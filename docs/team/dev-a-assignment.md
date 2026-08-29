@@ -21,10 +21,11 @@ Phần này là quyết định cuối cho MVP. Dev A code theo đúng contract;
 Dev A sở hữu và được quyền triển khai chính:
 
 ```text
-src/app/(teacher)/login/**
-src/app/(teacher)/class-sections/**        (trừ **/students/**)
-src/app/(teacher)/assignments/**
-src/app/(teacher)/evaluations/**
+src/app/(teacher)/teacher/login/**
+src/app/(teacher)/teacher/dashboard/**
+src/app/(teacher)/teacher/class-sections/**        (trừ **/students/**)
+src/app/(teacher)/teacher/assignments/**
+src/app/(teacher)/teacher/evaluations/**
 src/app/api/v1/teacher/auth/**
 src/app/api/v1/teacher/class-sections/**   (trừ **/students/**)
 src/app/api/v1/teacher/assignments/**

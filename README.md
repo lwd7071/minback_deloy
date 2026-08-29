@@ -1,0 +1,44 @@
+# MinBack
+
+MinBack là ứng dụng Next.js hỗ trợ giáo viên quản lý và sinh viên theo dõi kết quả học tập theo từng lớp học phần.
+
+## Yêu cầu
+
+- Node.js 20.9 trở lên
+- npm
+- Một Supabase project
+
+## Chạy local
+
+```powershell
+npm ci
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+Điền credential Supabase vào `.env.local` trước khi chạy các chức năng kết nối database/auth. Không commit `.env.local`.
+
+## Kiểm tra chất lượng
+
+```powershell
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
+
+## Tài liệu team
+
+- `docs/brief.md`
+- `docs/team/engineering-rules.md`
+- `docs/team/dev-a-assignment.md`
+- `docs/team/dev-b-assignment.md`
+
+## Kiến trúc
+
+```text
+UI → Route Handler/Server Action → Auth/Validation → Service → Repository → Supabase
+```
+
+Các trang và API trong scaffold chỉ xác lập route/boundary. Dev A và Dev B triển khai nghiệp vụ theo ownership trong tài liệu phân công.

@@ -21,9 +21,9 @@ Phần này là quyết định cuối cho MVP. Dev B code theo đúng contract;
 Dev B sở hữu và được quyền triển khai chính:
 
 ```text
-src/app/(student)/**
-src/app/(teacher)/class-sections/[classSectionId]/students/**
-src/app/(teacher)/settings/notifications/**
+src/app/(student)/student/**
+src/app/(teacher)/teacher/class-sections/[classSectionId]/students/**
+src/app/(teacher)/teacher/settings/notifications/**
 src/app/api/v1/student/auth/**
 src/app/api/v1/student/notifications/**
 src/app/api/v1/teacher/class-sections/[classSectionId]/students/**

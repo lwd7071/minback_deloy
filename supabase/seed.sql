@@ -1,0 +1,1 @@
+-- Local/test seed data only. Never place real student data or credentials in this file.
