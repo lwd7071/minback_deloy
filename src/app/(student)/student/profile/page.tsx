@@ -1,11 +1,17 @@
-import { ScaffoldPage } from "@/components/ui/scaffold-page";
+import { StudentProfileView } from "@/components/student/student-profile-view";
+
+export const metadata = {
+  title: "Hồ sơ Học tập — MinBack",
+  description:
+    "Xem hồ sơ học tập cá nhân, bài tập, điểm số, nhận xét và tiến độ học tập.",
+};
 
 export default function StudentProfilePage() {
   return (
-    <ScaffoldPage
-      owner="Dev B"
-      title="Student profile"
-      description="Hồ sơ học tập, điểm, feedback và tiến độ cá nhân."
-    />
+    <section className="surface">
+      <p className="eyebrow">Hồ sơ cá nhân</p>
+      <h1>Hồ sơ Học tập</h1>
+      <StudentProfileView />
+    </section>
   );
 }

@@ -1,11 +1,25 @@
-import { ScaffoldPage } from "@/components/ui/scaffold-page";
+import { StudentManagementView } from "@/components/teacher/student-management/student-management-view";
 
-export default function StudentManagementPage() {
+export const metadata = {
+  title: "Quản lý Sinh viên — MinBack",
+  description: "Quản lý thông tin sinh viên, nickname và reset PIN trong lớp học phần.",
+};
+
+export default async function TeacherStudentsPage({
+  params,
+}: {
+  params: Promise<{ classSectionId: string }>;
+}) {
+  const { classSectionId } = await params;
+
   return (
-    <ScaffoldPage
-      owner="Dev B"
-      title="Student management"
-      description="Quản lý sinh viên, nickname và reset PIN trong lớp."
-    />
+    <section className="surface">
+      <p className="eyebrow">Quản lý lớp</p>
+      <h1>Danh sách Sinh viên trong Lớp</h1>
+      <p className="muted">
+        Xem danh sách sinh viên, cập nhật thông tin cá nhân và tạo lại PIN ngẫu nhiên khi sinh viên quên.
+      </p>
+      <StudentManagementView classSectionId={classSectionId} />
+    </section>
   );
 }
