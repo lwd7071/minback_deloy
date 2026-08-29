@@ -32,6 +32,14 @@ MinBack giúp Teacher/Admin quản lý lớp học phần, bài tập và kết 
 
 Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` trong migration MVP. Rubric là migration sau MVP; hiện tại Teacher nhập trực tiếp `Evaluation.score`.
 
+## Implemented Components
+
+- **Teacher Authentication (Sprint 1)**: Đã hoàn thiện luồng đăng nhập Supabase Auth SSR bằng Next.js App Router.
+  - Các route công khai (login) nằm ở route group `(teacher-auth)`.
+  - Các route bảo mật (dashboard) nằm ở route group `(teacher)` và được bảo vệ bởi layout chung bằng hàm `requireTeacher()`.
+  - Hàm `requireTeacher()` giữ vai trò gatekeeper để map `auth.users.id` với `public.teachers`, đảm bảo Teacher context luôn hợp lệ.
+
+
 ## Contracts
 
 - Nghiệp vụ và scope: `docs/brief.md`
