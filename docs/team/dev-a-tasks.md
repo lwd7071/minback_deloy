@@ -52,11 +52,11 @@ Contract: `docs/team/dev-a-assignment.md`. TDD workflow: one observable behavior
 
 ## Sprint 1 — Teacher authentication backend
 
-- [ ] A1.1 — Teacher login API through Supabase Auth SSR
-- [ ] A1.2 — Current Teacher API and Auth-to-Teacher mapping
-- [ ] A1.3 — Logout and session invalidation
-- [ ] A1.4 — `requireTeacher` and protected Teacher boundaries
-- [ ] A1.5 — Auth and Teacher-isolation integration tests
+- [x] A1.1 — Teacher login API through Supabase Auth SSR
+- [x] A1.2 — Current Teacher API and Auth-to-Teacher mapping
+- [x] A1.3 — Logout and session invalidation
+- [x] A1.4 — `requireTeacher` and protected Teacher boundaries
+- [x] A1.5 — Auth and Teacher-isolation integration tests
 
 ## Sprint 2 — Class Section and import backend
 
