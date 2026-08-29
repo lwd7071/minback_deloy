@@ -17,7 +17,8 @@ insert into auth.users (
     'authenticated',
     'authenticated',
     'teacher-a@minback.local',
-    extensions.crypt('DemoTeacherA123!', extensions.gen_salt('bf')),
+    -- Password: DemoTeacherA123!
+    '$2a$10$caNbeOhxFHONxYlNPVP7yObuOsgF1KEBo91ZQoJKU3.fmmuJhgaza',
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
@@ -29,10 +30,31 @@ insert into auth.users (
     'authenticated',
     'authenticated',
     'teacher-b@minback.local',
-    extensions.crypt('DemoTeacherB123!', extensions.gen_salt('bf')),
+    -- Password: DemoTeacherB123!
+    '$2a$10$H8k18xSgL45q1i1z5885/eoC.YQn6m/.vJ5XvT7o2K/W/T1U58/H.',
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{}'::jsonb,
+    now(),
+    now()
+  );
+
+insert into auth.identities (id, provider_id, user_id, identity_data, provider, created_at, updated_at) values
+  (
+    'f0000000-0000-0000-0000-000000000001',
+    'f0000000-0000-0000-0000-000000000001',
+    'f0000000-0000-0000-0000-000000000001',
+    '{"sub":"f0000000-0000-0000-0000-000000000001","email":"teacher-a@minback.local","email_verified":false,"phone_verified":false}',
+    'email',
+    now(),
+    now()
+  ),
+  (
+    'f0000000-0000-0000-0000-000000000002',
+    'f0000000-0000-0000-0000-000000000002',
+    'f0000000-0000-0000-0000-000000000002',
+    '{"sub":"f0000000-0000-0000-0000-000000000002","email":"teacher-b@minback.local","email_verified":false,"phone_verified":false}',
+    'email',
     now(),
     now()
   );
@@ -61,7 +83,7 @@ insert into public.students (
     'Demo Student A',
     'student-a@minback.local',
     'DEMO001',
-    extensions.crypt('123456', extensions.gen_salt('bf'))
+    extensions.crypt('123456', extensions.gen_salt('bf', 10))
   ),
   (
     'f2000000-0000-0000-0000-000000000002',
@@ -70,7 +92,7 @@ insert into public.students (
     'Demo Student B',
     'student-b@minback.local',
     'DEMO002',
-    extensions.crypt('654321', extensions.gen_salt('bf'))
+    extensions.crypt('654321', extensions.gen_salt('bf', 10))
   );
 
 insert into public.assignments (

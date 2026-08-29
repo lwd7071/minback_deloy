@@ -1,7 +1,7 @@
 import "server-only";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher } from "@/server/auth/teacher-auth";
 import {
   assertBrevoConfigured,
   getBrevoPublicConfig,
@@ -15,21 +15,6 @@ export type NotificationSettingsDto = {
   senderName: string | null;
 };
 
-async function requireTeacher() {
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data.user) {
-    throw new ApiError(
-      401,
-      API_ERROR_CODES.unauthenticated,
-      "Vui lòng đăng nhập Teacher/Admin",
-    );
-  }
-
-  return { supabase, user: data.user };
-}
-
 function toDto(emailEnabled: boolean): NotificationSettingsDto {
   const brevo = getBrevoPublicConfig();
   return {
@@ -41,15 +26,16 @@ function toDto(emailEnabled: boolean): NotificationSettingsDto {
 }
 
 export async function getNotificationSettings(): Promise<NotificationSettingsDto> {
-  const { supabase, user } = await requireTeacher();
+  const { supabase, teacher } = await requireTeacher();
   const { data, error } = await supabase
     .from("teachers")
     .select("email_notification_enabled")
-    .eq("id", user.id)
+    .eq("id", teacher.id)
     .single();
 
   if (error || !data) {
-    throw new ApiError(404, API_ERROR_CODES.notFound, "Không tìm thấy Teacher");
+    // requireTeacher already verified the teacher exists; this is unexpected
+    throw new Error("Failed to fetch notification settings");
   }
 
   return toDto(Boolean(data.email_notification_enabled));
@@ -58,27 +44,31 @@ export async function getNotificationSettings(): Promise<NotificationSettingsDto
 export async function updateNotificationSettings(
   emailEnabled: boolean,
 ): Promise<NotificationSettingsDto> {
-  const { supabase, user } = await requireTeacher();
+  const { supabase, teacher } = await requireTeacher();
   if (emailEnabled) assertBrevoConfigured();
   const { data, error } = await supabase
     .from("teachers")
     .update({ email_notification_enabled: emailEnabled })
-    .eq("id", user.id)
+    .eq("id", teacher.id)
     .select("email_notification_enabled")
     .single();
 
   if (error || !data) {
-    throw new ApiError(404, API_ERROR_CODES.notFound, "Không tìm thấy Teacher");
+    throw new Error("Failed to update notification settings");
   }
 
   return toDto(Boolean(data.email_notification_enabled));
 }
 
 export async function sendNotificationTestEmail(): Promise<{ success: true }> {
-  const { user } = await requireTeacher();
-  assertBrevoConfigured();
+  const { supabase } = await requireTeacher();
 
-  if (!user.email) {
+  // Get email from auth user via the already-authenticated supabase client
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
     throw new ApiError(
       400,
       API_ERROR_CODES.validation,
@@ -86,6 +76,7 @@ export async function sendNotificationTestEmail(): Promise<{ success: true }> {
     );
   }
 
+  assertBrevoConfigured();
   await sendTestEmail(user.email);
   return { success: true };
 }

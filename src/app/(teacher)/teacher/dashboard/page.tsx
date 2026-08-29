@@ -1,11 +1,17 @@
-import { ScaffoldPage } from "@/components/ui/scaffold-page";
+import { LogoutButton } from "@/components/teacher/logout-button";
+import { requireTeacher } from "@/server/auth/teacher-auth";
 
-export default function TeacherDashboardPage() {
+export default async function TeacherDashboardPage() {
+  const { teacher } = await requireTeacher();
+
   return (
-    <ScaffoldPage
-      owner="Dev A"
-      title="Teacher dashboard"
-      description="Trang tổng quan Teacher/Admin."
-    />
+    <section className="surface">
+      <p className="eyebrow">Teacher Dashboard</p>
+      <h1>Xin chào, {teacher.displayName}</h1>
+      <p className="muted">
+        Quản lý lớp học phần, bài tập và đánh giá từ trang tổng quan này.
+      </p>
+      <LogoutButton />
+    </section>
   );
 }
