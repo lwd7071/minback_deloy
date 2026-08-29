@@ -71,3 +71,70 @@ a {
 .route-card:hover {
   border-color: var(--accent);
 }
+
+.settings-stack {
+  display: grid;
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.settings-row {
+  align-items: start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.settings-help {
+  margin: 8px 0 0;
+}
+
+.settings-details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.settings-details div {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(130px, 0.35fr) 1fr;
+}
+
+.settings-details dt {
+  color: var(--muted);
+}
+
+.settings-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.button {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 16px;
+  width: fit-content;
+}
+
+.button-secondary {
+  background: #fff;
+  color: var(--accent);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.form-success {
+  color: #18733b;
+}
+
+.form-error {
+  color: #b42318;
+}

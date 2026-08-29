@@ -11,6 +11,8 @@ export const API_ERROR_CODES = {
   notFound: "NOT_FOUND",
   conflict: "CONFLICT",
   loginRateLimited: "LOGIN_RATE_LIMITED",
+  emailNotConfigured: "EMAIL_NOT_CONFIGURED",
+  emailDeliveryFailed: "EMAIL_DELIVERY_FAILED",
   internal: "INTERNAL_ERROR",
 } as const;
 
