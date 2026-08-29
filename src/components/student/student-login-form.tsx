@@ -46,9 +46,9 @@ export function StudentLoginForm() {
         session.mustChangeNickname ||
         session.mustChangePin
       ) {
-        router.push("/student/change-credentials");
+        window.location.href = "/student/change-credentials";
       } else {
-        router.push("/student/profile");
+        window.location.href = "/student/profile";
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");

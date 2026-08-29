@@ -84,7 +84,7 @@ export function ChangeCredentialsForm() {
 
       // Nếu đã đổi đủ → vào profile
       if (updated.accessLevel === "full") {
-        router.push("/student/profile");
+        window.location.href = "/student/profile";
       } else {
         // Cập nhật lại session state (còn cờ chưa đổi)
         setSession(updated);

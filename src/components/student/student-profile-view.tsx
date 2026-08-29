@@ -41,9 +41,24 @@ export function StudentProfileView() {
 
     fetch("/api/v1/student/profile", { cache: "no-store" })
       .then(async (res) => {
+        if (!res.ok) {
+          if (res.status === 404) {
+            throw new Error(
+              "API Hồ sơ học tập (/api/v1/student/profile) chưa khả dụng (Đang chờ Dev A hoàn thành ở Sprint 5).",
+            );
+          }
+          let message = "Không thể tải hồ sơ học tập";
+          try {
+            const body = (await res.json()) as { error?: { message?: string } };
+            if (body.error?.message) message = body.error.message;
+          } catch {
+            // Ignored if non-json
+          }
+          throw new Error(message);
+        }
         const body = (await res.json()) as ApiResult<StudentProfileDto>;
-        if (!res.ok || !("data" in body)) {
-          throw new Error("error" in body ? body.error.message : "Không thể tải hồ sơ học tập");
+        if (!("data" in body)) {
+          throw new Error("Dữ liệu không hợp lệ");
         }
         return body.data;
       })
@@ -68,7 +83,7 @@ export function StudentProfileView() {
     try {
       await fetch("/api/v1/student/auth/logout", { method: "POST" });
     } finally {
-      router.push("/student/login");
+      window.location.href = "/student/login";
     }
   }
 
