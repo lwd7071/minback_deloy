@@ -121,6 +121,7 @@ Lỗi:
 - Toàn dự án dùng `400` cho validation/business input; không trộn thêm `422` nếu chưa có quyết định thay đổi rule chung.
 - `429`: vượt rate limit.
 - `500`: lỗi ngoài dự kiến; response không được lộ chi tiết nội bộ.
+- `502`: dịch vụ email bên ngoài từ chối/timeout, chỉ dùng cho thao tác gửi thử đồng bộ.
 
 Một loại lỗi phải dùng nhất quán cùng status trong toàn hệ thống.
 
@@ -138,6 +139,8 @@ Error code cố định cho MVP:
 | `NOT_FOUND` | 404 | Không tồn tại hoặc cần che giấu resource ngoài quyền |
 | `CONFLICT` | 409 | Unique conflict hoặc không thể xóa resource đang được dùng |
 | `LOGIN_RATE_LIMITED` | 429 | Login bucket đang bị block |
+| `EMAIL_NOT_CONFIGURED` | 400 | Admin bật/test email nhưng thiếu Brevo server env hợp lệ |
+| `EMAIL_DELIVERY_FAILED` | 502 | Endpoint gửi thử bị Brevo từ chối, timeout hoặc response không hợp lệ |
 | `INTERNAL_ERROR` | 500 | Lỗi ngoài dự kiến; không lộ chi tiết |
 
 ### 5.4. Thứ tự xử lý request

@@ -34,7 +34,9 @@ src/server/auth/student-session.ts
 src/server/services/student-auth-service.ts
 src/server/services/student-management-service.ts
 src/server/services/notification-service.ts
-src/server/services/email-notification-service.ts
+src/server/services/brevo-email-service.ts
+src/server/services/email-notification-policy.ts
+src/server/services/notification-settings-service.ts
 src/server/services/evaluation-history-service.ts
 src/server/repositories/student-repository.ts
 src/server/repositories/student-session-repository.ts
@@ -65,8 +67,9 @@ Tất cả dùng response/error envelope trong `engineering-rules.md`.
 | GET | `/api/v1/student/notifications?page&pageSize&unreadOnly` | Student cookie | `NotificationDto[]` + `meta` pagination có `unreadCount` |
 | PATCH | `/api/v1/student/notifications/:notificationId/read` | Không có | `NotificationDto` |
 | GET | `/api/v1/teacher/evaluations/:evaluationId/history` | Không có | `EvaluationHistoryDto[]` |
-| GET | `/api/v1/teacher/settings/notifications` | Không có | `{ emailEnabled: boolean }` |
-| PATCH | `/api/v1/teacher/settings/notifications` | `{ emailEnabled: boolean }` | `{ emailEnabled: boolean }` |
+| GET | `/api/v1/teacher/settings/notifications` | Không có | `NotificationSettingsDto` |
+| PATCH | `/api/v1/teacher/settings/notifications` | `{ emailEnabled: boolean }` | `NotificationSettingsDto` |
+| POST | `/api/v1/teacher/settings/notifications/test` | Không có | `{ success: true }` |
 
 DTO cố định:
 
@@ -100,6 +103,13 @@ type EvaluationHistoryDto = {
   oldFeedback: string; oldStatus: 'pending' | 'graded' | 'returned';
   changedAt: string;
   changedBy: { id: string; displayName: string };
+};
+
+type NotificationSettingsDto = {
+  emailEnabled: boolean;
+  brevoConfigured: boolean;
+  senderEmail: string | null;
+  senderName: string | null;
 };
 ```
 
@@ -145,13 +155,43 @@ export async function createEvaluationNotification(input: {
 
 Quy tắc:
 
-- `evaluation_created`: Evaluation mới được tạo với status `graded|returned`.
-- `evaluation_updated`: score, feedback hoặc status thay đổi và kết quả sau update có status `graded|returned`.
+- `evaluation_created`: Evaluation mới được tạo với status `graded|returned` thì tạo web notification.
+- `evaluation_updated`: score, feedback hoặc status thay đổi và kết quả sau update có status `graded|returned` thì tạo web notification.
 - Module tạo message server-side từ `assignmentTitle`: `Kết quả bài tập "{assignmentTitle}" đã được cập nhật.`; title phải escape khi render UI.
 - Không tạo notification cho update no-op hoặc Evaluation còn `pending`.
-- Email chỉ gửi sau khi Notification đã insert thành công, cấu hình bật và Student có email.
+- Email tự động chỉ gửi khi Evaluation hiện tại là `returned`; bản ghi EvaluationHistory mới nhất có `old_status != 'returned'`; Admin đã bật email; Student có email; và Brevo env hợp lệ. Evaluation mới tạo trực tiếp với `returned` cũng gửi.
+- Chỉnh score/feedback của Evaluation đã ở `returned` không gửi lại email. Nếu chuyển `returned → graded → returned` thì lần chuyển trở lại `returned` được xem là một lần công bố mới và gửi lại.
+- Email chỉ gửi sau khi Notification đã insert thành công.
 - Email lỗi không rollback Evaluation/Notification; log an toàn và để web notification tiếp tục hoạt động.
+- MVP không tự retry email.
 - Polling chạy mỗi 10 giây khi tab visible, dừng khi hidden/logout/unmount và fetch ngay khi tab visible lại.
+
+Brevo và Admin setting cố định:
+
+- Gọi trực tiếp `POST https://api.brevo.com/v3/smtp/email` bằng server-side `fetch`, header `api-key`; không cài SDK.
+- Timeout 10 giây. Chỉ HTTP `201` và response có `messageId` mới tính là thành công.
+- Credential thật nằm trong `.env.local`: `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`, `APP_URL`. Sender email phải được xác minh trên Brevo; không biến nào dùng prefix `NEXT_PUBLIC_`.
+- Admin UI chỉ có toggle, trạng thái đã/chưa cấu hình, sender email/name read-only và nút gửi thử. Không có input API key/password.
+- Email thử luôn gửi tới email Supabase Auth của Teacher đang đăng nhập, không nhận recipient từ browser.
+- Không log API key, HTML body hoặc recipient đầy đủ; database và API response không lưu/trả secret.
+
+Form email công bố kết quả:
+
+```text
+Subject: [MinBack] Có kết quả mới - {classCode}
+
+Xin chào {studentFullName},
+
+Giáo viên đã công bố kết quả bài tập “{assignmentTitle}”
+thuộc lớp học phần {classCode} — {className}.
+
+Vui lòng đăng nhập MinBack để xem điểm và feedback:
+{APP_URL}/student/login
+
+Đây là email tự động, vui lòng không trả lời.
+```
+
+Email không chứa điểm/feedback. Mọi dữ liệu động phải escape trước khi tạo HTML.
 
 ### 2.5. Contract Dev B tiêu thụ từ Dev A
 
@@ -278,6 +318,7 @@ Phụ trách:
 - Hiển thị giá trị cũ, thời điểm thay đổi và Teacher thay đổi.
 - Đọc history do trigger cố định trong migration Dev A tạo; không viết logic history thứ hai ở application layer.
 - Hoàn thiện Admin email config on/off.
+- Hoàn thiện `brevo-email-service.ts`, UI trạng thái sender và endpoint gửi thử.
 
 Acceptance tối thiểu:
 
@@ -285,6 +326,11 @@ Acceptance tối thiểu:
 - Update thất bại không để lại history record mồ côi.
 - History bị scope theo Teacher/Class/Student đúng quyền.
 - Thay đổi email config không làm lộ provider secret.
+- Thiếu Brevo env không cho bật email hoặc gửi thử (`400 EMAIL_NOT_CONFIGURED`).
+- Brevo từ chối, timeout hoặc response thiếu `messageId` trả `502 EMAIL_DELIVERY_FAILED` ở endpoint gửi thử.
+- `pending/graded` không gửi email; lần đầu chuyển sang `returned` gửi đúng một lần; sửa bản ghi đã `returned` không gửi lại.
+- Admin tắt email hoặc Student thiếu email vẫn tạo web notification.
+- Lỗi Brevo không ảnh hưởng kết quả chấm điểm đã commit.
 
 ### Sprint 5 — Student Profile UI
 

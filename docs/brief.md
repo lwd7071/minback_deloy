@@ -93,7 +93,7 @@ Mỗi lần xác thực thành công chỉ mở **một hồ sơ học tập duy
 ### Notification (cập nhật theo quyết định nhóm)
 - **Mặc định**: thông báo hiển thị trong web khi có feedback/điểm mới.
 - **Email**: service gửi mail được xây dựng sẵn ở backend (kiến trúc dạng interface/adapter, có thể bật/tắt độc lập), nhưng **không bắt buộc dùng ở MVP**.
-- Teacher/Admin có thể **bật/tắt gửi mail trong trang Admin** nếu muốn dùng; thông tin nhà cung cấp/SMTP được cấu hình bằng biến môi trường phía server, không nhập hoặc trả secret qua giao diện.
+- Teacher/Admin có thể **bật/tắt gửi mail trong trang Admin** nếu muốn dùng; Brevo Transactional Email được cấu hình bằng biến môi trường phía server, không nhập hoặc trả secret qua giao diện.
 - Email chỉ được gửi cho Student có `email`; Student không có email vẫn nhận web notification bình thường.
 
 ### Privacy & Access Control
