@@ -6,6 +6,7 @@ MinBack là ứng dụng Next.js hỗ trợ giáo viên quản lý và sinh viê
 
 - Node.js 20.9 trở lên
 - npm
+- Docker Desktop
 - Một Supabase project
 
 ## Chạy local
@@ -17,6 +18,16 @@ npm run dev
 ```
 
 Điền credential Supabase vào `.env.local` trước khi chạy các chức năng kết nối database/auth. Không commit `.env.local`.
+
+## Supabase local
+
+```powershell
+npm run db:start
+npm run db:reset
+npm run db:test
+```
+
+`db:reset` chỉ dùng cho Docker local. Không chạy reset trên Supabase remote. Seed local chỉ chứa dữ liệu demo tổng hợp trong `supabase/seed.sql`.
 
 ## Kiểm tra chất lượng
 

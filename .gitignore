@@ -21,6 +21,7 @@ test-results/
 .DS_Store
 Thumbs.db
 .vercel/
+.agents/
 
 # TypeScript
 *.tsbuildinfo
