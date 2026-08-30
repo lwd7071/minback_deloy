@@ -167,10 +167,52 @@ All slices are **AFK** because the API, validation, ownership and import behavio
 
 ## Sprint 3 — Assignment backend
 
-- [ ] A3.1 — Assignment validation and status transitions
-- [ ] A3.2 — Teacher-scoped list/create/get/update
-- [ ] A3.3 — Delete only unused draft Assignment
-- [ ] A3.4 — Assignment API and authorization integration tests
+All slices are **AFK** because the Assignment DTO, endpoints, validation and status-transition rules are locked in `docs/team/dev-a-assignment.md`.
+
+- [x] A3.1 — List and create Teacher-scoped Assignments
+  - Type: AFK
+  - Blocked by: A2 ClassSection context
+  - Covers: ASM-001, `GET/POST /api/v1/teacher/class-sections/:classSectionId/assignments`
+  - [x] RED: integration test proves the endpoint is unavailable before implementation
+  - [x] GREEN: list only the owned ClassSection's Assignments by `assignedDate desc, createdAt desc`; create a draft with the locked DTO and `201`
+  - [x] GREEN: provide Teacher UI to choose an owned ClassSection, list its Assignments and create a draft
+  - [x] REFACTOR: isolate DTO mapping, input validation and Teacher/ClassSection context behind Assignment service/repository boundaries
+  - [x] VERIFY: unit/integration tests cover success, date/score boundary validation, `401`, `404` and `403 Origin`
+
+- [x] A3.2 — Read, update and transition an Assignment safely
+  - Type: AFK
+  - Blocked by: A3.1
+  - Covers: ASM-002, ASM-004, `GET/PATCH /api/v1/teacher/assignments/:assignmentId`
+  - [x] RED: tests prove a Teacher cannot read/update another Teacher's Assignment and invalid transitions are rejected
+  - [x] GREEN: implement detail/edit UI plus `draft → published`, `published → closed`, `closed → published` and unchanged status; reject transitions back to `draft`
+  - [x] REFACTOR: enforce status transition and merged date validation once in the service, returning `INVALID_STATE_TRANSITION` or `VALIDATION_ERROR`
+  - [x] VERIFY: tests cover direct API reads, updates, all allowed transitions and every forbidden transition family
+
+- [x] A3.3 — Delete only an unused draft Assignment
+  - Type: AFK
+  - Blocked by: A3.1
+  - Covers: ASM-003, `DELETE /api/v1/teacher/assignments/:assignmentId`
+  - [x] RED: tests prove published Assignments and drafts with an Evaluation cannot be deleted
+  - [x] GREEN: delete owned, unused drafts with `204`; return `409 CONFLICT` for every other state and show the safe action in Teacher UI
+  - [x] REFACTOR: precheck status/Evaluation while retaining database foreign-key protection for the delete race
+  - [x] VERIFY: API tests cover successful delete, not found, cross-Teacher `404`, published conflict and Evaluation conflict
+
+- [ ] A3.4 — Assignment privacy regression, handoff and quality gate
+  - Type: AFK
+  - Blocked by: A3.1–A3.3
+  - [x] RED: privacy suite identifies authentication-before-validation regression for malformed mutation bodies
+  - [x] GREEN: authenticate before validation for all Assignment endpoints; retain `404` concealment and safe error envelopes
+  - [x] REFACTOR: remove duplicated status/date checks from route handlers; document endpoint/DTO/error matrix and remaining risk
+  - [ ] VERIFY: run local clean-state database gate, format/lint/typecheck, unit tests, full integration, build and `git diff --check`
+  - [ ] VERIFY: Dev B reviews locked Assignment DTO/endpoints and privacy behavior before Sprint 3 is marked done
+
+### Sprint 3 verification note
+
+- Clean local baseline: `npm run test:setup` ran once and passed (`DB reset`, Teacher A auth, Teacher B auth); `npm run db:test` passed 16/16 tests in 7 SQL files; `npm run db:lint` and `npm run test:health` passed.
+- Assignment unit tests: 3/3 pass. Assignment API/privacy integration: 10/10 pass. Full integration suite: 43/43 pass across 5 files, with clean exit and no `EADDRINUSE`.
+- `npm run typecheck`, `npm test` (33/33), `npm run lint` (0 errors; 7 pre-existing Student-scope warnings), `npm run build`, and `git diff --check` pass.
+- All Sprint 3 files pass targeted Prettier check. Repository-wide `npm run format:check` remains blocked by 90 existing formatting violations across shared/Student/Dev B files, so A3.4 quality-gate checkbox remains honestly pending rather than claiming a green full-repository format gate.
+- Sprint 3 also remains pending required independent Dev B review of the locked API/DTO and privacy behavior.
 
 ## Sprint 4 — Evaluation backend
 

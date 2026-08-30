@@ -1,11 +1,5 @@
-import { ScaffoldPage } from "@/components/ui/scaffold-page";
+import { AssignmentManagementView } from "@/components/teacher/assignments/assignment-management-view";
 
 export default function AssignmentsPage() {
-  return (
-    <ScaffoldPage
-      owner="Dev A"
-      title="Assignments"
-      description="Quản lý bài tập theo lớp học phần."
-    />
-  );
+  return <AssignmentManagementView />;
 }

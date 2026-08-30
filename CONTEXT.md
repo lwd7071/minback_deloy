@@ -43,7 +43,7 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - **ClassSection CSV import (Sprint 2 — A2.3)**: Đã hoàn thành import CSV hợp lệ theo Teacher/ClassSection context. Parser hỗ trợ header `MSSV`/`Họ Tên` không phân biệt hoa thường và `Email` tùy chọn; Student mới có nickname bằng MSSV, PIN CSPRNG sáu chữ số chỉ trả ở response đầu tiên, BCrypt-only storage và cờ bắt buộc đổi nickname/PIN. UI tạo file PIN ngay trên browser, không lưu hay có endpoint tải lại. Full integration regression pass 25/25.
 - **ClassSection CSV partial import (Sprint 2 — A2.4)**: Import giữ các dòng hợp lệ khi có dòng trống, dữ liệu sai hoặc MSSV trùng trong file; mọi row outcome có thứ tự xác định và summary đếm đúng. Re-import trong cùng ClassSection chỉ cập nhật tên/email, không reset credential/session; cùng MSSV ở ClassSection khác không bị ảnh hưởng. Full integration regression pass 27/27.
 - **ClassSection XLSX import and whole-file limits (Sprint 2 — A2.5)**: Import hỗ trợ CSV và XLSX qua một normalized-row model dùng chung. Endpoint từ chối toàn file trước mutation nếu sai đuôi, quá 5 MB, thiếu header bắt buộc hoặc quá 2.000 dòng dữ liệu; row-level errors vẫn partial-success. ExcelJS 4.4.0 được dùng chỉ để đọc XLSX buffer; rủi ro UUID transitive được ghi ở handoff A2.6. Full integration regression pass 29/29.
-
+- **Assignment management (Sprint 3 — A3.1–A3.3)**: Teacher quản lý Assignment theo ClassSection qua API list/create/detail/update/delete và UI `/teacher/assignments`. DTO, date/max-score validation, status transitions và deletion restriction được enforce tại service/repository; direct API privacy tests che giấu cross-Teacher resources bằng `404` và yêu cầu Origin cho mutations. Handoff: `docs/team/dev-a-sprint-3-handoff.md`.
 
 ## Contracts
 
@@ -51,5 +51,6 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - Quy chuẩn kỹ thuật: `docs/team/engineering-rules.md`
 - Dev A: `docs/team/dev-a-assignment.md`
 - Sprint 2 handoff: `docs/team/dev-a-sprint-2-handoff.md`
+- Sprint 3 handoff: `docs/team/dev-a-sprint-3-handoff.md`
 - Dev B: `docs/team/dev-b-assignment.md`
 - Checklist Dev A: `docs/team/dev-a-tasks.md`
