@@ -34,10 +34,15 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 
 ## Implemented Components
 
-- **Teacher Authentication (Sprint 1)**: Đã hoàn thiện luồng đăng nhập Supabase Auth SSR bằng Next.js App Router.
+- **Teacher Authentication (Sprint 1)**: Đã triển khai luồng đăng nhập Supabase Auth SSR bằng Next.js App Router; implementation và test artifact đã có, nhưng quality gate/runtime integration cần được xác nhận sau khi môi trường local Supabase và dependency đầy đủ.
   - Các route công khai (login) nằm ở route group `(teacher-auth)`.
   - Các route bảo mật (dashboard) nằm ở route group `(teacher)` và được bảo vệ bởi layout chung bằng hàm `requireTeacher()`.
   - Hàm `requireTeacher()` giữ vai trò gatekeeper để map `auth.users.id` với `public.teachers`, đảm bảo Teacher context luôn hợp lệ.
+  - Verification hiện tại: `npm run typecheck` pass; Teacher Auth integration regression pass 12/12 sau khi seed và test harness được cố định cho Supabase local.
+- **ClassSection management (Sprint 2 — A2.1/A2.2)**: Đã hoàn thành list/create và detail/update/delete theo Teacher context, kèm API, repository/service, validation và UI list/detail. Targeted integration tests pass 11/11; Teacher Auth regression pass 12/12.
+- **ClassSection CSV import (Sprint 2 — A2.3)**: Đã hoàn thành import CSV hợp lệ theo Teacher/ClassSection context. Parser hỗ trợ header `MSSV`/`Họ Tên` không phân biệt hoa thường và `Email` tùy chọn; Student mới có nickname bằng MSSV, PIN CSPRNG sáu chữ số chỉ trả ở response đầu tiên, BCrypt-only storage và cờ bắt buộc đổi nickname/PIN. UI tạo file PIN ngay trên browser, không lưu hay có endpoint tải lại. Full integration regression pass 25/25.
+- **ClassSection CSV partial import (Sprint 2 — A2.4)**: Import giữ các dòng hợp lệ khi có dòng trống, dữ liệu sai hoặc MSSV trùng trong file; mọi row outcome có thứ tự xác định và summary đếm đúng. Re-import trong cùng ClassSection chỉ cập nhật tên/email, không reset credential/session; cùng MSSV ở ClassSection khác không bị ảnh hưởng. Full integration regression pass 27/27.
+- **ClassSection XLSX import and whole-file limits (Sprint 2 — A2.5)**: Import hỗ trợ CSV và XLSX qua một normalized-row model dùng chung. Endpoint từ chối toàn file trước mutation nếu sai đuôi, quá 5 MB, thiếu header bắt buộc hoặc quá 2.000 dòng dữ liệu; row-level errors vẫn partial-success. ExcelJS 4.4.0 được dùng chỉ để đọc XLSX buffer; rủi ro UUID transitive được ghi ở handoff A2.6. Full integration regression pass 29/29.
 
 
 ## Contracts
@@ -45,5 +50,6 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - Nghiệp vụ và scope: `docs/brief.md`
 - Quy chuẩn kỹ thuật: `docs/team/engineering-rules.md`
 - Dev A: `docs/team/dev-a-assignment.md`
+- Sprint 2 handoff: `docs/team/dev-a-sprint-2-handoff.md`
 - Dev B: `docs/team/dev-b-assignment.md`
 - Checklist Dev A: `docs/team/dev-a-tasks.md`

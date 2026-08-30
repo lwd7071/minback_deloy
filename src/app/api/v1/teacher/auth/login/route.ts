@@ -5,7 +5,6 @@ import { teacherLoginSchema } from "@/schemas/teacher-auth";
 import { loginTeacher } from "@/server/auth/teacher-auth";
 
 export async function POST(request: Request) {
-  console.log("SERVER SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
   try {
     assertSameOrigin(request);
 
@@ -37,7 +36,6 @@ export async function POST(request: Request) {
 
     return successResponse({ teacher });
   } catch (error) {
-    console.error("[LOGIN ROUTE ERROR]", error);
     return errorResponse(error);
   }
 }
