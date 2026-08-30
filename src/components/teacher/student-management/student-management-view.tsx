@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import type { StudentAdminDto } from "@/types/student";
 
 type ApiResult<T> = { data: T; meta?: { page: number; pageSize: number; total: number } } | { error: { message: string } };
@@ -26,30 +26,45 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
   const [initialPin, setInitialPin] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
 
-  const fetchStudents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=20${search.trim() ? `&search=${encodeURIComponent(search.trim())}` : ""}`;
-      const res = await fetch(url, { cache: "no-store" });
-      const body = (await res.json()) as ApiResult<StudentAdminDto[]>;
-
-      if (!res.ok || !("data" in body)) {
-        throw new Error("error" in body ? body.error.message : "Không thể tải danh sách sinh viên");
-      }
-
-      setStudents(body.data);
-      if (body.meta) setTotal(body.meta.total);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Lỗi kết nối");
-    } finally {
-      setLoading(false);
-    }
-  }, [classSectionId, page, search]);
+  // refreshKey tăng lên mỗi khi cần tải lại danh sách (sau save/reset PIN)
+  const [refreshKey, setRefreshKey] = useState(0);
+  const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
-    void fetchStudents();
-  }, [fetchStudents]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=20${search.trim() ? `&search=${encodeURIComponent(search.trim())}` : ""}`;
+        const res = await fetch(url, { cache: "no-store" });
+        const body = (await res.json()) as ApiResult<StudentAdminDto[]>;
+
+        if (cancelled) return;
+
+        if (!res.ok || !("data" in body)) {
+          throw new Error("error" in body ? body.error.message : "Không thể tải danh sách sinh viên");
+        }
+
+        setStudents(body.data);
+        if (body.meta) setTotal(body.meta.total);
+        setError(null);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Lỗi kết nối");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    // Cleanup: huỷ setState khi component unmount hoặc deps thay đổi
+    return () => { cancelled = true; };
+  }, [classSectionId, page, search, refreshKey]);
 
   function startEdit(st: StudentAdminDto) {
     setEditingStudent(st);
@@ -86,7 +101,7 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
       }
 
       setEditingStudent(null);
-      void fetchStudents();
+      triggerRefresh();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Lưu thất bại");
     } finally {
@@ -111,7 +126,7 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
       }
 
       setInitialPin(body.data.initialPin);
-      void fetchStudents();
+      triggerRefresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Lỗi reset PIN");
       setResetPinStudent(null);

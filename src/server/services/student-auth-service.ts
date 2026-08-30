@@ -329,11 +329,18 @@ export async function resetStudentPin(studentId: string): Promise<{
   const initialPin = generateRandomPin();
   const newPinHash = await hash(initialPin, BCRYPT_ROUNDS);
 
-  // Update pin và revoke sessions trong parallel
-  await Promise.all([
-    updateStudentPinHash(studentId, newPinHash),
-    revokeAllSessionsByStudentId(studentId),
-  ]);
+  // Bước 1: Update PIN — bắt buộc thành công; throw nếu fail
+  await updateStudentPinHash(studentId, newPinHash);
+
+  // Bước 2: Revoke sessions — xử lý riêng để partial failure không block kết quả.
+  // Nếu revoke fail (hiếm gặp, thường do network), session cũ vẫn tự hết hạn
+  // sau SESSION_TIMEOUT_MINUTES — bảo mật vẫn đảm bảo vì PIN đã thay đổi.
+  try {
+    await revokeAllSessionsByStudentId(studentId);
+  } catch (err) {
+    // Log cảnh báo nhưng không throw — không để lỗi revoke rollback reset PIN đã thành công
+    console.error("[resetStudentPin] Không thể revoke sessions của student:", studentId, err);
+  }
 
   return { initialPin };
 }

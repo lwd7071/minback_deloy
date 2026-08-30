@@ -6,6 +6,7 @@ import {
   getNotificationSettings,
   updateNotificationSettings,
 } from "@/server/services/notification-settings-service";
+import { assertSameOrigin } from "@/lib/api/origin";
 
 const updateSettingsSchema = z.object({
   emailEnabled: z.boolean(),
@@ -21,6 +22,9 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     let body: unknown;
     try {
       body = await request.json();

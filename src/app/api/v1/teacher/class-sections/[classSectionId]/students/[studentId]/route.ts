@@ -23,6 +23,7 @@ import {
   updateStudentInClass,
 } from "@/server/services/student-management-service";
 import { ApiError } from "@/lib/api/errors";
+import { assertSameOrigin } from "@/lib/api/origin";
 
 type RouteParams = { params: Promise<{ classSectionId: string; studentId: string }> };
 
@@ -44,6 +45,9 @@ export async function PATCH(
   { params }: RouteParams,
 ): Promise<NextResponse> {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     const { classSectionId, studentId } = await params;
 
     let body: unknown;

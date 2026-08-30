@@ -19,9 +19,13 @@ import { credentialsUpdateSchema } from "@/schemas/student-auth";
 import { requireAnyStudentSession } from "@/server/auth/student-session";
 import { updateStudentCredentials } from "@/server/services/student-auth-service";
 import { ApiError } from "@/lib/api/errors";
+import { assertSameOrigin } from "@/lib/api/origin";
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     // Xác thực session (bất kỳ access level)
     const session = await requireAnyStudentSession();
 

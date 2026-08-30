@@ -17,9 +17,13 @@ import { errorResponse, successResponse } from "@/lib/api/response";
 import { studentLoginSchema } from "@/schemas/student-auth";
 import { loginStudent } from "@/server/services/student-auth-service";
 import { ApiError } from "@/lib/api/errors";
+import { assertSameOrigin } from "@/lib/api/origin";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     // Parse và validate body
     let body: unknown;
     try {

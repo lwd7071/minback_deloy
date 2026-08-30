@@ -135,7 +135,7 @@ export async function updateStudentInClass(
 
   const updated = await updateStudentByTeacher(studentId, classSectionId, {
     fullName: input.fullName,
-    email: input.email ?? undefined,
+    email: input.email,   // Truyền thẳng: null = xóa email; string = cập nhật; undefined = không thay đổi
     nickname: input.nickname,
   });
 

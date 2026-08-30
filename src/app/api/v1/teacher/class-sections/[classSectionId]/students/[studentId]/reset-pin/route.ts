@@ -15,16 +15,20 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { resetStudentPinByTeacher } from "@/server/services/student-management-service";
+import { assertSameOrigin } from "@/lib/api/origin";
 
 type RouteParams = {
   params: Promise<{ classSectionId: string; studentId: string }>;
 };
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteParams,
 ): Promise<NextResponse> {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     const { classSectionId, studentId } = await params;
     const result = await resetStudentPinByTeacher(classSectionId, studentId);
     // initialPin được trả về một lần duy nhất — không log, không lưu thêm

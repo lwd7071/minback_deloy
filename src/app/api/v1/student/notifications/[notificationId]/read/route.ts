@@ -16,14 +16,18 @@ import { errorResponse, successResponse } from "@/lib/api/response";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireFullStudentSession } from "@/server/auth/student-session";
 import { markNotificationAsRead } from "@/server/repositories/notification-repository";
+import { assertSameOrigin } from "@/lib/api/origin";
 
 type RouteParams = { params: Promise<{ notificationId: string }> };
 
 export async function PATCH(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: RouteParams,
 ): Promise<NextResponse> {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     const { studentId } = await requireFullStudentSession();
     const { notificationId } = await params;
 

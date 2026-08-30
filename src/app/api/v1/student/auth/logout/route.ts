@@ -9,7 +9,7 @@
  * - 401: UNAUTHENTICATED | SESSION_EXPIRED
  */
 
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
 import {
@@ -17,9 +17,13 @@ import {
   requireAnyStudentSession,
 } from "@/server/auth/student-session";
 import { logoutStudent } from "@/server/services/student-auth-service";
+import { assertSameOrigin } from "@/lib/api/origin";
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
+    assertSameOrigin(request);
+
     const session = await requireAnyStudentSession();
     await logoutStudent(session.sessionId);
 
