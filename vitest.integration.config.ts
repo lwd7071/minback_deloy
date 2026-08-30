@@ -10,6 +10,8 @@ export default defineConfig({
     },
   },
   test: {
+    fileParallelism: false,
+    globalSetup: ["test/integration/global-setup.ts"],
     include: ["test/integration/**/*.test.ts"],
     testTimeout: 30_000,
     hookTimeout: 60_000,
