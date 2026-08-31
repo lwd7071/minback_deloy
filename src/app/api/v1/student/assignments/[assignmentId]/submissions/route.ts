@@ -5,7 +5,7 @@ import { errorResponse, successResponse } from "@/lib/api/response";
 import {
   finalizeStudentSubmission,
   getStudentSubmissionHistory,
-} from "@/server/services/submission-service";
+} from "@/server/services/students/submission-service";
 
 type Params = { params: Promise<{ assignmentId: string }> };
 

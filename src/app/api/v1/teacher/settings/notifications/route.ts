@@ -5,7 +5,7 @@ import { errorResponse, successResponse } from "@/lib/api/response";
 import {
   getNotificationSettings,
   updateNotificationSettings,
-} from "@/server/services/notification-settings-service";
+} from "@/server/services/notifications/notification-settings-service";
 import { assertSameOrigin } from "@/lib/api/origin";
 
 const updateSettingsSchema = z.object({

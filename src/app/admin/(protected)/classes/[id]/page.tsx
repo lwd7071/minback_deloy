@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ClassDetailTabs } from "@/components/admin/class-detail-tabs";
-import { getTeacherClassSection } from "@/server/services/class-section-service";
+import { getTeacherClassSection } from "@/server/services/class-sections/class-section-service";
 export default async function AdminClassPage({
   params,
 }: {

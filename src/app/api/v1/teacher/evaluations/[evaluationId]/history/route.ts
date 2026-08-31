@@ -13,7 +13,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { getEvaluationHistory } from "@/server/services/evaluation-history-service";
+import { getEvaluationHistory } from "@/server/services/evaluations/evaluation-history-service";
 
 type RouteParams = { params: Promise<{ evaluationId: string }> };
 

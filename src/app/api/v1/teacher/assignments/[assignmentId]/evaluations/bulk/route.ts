@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { assertSameOrigin } from "@/lib/api/origin";
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { bulkUpsertTeacherEvaluations } from "@/server/services/bulk-evaluation-service";
+import { bulkUpsertTeacherEvaluations } from "@/server/services/evaluations/bulk-evaluation-service";
 
 type Context = { params: Promise<{ assignmentId: string }> };
 

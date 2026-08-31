@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { getPublicClassSection } from "@/server/services/frontend-api-service";
+import { getPublicClassSection } from "@/server/services/frontend-rebuild/frontend-api-service";
 
 type Context = { params: Promise<{ code: string }> };
 

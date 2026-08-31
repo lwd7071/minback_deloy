@@ -17,7 +17,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { credentialsUpdateSchema } from "@/schemas/student-auth";
 import { requireAnyStudentSession } from "@/server/auth/student-session";
-import { updateStudentCredentials } from "@/server/services/student-auth-service";
+import { updateStudentCredentials } from "@/server/services/students/student-auth-service";
 import { ApiError } from "@/lib/api/errors";
 import { assertSameOrigin } from "@/lib/api/origin";
 

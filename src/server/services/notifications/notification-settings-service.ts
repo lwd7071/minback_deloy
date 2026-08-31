@@ -6,7 +6,7 @@ import {
   assertBrevoConfigured,
   getBrevoPublicConfig,
   sendTestEmail,
-} from "@/server/services/brevo-email-service";
+} from "@/server/services/notifications/email/brevo-email-service";
 
 export type NotificationSettingsDto = {
   emailEnabled: boolean;

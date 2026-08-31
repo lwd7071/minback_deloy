@@ -21,7 +21,7 @@ import { studentAdminUpdateSchema } from "@/schemas/student-auth";
 import {
   getStudentInClass,
   updateStudentInClass,
-} from "@/server/services/student-management-service";
+} from "@/server/services/students/student-management-service";
 import { ApiError } from "@/lib/api/errors";
 import { assertSameOrigin } from "@/lib/api/origin";
 

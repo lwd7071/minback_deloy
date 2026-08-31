@@ -7,17 +7,21 @@ vi.mock("@/server/repositories/student-repository", () => ({
   listStudentsByClassSection: vi.fn(),
   updateStudentByTeacher: vi.fn(),
 }));
-vi.mock("@/server/services/student-auth-service", () => ({
+vi.mock("@/server/services/students/student-auth-service", () => ({
   resetStudentPin: vi.fn(),
 }));
 vi.mock("@/server/repositories/evaluation-history-repository", () => ({
-  listEvaluationHistory: vi.fn(),
+  findEvaluationOwnerTeacherId: vi.fn(),
+  listEvaluationHistoryRows: vi.fn(),
 }));
 
 import { createClient } from "@/lib/supabase/server";
-import { listEvaluationHistory } from "@/server/repositories/evaluation-history-repository";
+import {
+  findEvaluationOwnerTeacherId,
+  listEvaluationHistoryRows,
+} from "@/server/repositories/evaluation-history-repository";
 import { getEvaluationHistory } from "./evaluation-history-service";
-import { getStudentInClass } from "./student-management-service";
+import { getStudentInClass } from "@/server/services/students/student-management-service";
 
 function teacherClientWithNoMatchingClass() {
   const query = {
@@ -62,13 +66,11 @@ describe("Teacher resource privacy", () => {
         }),
       },
     } as never);
-    vi.mocked(listEvaluationHistory).mockRejectedValue(
-      new Error("Không có quyền truy cập lịch sử Evaluation này"),
-    );
+    vi.mocked(findEvaluationOwnerTeacherId).mockResolvedValue("teacher-b");
 
     await expect(getEvaluationHistory("evaluation-b")).rejects.toMatchObject({
-      status: 404,
-      code: "NOT_FOUND",
+      status: 403,
+      code: "FORBIDDEN",
     });
   });
 });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { getTeacherStudentProfile } from "@/server/services/teacher-student-profile-service";
+import { getTeacherStudentProfile } from "@/server/services/students/teacher-student-profile-service";
 
 type RouteParams = {
   params: Promise<{ classSectionId: string; studentId: string }>;

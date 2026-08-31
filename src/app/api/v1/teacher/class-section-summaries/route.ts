@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { getTeacherClassSectionSummaries } from "@/server/services/frontend-api-service";
+import { getTeacherClassSectionSummaries } from "@/server/services/frontend-rebuild/frontend-api-service";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

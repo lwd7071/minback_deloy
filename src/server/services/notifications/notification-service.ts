@@ -2,12 +2,12 @@ import "server-only";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { createClient } from "@/lib/supabase/server";
-import { shouldAttemptEvaluationEmail } from "@/server/services/email-notification-policy";
+import { shouldAttemptEvaluationEmail } from "@/server/services/notifications/email-notification-policy";
 import {
   getBrevoPublicConfig,
   sendEvaluationEmail,
-} from "@/server/services/brevo-email-service";
-import { deliverEmailSafely } from "@/server/services/safe-email-delivery";
+} from "@/server/services/notifications/email/brevo-email-service";
+import { deliverEmailSafely } from "@/server/services/notifications/email/safe-email-delivery";
 
 type EvaluationNotificationInput = {
   studentId: string;

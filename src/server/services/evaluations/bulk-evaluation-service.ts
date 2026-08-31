@@ -4,7 +4,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { bulkEvaluationSchema } from "@/schemas/frontend-rebuild";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findAssignmentById } from "@/server/repositories/assignment-repository";
-import { createEvaluationNotification } from "@/server/services/notification-service";
+import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 
 export async function bulkUpsertTeacherEvaluations(
   assignmentId: string,

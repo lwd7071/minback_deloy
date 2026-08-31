@@ -16,7 +16,7 @@ import {
   STUDENT_SESSION_COOKIE,
   requireAnyStudentSession,
 } from "@/server/auth/student-session";
-import { logoutStudent } from "@/server/services/student-auth-service";
+import { logoutStudent } from "@/server/services/students/student-auth-service";
 import { assertSameOrigin } from "@/lib/api/origin";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

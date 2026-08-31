@@ -4,7 +4,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { assertSameOrigin } from "@/lib/api/origin";
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { upsertTeacherEvaluation } from "@/server/services/evaluation-service";
+import { upsertTeacherEvaluation } from "@/server/services/evaluations/evaluation-service";
 
 type RouteContext = {
   params: Promise<{ assignmentId: string; studentId: string }>;

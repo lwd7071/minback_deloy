@@ -9,7 +9,7 @@ import {
   previewStudentCsv,
   previewStudentXlsx,
   validateImportFile,
-} from "@/server/services/import-service";
+} from "@/server/services/class-sections/import-service";
 
 type Context = { params: Promise<{ classSectionId: string }> };
 

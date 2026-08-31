@@ -1,5 +1,5 @@
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { sendNotificationTestEmail } from "@/server/services/notification-settings-service";
+import { sendNotificationTestEmail } from "@/server/services/notifications/notification-settings-service";
 import { assertSameOrigin } from "@/lib/api/origin";
 
 export async function POST(request: Request) {

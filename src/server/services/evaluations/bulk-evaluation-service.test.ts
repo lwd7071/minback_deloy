@@ -5,13 +5,13 @@ vi.mock("@/server/auth/teacher-auth", () => ({ requireTeacher: vi.fn() }));
 vi.mock("@/server/repositories/assignment-repository", () => ({
   findAssignmentById: vi.fn(),
 }));
-vi.mock("@/server/services/notification-service", () => ({
+vi.mock("@/server/services/notifications/notification-service", () => ({
   createEvaluationNotification: vi.fn(),
 }));
 
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findAssignmentById } from "@/server/repositories/assignment-repository";
-import { createEvaluationNotification } from "@/server/services/notification-service";
+import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 
 import { bulkUpsertTeacherEvaluations } from "./bulk-evaluation-service";
 

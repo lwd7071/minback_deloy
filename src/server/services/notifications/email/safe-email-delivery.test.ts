@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { deliverEmailSafely } from "@/server/services/safe-email-delivery";
+import { deliverEmailSafely } from "@/server/services/notifications/email/safe-email-delivery";
 
 describe("deliverEmailSafely", () => {
   it("does not propagate a Brevo failure to the committed evaluation flow", async () => {

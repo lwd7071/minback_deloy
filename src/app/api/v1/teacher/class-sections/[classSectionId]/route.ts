@@ -8,7 +8,7 @@ import {
   deleteTeacherClassSection,
   getTeacherClassSection,
   updateTeacherClassSection,
-} from "@/server/services/class-section-service";
+} from "@/server/services/class-sections/class-section-service";
 
 type RouteContext = { params: Promise<{ classSectionId: string }> };
 

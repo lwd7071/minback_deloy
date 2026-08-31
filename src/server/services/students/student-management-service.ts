@@ -14,7 +14,7 @@ import {
   listStudentsByClassSection,
   updateStudentByTeacher,
 } from "@/server/repositories/student-repository";
-import { resetStudentPin } from "@/server/services/student-auth-service";
+import { resetStudentPin } from "@/server/services/students/student-auth-service";
 import type { StudentAdminDto } from "@/types/student";
 import type {
   StudentAdminUpdateInput,

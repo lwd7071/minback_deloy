@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { assertSameOrigin } from "@/lib/api/origin";
-import { signTeacherAttachmentUpload } from "@/server/services/attachment-service";
+import { signTeacherAttachmentUpload } from "@/server/services/assignments/attachment-service";
 
 type Params = { params: Promise<{ assignmentId: string }> };
 

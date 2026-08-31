@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { requireFullStudentSession } from "@/server/auth/student-session";
-import { getStudentProfile } from "@/server/services/student-profile-service";
+import { getStudentProfile } from "@/server/services/students/student-profile-service";
 
 export async function GET(): Promise<NextResponse> {
   try {

@@ -7,7 +7,7 @@ import {
   importTeacherClassSectionCsv,
   importTeacherClassSectionXlsx,
   validateImportFile,
-} from "@/server/services/import-service";
+} from "@/server/services/class-sections/import-service";
 
 type RouteContext = { params: Promise<{ classSectionId: string }> };
 

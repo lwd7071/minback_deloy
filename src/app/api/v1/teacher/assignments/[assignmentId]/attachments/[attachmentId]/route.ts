@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { assertSameOrigin } from "@/lib/api/origin";
 import { errorResponse } from "@/lib/api/response";
-import { deleteTeacherAttachment } from "@/server/services/attachment-service";
+import { deleteTeacherAttachment } from "@/server/services/assignments/attachment-service";
 
 type Params = {
   params: Promise<{ assignmentId: string; attachmentId: string }>;

@@ -15,7 +15,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { resetStudentPinByTeacher } from "@/server/services/student-management-service";
+import { resetStudentPinByTeacher } from "@/server/services/students/student-management-service";
 import { assertSameOrigin } from "@/lib/api/origin";
 
 type RouteParams = {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse } from "@/lib/api/response";
-import { getTeacherSubmissionFileDownload } from "@/server/services/teacher-submission-service";
+import { getTeacherSubmissionFileDownload } from "@/server/services/students/teacher-submission-service";
 
 type Params = { params: Promise<{ assignmentId: string; fileId: string }> };
 

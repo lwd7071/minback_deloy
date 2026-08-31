@@ -10,7 +10,7 @@ import {
 import {
   createTeacherClassSection,
   listTeacherClassSections,
-} from "@/server/services/class-section-service";
+} from "@/server/services/class-sections/class-section-service";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {

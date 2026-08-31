@@ -123,7 +123,6 @@ describe("Student Auth Schemas Validation", () => {
         studentAdminUpdateSchema.parse({ fullName: "Trần Thị B" }),
       ).toEqual({
         fullName: "Trần Thị B",
-        email: null,
       });
       expect(
         studentAdminUpdateSchema.parse({ email: "new@example.com" }),

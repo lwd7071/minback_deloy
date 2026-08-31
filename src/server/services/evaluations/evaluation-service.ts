@@ -11,7 +11,7 @@ import {
   updateEvaluation,
 } from "@/server/repositories/evaluation-repository";
 import { findStudentById } from "@/server/repositories/student-repository";
-import { createEvaluationNotification } from "@/server/services/notification-service";
+import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 import type {
   EvaluationDto,
   EvaluationWithStudentDto,

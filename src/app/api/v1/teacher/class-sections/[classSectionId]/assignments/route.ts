@@ -7,7 +7,7 @@ import { requireTeacher } from "@/server/auth/teacher-auth";
 import {
   createTeacherAssignment,
   listTeacherAssignments,
-} from "@/server/services/assignment-service";
+} from "@/server/services/assignments/assignment-service";
 
 type RouteContext = { params: Promise<{ classSectionId: string }> };
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   shouldAttemptEvaluationEmail,
   shouldSendEvaluationEmail,
-} from "@/server/services/email-notification-policy";
+} from "@/server/services/notifications/email-notification-policy";
 
 describe("shouldSendEvaluationEmail", () => {
   it.each(["pending", "graded"] as const)(

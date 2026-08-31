@@ -17,7 +17,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { studentListQuerySchema } from "@/schemas/student-auth";
-import { listStudentsInClass } from "@/server/services/student-management-service";
+import { listStudentsInClass } from "@/server/services/students/student-management-service";
 import { ApiError } from "@/lib/api/errors";
 
 export async function GET(

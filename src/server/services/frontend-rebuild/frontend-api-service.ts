@@ -12,8 +12,8 @@ import {
   listClassSectionSummaries,
 } from "@/server/repositories/frontend-rebuild-repository";
 import { findClassSectionById } from "@/server/repositories/class-section-repository";
-import { normalizePublicClassCode } from "@/server/services/frontend-rebuild-service";
-import { normalizeIp } from "@/server/services/student-auth-service";
+import { normalizePublicClassCode } from "@/server/services/frontend-rebuild/frontend-rebuild-service";
+import { normalizeIp } from "@/server/services/students/student-auth-service";
 
 export async function getPublicClassSection(
   code: string,

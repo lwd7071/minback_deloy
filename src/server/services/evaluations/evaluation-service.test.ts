@@ -15,7 +15,7 @@ vi.mock("@/server/repositories/evaluation-repository", () => ({
   listEvaluationsWithStudents: vi.fn(),
   updateEvaluation: vi.fn(),
 }));
-vi.mock("@/server/services/notification-service", () => ({
+vi.mock("@/server/services/notifications/notification-service", () => ({
   createEvaluationNotification: vi.fn(),
 }));
 
@@ -27,7 +27,7 @@ import {
   updateEvaluation,
 } from "@/server/repositories/evaluation-repository";
 import { findStudentById } from "@/server/repositories/student-repository";
-import { createEvaluationNotification } from "@/server/services/notification-service";
+import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 import { upsertTeacherEvaluation } from "./evaluation-service";
 
 const assignment = {

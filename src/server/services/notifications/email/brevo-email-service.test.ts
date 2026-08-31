@@ -7,7 +7,7 @@ import {
   assertBrevoConfigured,
   buildEvaluationEmail,
   sendEvaluationEmail,
-} from "@/server/services/brevo-email-service";
+} from "@/server/services/notifications/email/brevo-email-service";
 
 const originalEnv = { ...process.env };
 

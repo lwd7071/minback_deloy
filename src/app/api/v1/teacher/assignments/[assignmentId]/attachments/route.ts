@@ -5,7 +5,7 @@ import { assertSameOrigin } from "@/lib/api/origin";
 import {
   finalizeTeacherAttachment,
   listTeacherAttachments,
-} from "@/server/services/attachment-service";
+} from "@/server/services/assignments/attachment-service";
 
 type Params = { params: Promise<{ assignmentId: string }> };
 

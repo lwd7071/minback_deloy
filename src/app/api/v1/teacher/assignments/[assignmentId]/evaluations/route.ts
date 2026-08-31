@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { listTeacherEvaluations } from "@/server/services/evaluation-service";
+import { listTeacherEvaluations } from "@/server/services/evaluations/evaluation-service";
 
 type RouteContext = { params: Promise<{ assignmentId: string }> };
 

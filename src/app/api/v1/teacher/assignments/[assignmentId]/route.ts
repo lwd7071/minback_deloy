@@ -8,7 +8,7 @@ import {
   deleteTeacherAssignment,
   getTeacherAssignment,
   updateTeacherAssignment,
-} from "@/server/services/assignment-service";
+} from "@/server/services/assignments/assignment-service";
 
 type RouteContext = { params: Promise<{ assignmentId: string }> };
 

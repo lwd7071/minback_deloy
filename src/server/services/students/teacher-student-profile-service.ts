@@ -3,8 +3,8 @@ import "server-only";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findTeacherStudentProfileData } from "@/server/repositories/teacher-student-profile-repository";
-import { calculateProfileProgress } from "@/server/services/student-profile-service";
-import { calculateSubmissionProgress } from "@/server/services/student-profile-service";
+import { calculateProfileProgress } from "@/server/services/students/student-profile-service";
+import { calculateSubmissionProgress } from "@/server/services/students/student-profile-service";
 import type { TeacherStudentProfileDto } from "@/types/student-profile";
 
 export async function getTeacherStudentProfile(
