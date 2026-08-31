@@ -41,7 +41,12 @@ export async function GET(
         message: e.message,
       }));
       return errorResponse(
-        new ApiError(400, "VALIDATION_ERROR", "Query params không hợp lệ", details),
+        new ApiError(
+          400,
+          "VALIDATION_ERROR",
+          "Query params không hợp lệ",
+          details,
+        ),
       );
     }
 

@@ -25,6 +25,7 @@ npm run dev
 npm run db:start
 npm run db:reset
 npm run db:test
+npm run db:lint
 ```
 
 `db:reset` chỉ dùng cho Docker local. Không chạy reset trên Supabase remote. Seed local chỉ chứa dữ liệu demo tổng hợp trong `supabase/seed.sql`.
@@ -36,8 +37,20 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm run test
+npm run test:health
+npm run test:integration
 npm run build
+npm audit
+git diff --check
 ```
+
+Để tái lập baseline hiệu năng local (tạo rồi tự dọn fixture 2.000 Student), chạy:
+
+```powershell
+npm run benchmark:local
+```
+
+`npm run test:setup` reset database local và chỉ dùng khi cần một trạng thái sạch; `npm run test:health` chỉ kiểm tra Supabase/Teacher seed, không reset dữ liệu.
 
 ## Tài liệu team
 

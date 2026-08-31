@@ -9,7 +9,8 @@ type NotificationResponse = {
   total: number;
 };
 
-type ApiResult<T> = { data: T; meta?: Record<string, unknown> } | { error: { message: string } };
+type ApiResult<T> =
+  { data: T; meta?: Record<string, unknown> } | { error: { message: string } };
 
 /**
  * Custom hook polling Notification tự động mỗi 10 giây.
@@ -34,7 +35,9 @@ export function useNotificationPolling(options?: { unreadOnly?: boolean }) {
       const body = (await res.json()) as ApiResult<NotificationDto[]>;
 
       if (!res.ok || !("data" in body)) {
-        throw new Error("error" in body ? body.error.message : "Không thể tải thông báo");
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể tải thông báo",
+        );
       }
 
       setNotifications(body.data);
@@ -52,14 +55,19 @@ export function useNotificationPolling(options?: { unreadOnly?: boolean }) {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const res = await fetch(`/api/v1/student/notifications/${notificationId}/read`, {
-        method: "PATCH",
-      });
+      const res = await fetch(
+        `/api/v1/student/notifications/${notificationId}/read`,
+        {
+          method: "PATCH",
+        },
+      );
       if (res.ok) {
         // Cập nhật local state ngay lập tức
         setNotifications((prev) =>
           prev.map((n) =>
-            n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n,
+            n.id === notificationId
+              ? { ...n, readAt: new Date().toISOString() }
+              : n,
           ),
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));

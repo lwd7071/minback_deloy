@@ -30,7 +30,14 @@ export function StudentNotificationList() {
           )}
         </div>
 
-        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            cursor: "pointer",
+          }}
+        >
           <input
             type="checkbox"
             checked={unreadOnly}
@@ -67,7 +74,13 @@ export function StudentNotificationList() {
                 }}
               >
                 <div>
-                  <p style={{ margin: 0, fontWeight: isUnread ? 600 : 400, fontSize: "0.9rem" }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontWeight: isUnread ? 600 : 400,
+                      fontSize: "0.9rem",
+                    }}
+                  >
                     {n.message}
                   </p>
                   <span className="muted" style={{ fontSize: "0.78rem" }}>

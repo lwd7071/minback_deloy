@@ -14,13 +14,22 @@ function escapeCsv(value: string): string {
 
 function downloadInitialCredentials(result: ImportResultDto): void {
   const rows = result.rows.filter(
-    (row): row is typeof row & { initialNickname: string; initialPin: string } =>
+    (
+      row,
+    ): row is typeof row & { initialNickname: string; initialPin: string } =>
       row.status === "created" &&
       typeof row.initialNickname === "string" &&
       typeof row.initialPin === "string",
   );
-  const csv = ["Nickname,PIN", ...rows.map((row) => `${escapeCsv(row.initialNickname)},${escapeCsv(row.initialPin)}`)].join("\r\n");
-  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }));
+  const csv = [
+    "Nickname,PIN",
+    ...rows.map(
+      (row) => `${escapeCsv(row.initialNickname)},${escapeCsv(row.initialPin)}`,
+    ),
+  ].join("\r\n");
+  const url = URL.createObjectURL(
+    new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }),
+  );
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = "initial-student-pins.csv";
@@ -131,7 +140,9 @@ export function ClassSectionDetailView({
       const body = (await response.json()) as ApiResult<ImportResultDto>;
       if (!response.ok || !("data" in body)) {
         throw new Error(
-          "error" in body ? body.error.message : "Không thể import danh sách sinh viên",
+          "error" in body
+            ? body.error.message
+            : "Không thể import danh sách sinh viên",
         );
       }
       if (body.data.summary.created > 0) downloadInitialCredentials(body.data);
@@ -141,7 +152,9 @@ export function ClassSectionDetailView({
       );
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Không thể import danh sách sinh viên",
+        cause instanceof Error
+          ? cause.message
+          : "Không thể import danh sách sinh viên",
       );
     } finally {
       setImportBusy(false);
@@ -205,7 +218,13 @@ export function ClassSectionDetailView({
         </p>
         <label className="form-field">
           <span className="form-label">Tệp CSV hoặc XLSX</span>
-          <input accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="form-input" name="file" required type="file" />
+          <input
+            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className="form-input"
+            name="file"
+            required
+            type="file"
+          />
         </label>
         <button className="button" disabled={importBusy} type="submit">
           {importBusy ? "Đang import..." : "Import và tải PIN"}

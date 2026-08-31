@@ -54,7 +54,10 @@ export async function findStudentByNicknameAndClass(
     .maybeSingle();
 
   if (error) {
-    console.error("[StudentRepo] Lỗi findStudentByNicknameAndClass:", error.message);
+    console.error(
+      "[StudentRepo] Lỗi findStudentByNicknameAndClass:",
+      error.message,
+    );
     return null;
   }
 
@@ -142,9 +145,7 @@ export async function listStudentsByClassSection(
   const { data, error, count } = await query;
 
   if (error) {
-    throw new Error(
-      `Không thể lấy danh sách Student: ${error.message}`,
-    );
+    throw new Error(`Không thể lấy danh sách Student: ${error.message}`);
   }
 
   return {
@@ -185,7 +186,9 @@ export async function incrementStudentFailedLogin(
 /**
  * Reset failed_login_count và locked_until về 0/null sau login thành công.
  */
-export async function resetStudentFailedLogin(studentId: string): Promise<void> {
+export async function resetStudentFailedLogin(
+  studentId: string,
+): Promise<void> {
   const supabase = createAdminClient();
 
   await supabase

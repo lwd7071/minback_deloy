@@ -31,7 +31,10 @@ export async function PATCH(
     const { studentId } = await requireFullStudentSession();
     const { notificationId } = await params;
 
-    const notification = await markNotificationAsRead(notificationId, studentId);
+    const notification = await markNotificationAsRead(
+      notificationId,
+      studentId,
+    );
 
     if (!notification) {
       throw new ApiError(

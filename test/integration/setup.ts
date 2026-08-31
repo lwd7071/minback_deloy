@@ -1,5 +1,3 @@
-
-
 const TEST_PORT = 3099;
 export const BASE_URL = `http://localhost:${TEST_PORT}`;
 
@@ -57,7 +55,13 @@ export async function fetchApi(
   }
 
   // Default origin for CSRF
-  if (!headers.has("origin") && (options.method === "POST" || options.method === "PUT" || options.method === "PATCH" || options.method === "DELETE")) {
+  if (
+    !headers.has("origin") &&
+    (options.method === "POST" ||
+      options.method === "PUT" ||
+      options.method === "PATCH" ||
+      options.method === "DELETE")
+  ) {
     headers.set("origin", BASE_URL);
   }
 

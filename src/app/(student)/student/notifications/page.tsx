@@ -11,7 +11,8 @@ export default function StudentNotificationsPage() {
       <p className="eyebrow">Sinh viên</p>
       <h1>Thông báo của bạn</h1>
       <p className="muted">
-        Cập nhật kết quả bài tập và nhận xét từ giáo viên. Hệ thống tự động kiểm tra mỗi 10 giây.
+        Cập nhật kết quả bài tập và nhận xét từ giáo viên. Hệ thống tự động kiểm
+        tra mỗi 10 giây.
       </p>
       <StudentNotificationList />
     </section>

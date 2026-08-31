@@ -151,7 +151,9 @@ export async function incrementFailedAttempt(
     }
 
     if (attemptCount >= IP_MAX_ATTEMPTS_PER_WINDOW) {
-      blockedUntil = new Date(now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000);
+      blockedUntil = new Date(
+        now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000,
+      );
     }
   } else {
     // Identifier: chỉ đếm tổng, không có window
@@ -159,7 +161,9 @@ export async function incrementFailedAttempt(
     windowStartedAt = new Date(existing.window_started_at);
 
     if (attemptCount >= IDENTIFIER_MAX_ATTEMPTS) {
-      blockedUntil = new Date(now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000);
+      blockedUntil = new Date(
+        now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000,
+      );
     }
   }
 

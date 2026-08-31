@@ -177,9 +177,7 @@ export async function revokeSessionById(sessionId: string): Promise<void> {
     .eq("id", sessionId);
 
   if (error) {
-    throw new Error(
-      `Không thể revoke session ${sessionId}: ${error.message}`,
-    );
+    throw new Error(`Không thể revoke session ${sessionId}: ${error.message}`);
   }
 }
 

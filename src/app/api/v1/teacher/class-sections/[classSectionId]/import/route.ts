@@ -12,8 +12,16 @@ import {
 type RouteContext = { params: Promise<{ classSectionId: string }> };
 
 function parseId(value: string): string {
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
-    throw new ApiError(400, API_ERROR_CODES.validation, "ClassSection ID không hợp lệ");
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  ) {
+    throw new ApiError(
+      400,
+      API_ERROR_CODES.validation,
+      "ClassSection ID không hợp lệ",
+    );
   }
   return value;
 }
@@ -28,18 +36,32 @@ export async function POST(
     const formData = await request.formData();
     const file = formData.get("file");
     if (!(file instanceof File)) {
-      throw new ApiError(400, API_ERROR_CODES.validation, "Vui lòng tải lên tệp import hợp lệ");
+      throw new ApiError(
+        400,
+        API_ERROR_CODES.validation,
+        "Vui lòng tải lên tệp import hợp lệ",
+      );
     }
     const type = validateImportFile(file);
     const result =
       type === "csv"
-        ? await importTeacherClassSectionCsv(parseId(classSectionId), await file.text())
+        ? await importTeacherClassSectionCsv(
+            parseId(classSectionId),
+            await file.text(),
+          )
         : await importTeacherClassSectionXlsx(
             parseId(classSectionId),
             await file.arrayBuffer(),
           );
-    return successResponse(result, { headers: { "Cache-Control": "no-store" } });
+    return successResponse(result, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
+    if (!(error instanceof ApiError)) {
+      console.error("[Import] Unexpected import failure", {
+        code: error instanceof Error ? error.message : "UNKNOWN",
+      });
+    }
     return errorResponse(error);
   }
 }

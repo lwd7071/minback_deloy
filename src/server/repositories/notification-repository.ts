@@ -64,9 +64,7 @@ export async function listNotificationsByStudentId(
   const { data, error, count } = await query;
 
   if (error) {
-    throw new Error(
-      `Không thể lấy danh sách Notification: ${error.message}`,
-    );
+    throw new Error(`Không thể lấy danh sách Notification: ${error.message}`);
   }
 
   // Đếm riêng unreadCount (luôn đếm bất kể unreadOnly)
@@ -129,9 +127,7 @@ export async function markNotificationAsRead(
     .maybeSingle();
 
   if (error) {
-    throw new Error(
-      `Không thể đánh dấu đã đọc Notification: ${error.message}`,
-    );
+    throw new Error(`Không thể đánh dấu đã đọc Notification: ${error.message}`);
   }
 
   if (!data) return null;

@@ -15,7 +15,8 @@ let serverProcess: ChildProcess;
 // ---------------------------------------------------------------------------
 
 const SUPABASE_URL = "http://127.0.0.1:54321";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 const SUPABASE_SECRET = "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
 
 // ---------------------------------------------------------------------------
@@ -36,7 +37,7 @@ function assertNotRemote(): void {
     // The child process env overrides this, but warn loudly.
     console.warn(
       `[global-setup] WARNING: process.env.NEXT_PUBLIC_SUPABASE_URL points to "${hostname}". ` +
-      `Child server will be pinned to local Supabase (${SUPABASE_URL}).`,
+        `Child server will be pinned to local Supabase (${SUPABASE_URL}).`,
     );
   }
 }

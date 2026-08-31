@@ -16,7 +16,10 @@ import {
 } from "@/server/repositories/student-repository";
 import { resetStudentPin } from "@/server/services/student-auth-service";
 import type { StudentAdminDto } from "@/types/student";
-import type { StudentAdminUpdateInput, StudentListQuery } from "@/schemas/student-auth";
+import type {
+  StudentAdminUpdateInput,
+  StudentListQuery,
+} from "@/schemas/student-auth";
 
 /**
  * Xác thực Teacher đang đăng nhập và kiểm tra họ có quyền trên ClassSection này không.
@@ -135,7 +138,7 @@ export async function updateStudentInClass(
 
   const updated = await updateStudentByTeacher(studentId, classSectionId, {
     fullName: input.fullName,
-    email: input.email,   // Truyền thẳng: null = xóa email; string = cập nhật; undefined = không thay đổi
+    email: input.email, // Truyền thẳng: null = xóa email; string = cập nhật; undefined = không thay đổi
     nickname: input.nickname,
   });
 

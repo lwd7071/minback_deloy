@@ -3,9 +3,15 @@
 import { useEffect, useState } from "react";
 import type { StudentAdminDto } from "@/types/student";
 
-type ApiResult<T> = { data: T; meta?: { page: number; pageSize: number; total: number } } | { error: { message: string } };
+type ApiResult<T> =
+  | { data: T; meta?: { page: number; pageSize: number; total: number } }
+  | { error: { message: string } };
 
-export function StudentManagementView({ classSectionId }: { classSectionId: string }) {
+export function StudentManagementView({
+  classSectionId,
+}: {
+  classSectionId: string;
+}) {
   const [students, setStudents] = useState<StudentAdminDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +20,9 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
   const [total, setTotal] = useState(0);
 
   // State sửa thông tin student
-  const [editingStudent, setEditingStudent] = useState<StudentAdminDto | null>(null);
+  const [editingStudent, setEditingStudent] = useState<StudentAdminDto | null>(
+    null,
+  );
   const [editFullName, setEditFullName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editNickname, setEditNickname] = useState("");
@@ -22,7 +30,8 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
   const [editError, setEditError] = useState<string | null>(null);
 
   // State Reset PIN
-  const [resetPinStudent, setResetPinStudent] = useState<StudentAdminDto | null>(null);
+  const [resetPinStudent, setResetPinStudent] =
+    useState<StudentAdminDto | null>(null);
   const [initialPin, setInitialPin] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
 
@@ -43,7 +52,11 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
         if (cancelled) return;
 
         if (!res.ok || !("data" in body)) {
-          throw new Error("error" in body ? body.error.message : "Không thể tải danh sách sinh viên");
+          throw new Error(
+            "error" in body
+              ? body.error.message
+              : "Không thể tải danh sách sinh viên",
+          );
         }
 
         setStudents(body.data);
@@ -63,7 +76,9 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
     void load();
 
     // Cleanup: huỷ setState khi component unmount hoặc deps thay đổi
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [classSectionId, page, search, refreshKey]);
 
   function startEdit(st: StudentAdminDto) {
@@ -97,7 +112,9 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
 
       const body = (await res.json()) as ApiResult<StudentAdminDto>;
       if (!res.ok || !("data" in body)) {
-        throw new Error("error" in body ? body.error.message : "Không thể lưu cập nhật");
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể lưu cập nhật",
+        );
       }
 
       setEditingStudent(null);
@@ -122,7 +139,9 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
 
       const body = (await res.json()) as ApiResult<{ initialPin: string }>;
       if (!res.ok || !("data" in body)) {
-        throw new Error("error" in body ? body.error.message : "Reset PIN thất bại");
+        throw new Error(
+          "error" in body ? body.error.message : "Reset PIN thất bại",
+        );
       }
 
       setInitialPin(body.data.initialPin);
@@ -169,19 +188,31 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
             }}
           >
             <thead>
-              <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left" }}>
+              <tr
+                style={{
+                  borderBottom: "2px solid var(--border)",
+                  textAlign: "left",
+                }}
+              >
                 <th style={{ padding: "10px" }}>MSSV</th>
                 <th style={{ padding: "10px" }}>Họ và tên</th>
                 <th style={{ padding: "10px" }}>Nickname</th>
                 <th style={{ padding: "10px" }}>Email</th>
                 <th style={{ padding: "10px" }}>Trạng thái PIN</th>
-                <th style={{ padding: "10px", textAlign: "right" }}>Thao tác</th>
+                <th style={{ padding: "10px", textAlign: "right" }}>
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody>
               {students.map((st) => (
-                <tr key={st.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                  <td style={{ padding: "10px", fontWeight: 600 }}>{st.mssv}</td>
+                <tr
+                  key={st.id}
+                  style={{ borderBottom: "1px solid var(--border)" }}
+                >
+                  <td style={{ padding: "10px", fontWeight: 600 }}>
+                    {st.mssv}
+                  </td>
                   <td style={{ padding: "10px" }}>{st.fullName}</td>
                   <td style={{ padding: "10px" }}>{st.nickname}</td>
                   <td style={{ padding: "10px" }} className="muted">
@@ -189,7 +220,9 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
                   </td>
                   <td style={{ padding: "10px" }}>
                     {st.mustChangePin ? (
-                      <span style={{ color: "#dc6803", fontWeight: 600 }}>Cần đổi PIN</span>
+                      <span style={{ color: "#dc6803", fontWeight: 600 }}>
+                        Cần đổi PIN
+                      </span>
                     ) : (
                       <span style={{ color: "#18733b" }}>Bình thường</span>
                     )}
@@ -197,7 +230,11 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
                   <td style={{ padding: "10px", textAlign: "right" }}>
                     <button
                       className="button button-secondary"
-                      style={{ fontSize: "0.75rem", padding: "4px 8px", marginRight: "6px" }}
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "4px 8px",
+                        marginRight: "6px",
+                      }}
                       onClick={() => startEdit(st)}
                     >
                       Sửa
@@ -235,7 +272,10 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
             style={{ width: "100%", maxWidth: "440px", padding: "24px" }}
           >
             <h3>Cập nhật Sinh viên: {editingStudent.mssv}</h3>
-            <form onSubmit={(e) => void handleSaveEdit(e)} style={{ display: "grid", gap: "14px", marginTop: "14px" }}>
+            <form
+              onSubmit={(e) => void handleSaveEdit(e)}
+              style={{ display: "grid", gap: "14px", marginTop: "14px" }}
+            >
               <div>
                 <label className="form-label">Họ và tên</label>
                 <input
@@ -270,7 +310,14 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
 
               {editError && <p className="form-error">{editError}</p>}
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "8px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  justifyContent: "flex-end",
+                  marginTop: "8px",
+                }}
+              >
                 <button
                   type="button"
                   className="button button-secondary"
@@ -300,10 +347,15 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
             zIndex: 100,
           }}
         >
-          <div className="surface" style={{ width: "100%", maxWidth: "420px", padding: "24px" }}>
+          <div
+            className="surface"
+            style={{ width: "100%", maxWidth: "420px", padding: "24px" }}
+          >
             <h3>Reset PIN thành công</h3>
             <p className="muted" style={{ fontSize: "0.9rem" }}>
-              Đã tạo PIN khởi tạo mới cho sinh viên <strong>{resetPinStudent.fullName}</strong> ({resetPinStudent.mssv}):
+              Đã tạo PIN khởi tạo mới cho sinh viên{" "}
+              <strong>{resetPinStudent.fullName}</strong> (
+              {resetPinStudent.mssv}):
             </p>
 
             {resetBusy ? (
@@ -311,7 +363,8 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
             ) : initialPin ? (
               <div
                 style={{
-                  background: "color-mix(in srgb, var(--accent) 8%, var(--surface))",
+                  background:
+                    "color-mix(in srgb, var(--accent) 8%, var(--surface))",
                   border: "1px dashed var(--accent)",
                   borderRadius: "8px",
                   padding: "16px",
@@ -319,12 +372,25 @@ export function StudentManagementView({ classSectionId }: { classSectionId: stri
                   margin: "16px 0",
                 }}
               >
-                <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>PIN KHỞI TẠO MỚI:</span>
-                <div style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "4px", color: "var(--accent)" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                  PIN KHỞI TẠO MỚI:
+                </span>
+                <div
+                  style={{
+                    fontSize: "1.8rem",
+                    fontWeight: 700,
+                    letterSpacing: "4px",
+                    color: "var(--accent)",
+                  }}
+                >
                   {initialPin}
                 </div>
-                <small className="muted" style={{ display: "block", marginTop: "6px" }}>
-                  Mã PIN này chỉ hiển thị đúng một lần. Hãy sao chép để gửi cho Sinh viên.
+                <small
+                  className="muted"
+                  style={{ display: "block", marginTop: "6px" }}
+                >
+                  Mã PIN này chỉ hiển thị đúng một lần. Hãy sao chép để gửi cho
+                  Sinh viên.
                 </small>
               </div>
             ) : null}

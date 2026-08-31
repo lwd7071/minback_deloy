@@ -42,7 +42,11 @@ export function ChangeCredentialsForm() {
         if (!active) return;
         setSession(data);
         // Nếu session đã full (đổi đủ rồi) → redirect thẳng vào profile
-        if (data.accessLevel === "full" && !data.mustChangeNickname && !data.mustChangePin) {
+        if (
+          data.accessLevel === "full" &&
+          !data.mustChangeNickname &&
+          !data.mustChangePin
+        ) {
           router.replace("/student/profile");
         }
       })
@@ -71,7 +75,8 @@ export function ChangeCredentialsForm() {
     setBusy(true);
     try {
       const body: Record<string, string> = {};
-      if (session?.mustChangeNickname && nickname.trim()) body.nickname = nickname.trim();
+      if (session?.mustChangeNickname && nickname.trim())
+        body.nickname = nickname.trim();
       if (session?.mustChangePin && pin) body.pin = pin;
 
       const response = await fetch("/api/v1/student/auth/credentials", {
@@ -93,7 +98,9 @@ export function ChangeCredentialsForm() {
         setPinConfirm("");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể cập nhật thông tin");
+      setError(
+        err instanceof Error ? err.message : "Không thể cập nhật thông tin",
+      );
     } finally {
       setBusy(false);
     }
@@ -109,7 +116,11 @@ export function ChangeCredentialsForm() {
   const needPin = session.mustChangePin;
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="login-form" noValidate>
+    <form
+      onSubmit={(e) => void handleSubmit(e)}
+      className="login-form"
+      noValidate
+    >
       <div className="form-notice" role="note">
         <p>
           Để bảo mật tài khoản, bạn cần{" "}
@@ -128,7 +139,8 @@ export function ChangeCredentialsForm() {
             Nickname mới
           </label>
           <p className="muted form-label-hint">
-            3–50 ký tự, chỉ gồm chữ cái, số, dấu chấm, gạch dưới hoặc gạch ngang.
+            3–50 ký tự, chỉ gồm chữ cái, số, dấu chấm, gạch dưới hoặc gạch
+            ngang.
           </p>
           <input
             id="new-nickname"
@@ -162,7 +174,9 @@ export function ChangeCredentialsForm() {
               required
               disabled={busy}
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
             />
           </div>
 
@@ -181,7 +195,9 @@ export function ChangeCredentialsForm() {
               required
               disabled={busy}
               value={pinConfirm}
-              onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
             />
           </div>
         </>

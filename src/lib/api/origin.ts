@@ -10,11 +10,7 @@ import { getServerEnv } from "@/lib/env/server";
 export function assertSameOrigin(request: Request): void {
   const originHeader = request.headers.get("origin");
   if (!originHeader) {
-    throw new ApiError(
-      403,
-      API_ERROR_CODES.forbidden,
-      "Origin không hợp lệ",
-    );
+    throw new ApiError(403, API_ERROR_CODES.forbidden, "Origin không hợp lệ");
   }
 
   const env = getServerEnv();
@@ -22,10 +18,6 @@ export function assertSameOrigin(request: Request): void {
   const requestOrigin = originHeader.toLowerCase();
 
   if (requestOrigin !== allowedOrigin) {
-    throw new ApiError(
-      403,
-      API_ERROR_CODES.forbidden,
-      "Origin không hợp lệ",
-    );
+    throw new ApiError(403, API_ERROR_CODES.forbidden, "Origin không hợp lệ");
   }
 }

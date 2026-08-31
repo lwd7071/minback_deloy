@@ -29,11 +29,15 @@ function makeRequest(origin?: string): Request {
 
 describe("assertSameOrigin", () => {
   it("passes when origin matches APP_URL", () => {
-    expect(() => assertSameOrigin(makeRequest("http://localhost:3000"))).not.toThrow();
+    expect(() =>
+      assertSameOrigin(makeRequest("http://localhost:3000")),
+    ).not.toThrow();
   });
 
   it("passes with case-insensitive comparison", () => {
-    expect(() => assertSameOrigin(makeRequest("HTTP://LOCALHOST:3000"))).not.toThrow();
+    expect(() =>
+      assertSameOrigin(makeRequest("HTTP://LOCALHOST:3000")),
+    ).not.toThrow();
   });
 
   it("throws 403 when origin header is missing", () => {

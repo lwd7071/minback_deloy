@@ -58,7 +58,11 @@ export function StudentLoginForm() {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="login-form" noValidate>
+    <form
+      onSubmit={(e) => void handleSubmit(e)}
+      className="login-form"
+      noValidate
+    >
       <div className="form-field">
         <label htmlFor="classCode" className="form-label">
           Mã lớp học phần
@@ -112,7 +116,9 @@ export function StudentLoginForm() {
           required
           disabled={busy}
           value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onChange={(e) =>
+            setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+          }
         />
       </div>
 
@@ -126,7 +132,12 @@ export function StudentLoginForm() {
         id="login-submit"
         type="submit"
         className="button login-button"
-        disabled={busy || classCode.trim() === "" || nickname.trim() === "" || pin.length !== 6}
+        disabled={
+          busy ||
+          classCode.trim() === "" ||
+          nickname.trim() === "" ||
+          pin.length !== 6
+        }
       >
         {busy ? "Đang đăng nhập…" : "Đăng nhập"}
       </button>

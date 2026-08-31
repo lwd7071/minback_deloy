@@ -96,8 +96,7 @@ export const credentialsUpdateSchema = z
     pin: pinSchema.optional(),
   })
   .refine((data) => data.nickname !== undefined || data.pin !== undefined, {
-    message:
-      "Phải cung cấp ít nhất một trong hai: nickname hoặc pin mới",
+    message: "Phải cung cấp ít nhất một trong hai: nickname hoặc pin mới",
   });
 
 export type CredentialsUpdateInput = z.infer<typeof credentialsUpdateSchema>;

@@ -188,11 +188,7 @@ describe("Teacher Auth API", () => {
       expect(meBody.data.teacher).toHaveProperty("emailNotificationEnabled");
 
       // 3. Logout
-      const logoutRes = await fetchApi(
-        LOGOUT_PATH,
-        { method: "POST" },
-        jar,
-      );
+      const logoutRes = await fetchApi(LOGOUT_PATH, { method: "POST" }, jar);
       expect(logoutRes.status).toBe(200);
 
       // 4. /me after logout should return 401

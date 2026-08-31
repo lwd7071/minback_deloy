@@ -43,11 +43,7 @@ async function fetchTeacherByAuthId(
     if (error.code === "PGRST116") {
       return null;
     }
-    throw new ApiError(
-      500,
-      API_ERROR_CODES.internal,
-      "Đã xảy ra lỗi hệ thống",
-    );
+    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
   }
 
   return {
@@ -71,21 +67,13 @@ async function resolveAuthenticatedTeacher(): Promise<AuthenticatedTeacherContex
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    throw new ApiError(
-      401,
-      API_ERROR_CODES.unauthenticated,
-      "Chưa đăng nhập",
-    );
+    throw new ApiError(401, API_ERROR_CODES.unauthenticated, "Chưa đăng nhập");
   }
 
   const teacher = await fetchTeacherByAuthId(supabase, user.id);
 
   if (!teacher) {
-    throw new ApiError(
-      401,
-      API_ERROR_CODES.unauthenticated,
-      "Chưa đăng nhập",
-    );
+    throw new ApiError(401, API_ERROR_CODES.unauthenticated, "Chưa đăng nhập");
   }
 
   return { supabase, teacher };
@@ -124,11 +112,7 @@ export async function loginTeacher(
   } catch {
     // Database error — clean up the auth session before rethrowing
     await supabase.auth.signOut();
-    throw new ApiError(
-      500,
-      API_ERROR_CODES.internal,
-      "Đã xảy ra lỗi hệ thống",
-    );
+    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
   }
 
   if (!teacher) {
@@ -161,11 +145,7 @@ export async function logoutTeacher(): Promise<void> {
   const { error } = await supabase.auth.signOut({ scope: "local" });
 
   if (error) {
-    throw new ApiError(
-      500,
-      API_ERROR_CODES.internal,
-      "Đã xảy ra lỗi hệ thống",
-    );
+    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
   }
 }
 

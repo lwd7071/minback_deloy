@@ -94,7 +94,9 @@ export function StudentProfileView() {
   if (error) {
     return (
       <div className="settings-stack">
-        <p className="form-error" role="alert">{error}</p>
+        <p className="form-error" role="alert">
+          {error}
+        </p>
         <button className="button button-secondary" onClick={handleLogout}>
           Về trang đăng nhập
         </button>
@@ -113,10 +115,12 @@ export function StudentProfileView() {
         <div>
           <h2>{student.fullName}</h2>
           <p className="muted" style={{ margin: "4px 0" }}>
-            MSSV: <strong>{student.mssv}</strong> — Nickname: <strong>{student.nickname}</strong>
+            MSSV: <strong>{student.mssv}</strong> — Nickname:{" "}
+            <strong>{student.nickname}</strong>
           </p>
           <p className="muted" style={{ margin: 0 }}>
-            Lớp học phần: <strong>{classSection.code}</strong> — {classSection.name}
+            Lớp học phần: <strong>{classSection.code}</strong> —{" "}
+            {classSection.name}
           </p>
         </div>
 
@@ -142,7 +146,10 @@ export function StudentProfileView() {
               </span>
             )}
           </Link>
-          <button className="button button-secondary" onClick={() => void handleLogout()}>
+          <button
+            className="button button-secondary"
+            onClick={() => void handleLogout()}
+          >
             Đăng xuất
           </button>
         </div>
@@ -157,10 +164,17 @@ export function StudentProfileView() {
           background: "var(--surface)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "8px",
+          }}
+        >
           <strong>Tiến độ học tập</strong>
           <span className="muted">
-            {progress.completed} / {progress.total} bài hoàn thành ({progress.percentage}%)
+            {progress.completed} / {progress.total} bài hoàn thành (
+            {progress.percentage}%)
           </span>
         </div>
         <div
@@ -215,12 +229,16 @@ export function StudentProfileView() {
                     <div>
                       <h4 style={{ margin: "0 0 6px 0" }}>{asm.title}</h4>
                       {asm.description && (
-                        <p className="muted" style={{ margin: "0 0 8px 0", fontSize: "0.88rem" }}>
+                        <p
+                          className="muted"
+                          style={{ margin: "0 0 8px 0", fontSize: "0.88rem" }}
+                        >
                           {asm.description}
                         </p>
                       )}
                       <span className="muted" style={{ fontSize: "0.78rem" }}>
-                        Hạn nộp: {new Date(asm.dueDate).toLocaleDateString("vi-VN")}
+                        Hạn nộp:{" "}
+                        {new Date(asm.dueDate).toLocaleDateString("vi-VN")}
                       </span>
                     </div>
 
@@ -251,7 +269,10 @@ export function StudentProfileView() {
                             >
                               {hasScore ? evalData.score : "—"}
                             </span>
-                            <span className="muted" style={{ fontSize: "0.85rem" }}>
+                            <span
+                              className="muted"
+                              style={{ fontSize: "0.85rem" }}
+                            >
                               {" "}
                               / {asm.maxScore}
                             </span>
@@ -271,15 +292,24 @@ export function StudentProfileView() {
                       style={{
                         marginTop: "14px",
                         padding: "12px 14px",
-                        background: "color-mix(in srgb, var(--accent) 4%, var(--surface))",
+                        background:
+                          "color-mix(in srgb, var(--accent) 4%, var(--surface))",
                         borderLeft: "3px solid var(--accent)",
                         borderRadius: "0 8px 8px 0",
                       }}
                     >
-                      <strong style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
+                      <strong
+                        style={{ fontSize: "0.82rem", color: "var(--muted)" }}
+                      >
                         Nhận xét từ giáo viên:
                       </strong>
-                      <p style={{ margin: "4px 0 0 0", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                      <p
+                        style={{
+                          margin: "4px 0 0 0",
+                          fontSize: "0.9rem",
+                          lineHeight: 1.5,
+                        }}
+                      >
                         {evalData.feedback}
                       </p>
                     </div>

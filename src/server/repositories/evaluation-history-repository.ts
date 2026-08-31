@@ -32,9 +32,7 @@ export async function listEvaluationHistory(
   // Authorization chain: evaluations → assignments → class_sections → teacher_id = teacherId
   const { data: evalData, error: evalError } = await supabase
     .from("evaluations")
-    .select(
-      "id, assignments(class_sections(teacher_id))",
-    )
+    .select("id, assignments(class_sections(teacher_id))")
     .eq("id", evaluationId)
     .single();
 
@@ -43,9 +41,11 @@ export async function listEvaluationHistory(
   }
 
   // Kiểm tra quyền Teacher
-  const classSection = (evalData as unknown as {
-    assignments: { class_sections: { teacher_id: string } | null } | null;
-  }).assignments?.class_sections;
+  const classSection = (
+    evalData as unknown as {
+      assignments: { class_sections: { teacher_id: string } | null } | null;
+    }
+  ).assignments?.class_sections;
 
   if (!classSection || classSection.teacher_id !== teacherId) {
     throw new Error("Không có quyền truy cập lịch sử Evaluation này");

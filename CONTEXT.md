@@ -44,6 +44,9 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - **ClassSection CSV partial import (Sprint 2 — A2.4)**: Import giữ các dòng hợp lệ khi có dòng trống, dữ liệu sai hoặc MSSV trùng trong file; mọi row outcome có thứ tự xác định và summary đếm đúng. Re-import trong cùng ClassSection chỉ cập nhật tên/email, không reset credential/session; cùng MSSV ở ClassSection khác không bị ảnh hưởng. Full integration regression pass 27/27.
 - **ClassSection XLSX import and whole-file limits (Sprint 2 — A2.5)**: Import hỗ trợ CSV và XLSX qua một normalized-row model dùng chung. Endpoint từ chối toàn file trước mutation nếu sai đuôi, quá 5 MB, thiếu header bắt buộc hoặc quá 2.000 dòng dữ liệu; row-level errors vẫn partial-success. ExcelJS 4.4.0 được dùng chỉ để đọc XLSX buffer; rủi ro UUID transitive được ghi ở handoff A2.6. Full integration regression pass 29/29.
 - **Assignment management (Sprint 3 — A3.1–A3.3)**: Teacher quản lý Assignment theo ClassSection qua API list/create/detail/update/delete và UI `/teacher/assignments`. DTO, date/max-score validation, status transitions và deletion restriction được enforce tại service/repository; direct API privacy tests che giấu cross-Teacher resources bằng `404` và yêu cầu Origin cho mutations. Handoff: `docs/team/dev-a-sprint-3-handoff.md`.
+- **Current Evaluation management (Sprint 4 — A4.1–A4.5)**: Teacher list/upsert Evaluation theo Assignment/Student trong cùng ClassSection qua API và UI `/teacher/evaluations`. Score/feedback/status được validate theo Assignment; update dùng authenticated Teacher client để trigger ghi EvaluationHistory atomically và Notification chỉ được gọi sau commit khi payload thay đổi. Evaluation responses dùng `Cache-Control: no-store`. Handoff: `docs/team/dev-a-sprint-4-handoff.md`.
+- **Student Profile API (Sprint 5)**: `GET /api/v1/student/profile` chỉ nhận identity từ `requireFullStudentSession()`. Repository scope Student và ClassSection theo session, chỉ aggregate Assignment `published|closed` cùng Evaluation hiện hành của chính Student bằng tập ID (không N+1). Response có `Cache-Control: no-store`; progress đếm `graded|returned` và dùng `Math.round`, với không Assignment là `0/0/0`. Handoff: `docs/team/dev-a-sprint-5-handoff.md`.
+- **Hardening/release gate (Sprint 6)**: Benchmark local tái lập được bằng `npm run benchmark:local`; lookup MSSV import được batch 100 phần tử để hỗ trợ import giới hạn 2,000 rows. `EXPLAIN` baseline không chứng minh cần index mới. Core workflow synthetic và cleanup cùng test được kiểm tra trong integration suite. Handoff: `docs/team/dev-a-sprint-6-handoff.md`.
 
 ## Contracts
 
@@ -52,5 +55,8 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - Dev A: `docs/team/dev-a-assignment.md`
 - Sprint 2 handoff: `docs/team/dev-a-sprint-2-handoff.md`
 - Sprint 3 handoff: `docs/team/dev-a-sprint-3-handoff.md`
+- Sprint 4 handoff: `docs/team/dev-a-sprint-4-handoff.md`
+- Sprint 5 handoff: `docs/team/dev-a-sprint-5-handoff.md`
+- Sprint 6/release handoff: `docs/team/dev-a-sprint-6-handoff.md`
 - Dev B: `docs/team/dev-b-assignment.md`
 - Checklist Dev A: `docs/team/dev-a-tasks.md`

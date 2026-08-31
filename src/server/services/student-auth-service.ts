@@ -49,7 +49,10 @@ import {
   hashToken,
 } from "@/server/auth/student-session";
 import type { StudentSessionDto } from "@/types/student";
-import type { StudentLoginInput, CredentialsUpdateInput } from "@/schemas/student-auth";
+import type {
+  StudentLoginInput,
+  CredentialsUpdateInput,
+} from "@/schemas/student-auth";
 
 // BCrypt cost factor — 10 là mức chuẩn (balance giữa bảo mật và performance)
 const BCRYPT_ROUNDS = 10;
@@ -339,7 +342,11 @@ export async function resetStudentPin(studentId: string): Promise<{
     await revokeAllSessionsByStudentId(studentId);
   } catch (err) {
     // Log cảnh báo nhưng không throw — không để lỗi revoke rollback reset PIN đã thành công
-    console.error("[resetStudentPin] Không thể revoke sessions của student:", studentId, err);
+    console.error(
+      "[resetStudentPin] Không thể revoke sessions của student:",
+      studentId,
+      err,
+    );
   }
 
   return { initialPin };

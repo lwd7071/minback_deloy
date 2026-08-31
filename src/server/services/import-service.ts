@@ -29,7 +29,11 @@ const importedStudentSchema = z.object({
 type ParsedStudentRow = z.infer<typeof importedStudentSchema> & { row: number };
 type ParsedCsvRow =
   | { row: number; status: "valid"; student: ParsedStudentRow }
-  | { row: number; status: "skipped"; errors: NonNullable<ImportRowDto["errors"]> };
+  | {
+      row: number;
+      status: "skipped";
+      errors: NonNullable<ImportRowDto["errors"]>;
+    };
 type SourceRow = { row: number; cells: string[] };
 type ImportFileKind = "csv" | "xlsx";
 
@@ -97,7 +101,9 @@ function parseStudentRecords(records: SourceRow[]): ParsedCsvRow[] {
   const header = headerRow?.cells;
   if (!header) validationError("Tệp CSV phải có hàng tiêu đề");
 
-  const headerIndex = new Map(header.map((value, index) => [normalizeHeader(value), index]));
+  const headerIndex = new Map(
+    header.map((value, index) => [normalizeHeader(value), index]),
+  );
   for (const requiredHeader of REQUIRED_HEADERS) {
     if (!headerIndex.has(requiredHeader)) {
       validationError("Tệp CSV thiếu cột bắt buộc MSSV hoặc Họ Tên");
@@ -117,14 +123,14 @@ function parseStudentRecords(records: SourceRow[]): ParsedCsvRow[] {
 
   return nonEmptyRows.map<ParsedCsvRow>((row) => {
     const rowNumber = row.row;
-      const parsed = importedStudentSchema.safeParse({
-        mssv: row.cells[mssvIndex] ?? "",
-        fullName: row.cells[fullNameIndex] ?? "",
-        email:
-          emailIndex === undefined || !row.cells[emailIndex]?.trim()
-            ? undefined
-            : row.cells[emailIndex],
-      });
+    const parsed = importedStudentSchema.safeParse({
+      mssv: row.cells[mssvIndex] ?? "",
+      fullName: row.cells[fullNameIndex] ?? "",
+      email:
+        emailIndex === undefined || !row.cells[emailIndex]?.trim()
+          ? undefined
+          : row.cells[emailIndex],
+    });
     if (!parsed.success) {
       return {
         row: rowNumber,
@@ -190,7 +196,10 @@ export async function importTeacherClassSectionXlsx(
   classSectionId: string,
   buffer: ArrayBuffer,
 ): Promise<ImportResultDto> {
-  return importTeacherClassSection(classSectionId, await parseStudentXlsx(buffer));
+  return importTeacherClassSection(
+    classSectionId,
+    await parseStudentXlsx(buffer),
+  );
 }
 
 async function importTeacherClassSection(
@@ -200,10 +209,15 @@ async function importTeacherClassSection(
   const { teacher } = await requireTeacher();
   const classSection = await findClassSectionById(classSectionId, teacher.id);
   if (!classSection) {
-    throw new ApiError(404, API_ERROR_CODES.notFound, "Không tìm thấy lớp học phần");
+    throw new ApiError(
+      404,
+      API_ERROR_CODES.notFound,
+      "Không tìm thấy lớp học phần",
+    );
   }
 
-  if (parsedRows.length === 0) validationError("Tệp CSV không có dữ liệu sinh viên");
+  if (parsedRows.length === 0)
+    validationError("Tệp CSV không có dữ liệu sinh viên");
 
   const outcomes = new Map<number, ImportRowDto>();
   const seenMssvs = new Set<string>();
@@ -226,15 +240,22 @@ async function importTeacherClassSection(
   }
 
   const existingByMssv = new Map(
-    (await findImportedStudentsByMssv(classSectionId, validRows.map((row) => row.mssv))).map(
-      (student) => [student.mssv, student.id],
-    ),
+    (
+      await findImportedStudentsByMssv(
+        classSectionId,
+        validRows.map((row) => row.mssv),
+      )
+    ).map((student) => [student.mssv, student.id]),
   );
   const rowsToCreate = validRows.filter((row) => !existingByMssv.has(row.mssv));
   const credentials = await Promise.all(
     rowsToCreate.map(async (row) => {
       const initialPin = generateInitialPin();
-      return { row, initialPin, pinHash: await hash(initialPin, BCRYPT_ROUNDS) };
+      return {
+        row,
+        initialPin,
+        pinHash: await hash(initialPin, BCRYPT_ROUNDS),
+      };
     }),
   );
   const created = await createImportedStudents(
@@ -250,7 +271,9 @@ async function importTeacherClassSection(
   if (created.length !== rowsToCreate.length) {
     throw new Error("IMPORT_STUDENT_CREATE_INCOMPLETE");
   }
-  const idsByMssv = new Map(created.map((student) => [student.mssv, student.id]));
+  const idsByMssv = new Map(
+    created.map((student) => [student.mssv, student.id]),
+  );
   for (const { row, initialPin } of credentials) {
     outcomes.set(row.row, {
       row: row.row,

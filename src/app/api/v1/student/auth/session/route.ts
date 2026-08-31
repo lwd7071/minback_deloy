@@ -12,7 +12,10 @@
 import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
-import { requireAnyStudentSession, buildStudentSessionDto } from "@/server/auth/student-session";
+import {
+  requireAnyStudentSession,
+  buildStudentSessionDto,
+} from "@/server/auth/student-session";
 
 export async function GET(): Promise<NextResponse> {
   try {

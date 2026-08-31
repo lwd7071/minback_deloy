@@ -11,8 +11,16 @@ const SUPABASE_URL = "http://127.0.0.1:54321";
 const SUPABASE_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
 
 const ACCOUNTS = [
-  { label: "teacher-a", email: "teacher-a@minback.local", password: "DemoTeacherA123!" },
-  { label: "teacher-b", email: "teacher-b@minback.local", password: "DemoTeacherB123!" },
+  {
+    label: "teacher-a",
+    email: "teacher-a@minback.local",
+    password: "DemoTeacherA123!",
+  },
+  {
+    label: "teacher-b",
+    email: "teacher-b@minback.local",
+    password: "DemoTeacherB123!",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -33,20 +41,30 @@ async function checkSupabase() {
 
 async function verifyAuth(account) {
   try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPABASE_KEY,
+    const res = await fetch(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_KEY,
+        },
+        body: JSON.stringify({
+          email: account.email,
+          password: account.password,
+        }),
+        signal: AbortSignal.timeout(10000),
       },
-      body: JSON.stringify({ email: account.email, password: account.password }),
-      signal: AbortSignal.timeout(10000),
-    });
+    );
 
     if (res.ok) return { ok: true };
 
     const body = await res.json().catch(() => ({}));
-    return { ok: false, status: res.status, message: body.error_description || body.msg || "unknown" };
+    return {
+      ok: false,
+      status: res.status,
+      message: body.error_description || body.msg || "unknown",
+    };
   } catch (err) {
     return { ok: false, status: 0, message: err.message };
   }
@@ -79,7 +97,9 @@ async function main() {
     if (authResult.ok) {
       results.push(`Auth ${account.label}: OK`);
     } else {
-      results.push(`Auth ${account.label}: FAIL (${authResult.status} ${authResult.message})`);
+      results.push(
+        `Auth ${account.label}: FAIL (${authResult.status} ${authResult.message})`,
+      );
       hasError = true;
     }
   }

@@ -2,7 +2,8 @@ import { StudentManagementView } from "@/components/teacher/student-management/s
 
 export const metadata = {
   title: "Quản lý Sinh viên — MinBack",
-  description: "Quản lý thông tin sinh viên, nickname và reset PIN trong lớp học phần.",
+  description:
+    "Quản lý thông tin sinh viên, nickname và reset PIN trong lớp học phần.",
 };
 
 export default async function TeacherStudentsPage({
@@ -17,7 +18,8 @@ export default async function TeacherStudentsPage({
       <p className="eyebrow">Quản lý lớp</p>
       <h1>Danh sách Sinh viên trong Lớp</h1>
       <p className="muted">
-        Xem danh sách sinh viên, cập nhật thông tin cá nhân và tạo lại PIN ngẫu nhiên khi sinh viên quên.
+        Xem danh sách sinh viên, cập nhật thông tin cá nhân và tạo lại PIN ngẫu
+        nhiên khi sinh viên quên.
       </p>
       <StudentManagementView classSectionId={classSectionId} />
     </section>

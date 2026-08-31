@@ -57,10 +57,6 @@ export async function getEvaluationHistory(
       );
     }
 
-    throw new ApiError(
-      500,
-      API_ERROR_CODES.internal,
-      "Đã xảy ra lỗi hệ thống",
-    );
+    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
   }
 }

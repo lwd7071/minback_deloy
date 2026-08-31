@@ -25,7 +25,9 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import { assertSameOrigin } from "@/lib/api/origin";
 
-type RouteParams = { params: Promise<{ classSectionId: string; studentId: string }> };
+type RouteParams = {
+  params: Promise<{ classSectionId: string; studentId: string }>;
+};
 
 export async function GET(
   _request: NextRequest,

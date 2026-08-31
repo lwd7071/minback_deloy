@@ -14,6 +14,7 @@ type CreateImportedStudentInput = {
 type CreatedImportedStudent = { id: string; mssv: string };
 
 type ExistingImportedStudent = { id: string; mssv: string };
+const MSSV_LOOKUP_BATCH_SIZE = 100;
 
 export async function createImportedStudents(
   students: CreateImportedStudentInput[],
@@ -35,7 +36,9 @@ export async function createImportedStudents(
     )
     .select("id, mssv");
 
-  if (error || !data) throw new Error("IMPORT_STUDENT_CREATE_FAILED");
+  if (error || !data) {
+    throw new Error(`IMPORT_STUDENT_CREATE_FAILED:${error?.code ?? "NO_DATA"}`);
+  }
   return data as CreatedImportedStudent[];
 }
 
@@ -45,14 +48,20 @@ export async function findImportedStudentsByMssv(
 ): Promise<ExistingImportedStudent[]> {
   if (mssvs.length === 0) return [];
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("students")
-    .select("id, mssv")
-    .eq("class_section_id", classSectionId)
-    .in("mssv", mssvs);
+  const existing: ExistingImportedStudent[] = [];
 
-  if (error || !data) throw new Error("IMPORT_STUDENT_LOOKUP_FAILED");
-  return data as ExistingImportedStudent[];
+  for (let start = 0; start < mssvs.length; start += MSSV_LOOKUP_BATCH_SIZE) {
+    const { data, error } = await supabase
+      .from("students")
+      .select("id, mssv")
+      .eq("class_section_id", classSectionId)
+      .in("mssv", mssvs.slice(start, start + MSSV_LOOKUP_BATCH_SIZE));
+
+    if (error || !data) throw new Error("IMPORT_STUDENT_LOOKUP_FAILED");
+    existing.push(...(data as ExistingImportedStudent[]));
+  }
+
+  return existing;
 }
 
 export async function updateImportedStudent(

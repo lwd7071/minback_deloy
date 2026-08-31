@@ -69,7 +69,9 @@ async function getImportedStudents(ids: string[]): Promise<
     },
   );
   expect(response.ok).toBe(true);
-  return (await response.json()) as Awaited<ReturnType<typeof getImportedStudents>>;
+  return (await response.json()) as Awaited<
+    ReturnType<typeof getImportedStudents>
+  >;
 }
 
 function csvForm(contents: string): FormData {
@@ -92,7 +94,9 @@ async function xlsxForm(rows: string[][]): Promise<FormData> {
   return form;
 }
 
-async function findStudentsByMssv(mssv: string): Promise<Array<{ id: string }>> {
+async function findStudentsByMssv(
+  mssv: string,
+): Promise<Array<{ id: string }>> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/students?mssv=eq.${mssv}&select=id`,
     {
@@ -142,19 +146,29 @@ describe("ClassSection import API", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("no-store");
-    expect(body.data.summary).toEqual({ total: 2, created: 2, updated: 0, skipped: 0 });
+    expect(body.data.summary).toEqual({
+      total: 2,
+      created: 2,
+      updated: 0,
+      skipped: 0,
+    });
     expect(body.data.rows).toHaveLength(2);
-    expect(body.data.rows.map((row: { initialNickname: string }) => row.initialNickname)).toEqual([
-      `SV${suffix}1`,
-      `SV${suffix}2`,
-    ]);
+    expect(
+      body.data.rows.map(
+        (row: { initialNickname: string }) => row.initialNickname,
+      ),
+    ).toEqual([`SV${suffix}1`, `SV${suffix}2`]);
 
-    const pins = body.data.rows.map((row: { initialPin: string }) => row.initialPin);
+    const pins = body.data.rows.map(
+      (row: { initialPin: string }) => row.initialPin,
+    );
     expect(pins).toHaveLength(2);
     expect(pins[0]).toMatch(/^\d{6}$/);
     expect(pins[1]).toMatch(/^\d{6}$/);
     expect(pins[0]).not.toBe(pins[1]);
-    createdStudentIds.push(...body.data.rows.map((row: { studentId: string }) => row.studentId));
+    createdStudentIds.push(
+      ...body.data.rows.map((row: { studentId: string }) => row.studentId),
+    );
 
     const storedStudents = await getImportedStudents(createdStudentIds);
     expect(storedStudents).toHaveLength(2);
@@ -172,7 +186,11 @@ describe("ClassSection import API", () => {
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ classCode: "DEMO_A", nickname: mssv, pin: pins[index] }),
+          body: JSON.stringify({
+            classCode: "DEMO_A",
+            nickname: mssv,
+            pin: pins[index],
+          }),
         },
         studentJar,
       );
@@ -198,7 +216,10 @@ describe("ClassSection import API", () => {
   it("rejects unauthenticated and cross-Teacher imports", async () => {
     const makeForm = () => {
       const form = new FormData();
-      form.set("file", new File(["MSSV,Họ Tên\nSV001,Nguyen Van A\n"], "students.csv"));
+      form.set(
+        "file",
+        new File(["MSSV,Họ Tên\nSV001,Nguyen Van A\n"], "students.csv"),
+      );
       return form;
     };
 
@@ -258,8 +279,18 @@ describe("ClassSection import API", () => {
     const partial = await partialResponse.json();
 
     expect(partialResponse.status).toBe(200);
-    expect(partial.data.summary).toEqual({ total: 5, created: 1, updated: 1, skipped: 3 });
-    expect(partial.data.rows.map((row: { row: number; status: string }) => [row.row, row.status])).toEqual([
+    expect(partial.data.summary).toEqual({
+      total: 5,
+      created: 1,
+      updated: 1,
+      skipped: 3,
+    });
+    expect(
+      partial.data.rows.map((row: { row: number; status: string }) => [
+        row.row,
+        row.status,
+      ]),
+    ).toEqual([
       [3, "skipped"],
       [4, "skipped"],
       [5, "created"],
@@ -350,7 +381,9 @@ describe("ClassSection import API", () => {
       [studentB.id, studentB],
       [studentA.id, studentA],
     ]);
-    expect(studentsById.get(classBStudentId)).toMatchObject({ full_name: "Tên lớp B" });
+    expect(studentsById.get(classBStudentId)).toMatchObject({
+      full_name: "Tên lớp B",
+    });
     expect(studentsById.get(classAStudentId)).toMatchObject({
       full_name: "Tên lớp A đã cập nhật",
     });
@@ -390,8 +423,16 @@ describe("ClassSection import API", () => {
 
     expect(xlsxResponse.status).toBe(200);
     expect(xlsxBody.data.summary).toEqual(csvBody.data.summary);
-    expect(xlsxBody.data.rows.map((row: { row: number; status: string }) => [row.row, row.status])).toEqual(
-      csvBody.data.rows.map((row: { row: number; status: string }) => [row.row, row.status]),
+    expect(
+      xlsxBody.data.rows.map((row: { row: number; status: string }) => [
+        row.row,
+        row.status,
+      ]),
+    ).toEqual(
+      csvBody.data.rows.map((row: { row: number; status: string }) => [
+        row.row,
+        row.status,
+      ]),
     );
     createdStudentIds.push(xlsxBody.data.rows[0].studentId);
   });
@@ -402,15 +443,23 @@ describe("ClassSection import API", () => {
     const exactLimitMssv = `SV${suffix}EXACT`;
     const endpoint = `/api/v1/teacher/class-sections/${CLASS_A}/import`;
     const unsupported = new FormData();
-    unsupported.set("file", new File(["MSSV,Họ Tên\nSV001,Nguyen Van A\n"], "students.txt"));
-    const missingHeaders = csvForm(`MSSV,Email\n${mssv},valid-${suffix}@example.test\n`);
+    unsupported.set(
+      "file",
+      new File(["MSSV,Họ Tên\nSV001,Nguyen Van A\n"], "students.txt"),
+    );
+    const missingHeaders = csvForm(
+      `MSSV,Email\n${mssv},valid-${suffix}@example.test\n`,
+    );
     const overLimit = new FormData();
     overLimit.set(
       "file",
       new File([new Uint8Array(5 * 1024 * 1024 + 1)], "students.csv"),
     );
     const tooManyRows = csvForm(
-      ["MSSV,Họ Tên", ...Array.from({ length: 2001 }, () => `${mssv},Sinh viên`)].join("\n"),
+      [
+        "MSSV,Họ Tên",
+        ...Array.from({ length: 2001 }, () => `${mssv},Sinh viên`),
+      ].join("\n"),
     );
 
     const exactLimit = await fetchApi(
@@ -420,7 +469,10 @@ describe("ClassSection import API", () => {
         body: csvForm(
           [
             "MSSV,Họ Tên",
-            ...Array.from({ length: 2000 }, () => `${exactLimitMssv},Sinh viên`),
+            ...Array.from(
+              { length: 2000 },
+              () => `${exactLimitMssv},Sinh viên`,
+            ),
           ].join("\n"),
         ),
       },
@@ -437,7 +489,11 @@ describe("ClassSection import API", () => {
     createdStudentIds.push(exactLimitBody.data.rows[0].studentId);
 
     for (const form of [unsupported, missingHeaders, overLimit, tooManyRows]) {
-      const response = await fetchApi(endpoint, { method: "POST", body: form }, jar);
+      const response = await fetchApi(
+        endpoint,
+        { method: "POST", body: form },
+        jar,
+      );
       expect(response.status).toBe(400);
       expect((await response.json()).error.code).toBe("VALIDATION_ERROR");
     }

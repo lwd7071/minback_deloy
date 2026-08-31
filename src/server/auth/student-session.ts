@@ -35,7 +35,10 @@ import {
   refreshSessionActivity,
 } from "@/server/repositories/student-session-repository";
 import { findStudentRowById } from "@/server/repositories/student-repository";
-import type { StudentSessionDto, VerifiedStudentSession } from "@/types/student";
+import type {
+  StudentSessionDto,
+  VerifiedStudentSession,
+} from "@/types/student";
 
 /** Tên cookie chứa raw session token */
 export const STUDENT_SESSION_COOKIE = "minback_student_session";
@@ -127,7 +130,10 @@ export async function buildStudentSessionDto(
  * Hàm public requireFullStudentSession() wrap hàm này và thêm kiểm tra access_level.
  */
 async function requireStudentSession(): Promise<
-  VerifiedStudentSession & { accessLevel: "credential_change" | "full"; expiresAt: string }
+  VerifiedStudentSession & {
+    accessLevel: "credential_change" | "full";
+    expiresAt: string;
+  }
 > {
   const cookieStore = await cookies();
   const rawToken = cookieStore.get(STUDENT_SESSION_COOKIE)?.value;
@@ -213,7 +219,10 @@ export async function requireFullStudentSession(): Promise<VerifiedStudentSessio
  * Dùng trong: GET /auth/session, PATCH /auth/credentials, POST /auth/logout.
  */
 export async function requireAnyStudentSession(): Promise<
-  VerifiedStudentSession & { accessLevel: "credential_change" | "full"; expiresAt: string }
+  VerifiedStudentSession & {
+    accessLevel: "credential_change" | "full";
+    expiresAt: string;
+  }
 > {
   return requireStudentSession();
 }

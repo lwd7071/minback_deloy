@@ -53,7 +53,10 @@ describe("validateImportFile", () => {
       validateImportFile({ name: "students.csv", size: MAX_IMPORT_FILE_BYTES }),
     ).toBe("csv");
     expect(() =>
-      validateImportFile({ name: "students.xlsx", size: MAX_IMPORT_FILE_BYTES + 1 }),
+      validateImportFile({
+        name: "students.xlsx",
+        size: MAX_IMPORT_FILE_BYTES + 1,
+      }),
     ).toThrow("Tệp import vượt quá giới hạn 5 MB");
   });
 });

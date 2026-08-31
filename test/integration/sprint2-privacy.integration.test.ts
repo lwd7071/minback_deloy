@@ -113,7 +113,9 @@ describe("Sprint 2 ClassSection privacy regression", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: "Unauthorized" }),
       }),
-      fetchApi(`/api/v1/teacher/class-sections/${CLASS_A}`, { method: "DELETE" }),
+      fetchApi(`/api/v1/teacher/class-sections/${CLASS_A}`, {
+        method: "DELETE",
+      }),
       fetchApi(`/api/v1/teacher/class-sections/${CLASS_A}/import`, {
         method: "POST",
         body: importForm("UNAUTH001"),
@@ -130,7 +132,11 @@ describe("Sprint 2 ClassSection privacy regression", () => {
   it("hides Teacher B resources from Teacher A for direct-ID operations", async () => {
     const crossMssv = `CROSS${randomUUID().slice(0, 8).toUpperCase()}`;
     const responses = [
-      await fetchApi(`/api/v1/teacher/class-sections/${CLASS_B}`, { method: "GET" }, teacherAJar),
+      await fetchApi(
+        `/api/v1/teacher/class-sections/${CLASS_B}`,
+        { method: "GET" },
+        teacherAJar,
+      ),
       await fetchApi(
         `/api/v1/teacher/class-sections/${CLASS_B}`,
         {
@@ -175,7 +181,11 @@ describe("Sprint 2 ClassSection privacy regression", () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code, name: "Owner Scope", teacherId: TEACHER_B_ID }),
+        body: JSON.stringify({
+          code,
+          name: "Owner Scope",
+          teacherId: TEACHER_B_ID,
+        }),
       },
       teacherAJar,
     );
@@ -243,7 +253,11 @@ describe("Sprint 2 ClassSection privacy regression", () => {
     await expectSafeError(deleteResponse, 403, "FORBIDDEN");
     const importResponse = await fetchApi(
       `/api/v1/teacher/class-sections/${CLASS_A}/import`,
-      { method: "POST", headers: { origin: EVIL_ORIGIN }, body: importForm(mssv) },
+      {
+        method: "POST",
+        headers: { origin: EVIL_ORIGIN },
+        body: importForm(mssv),
+      },
       teacherAJar,
     );
     await expectSafeError(importResponse, 403, "FORBIDDEN");
