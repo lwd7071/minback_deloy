@@ -3,12 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import type { NotificationDto } from "@/types/student";
 
-type NotificationResponse = {
-  notifications: NotificationDto[];
-  unreadCount: number;
-  total: number;
-};
-
 type ApiResult<T> =
   { data: T; meta?: Record<string, unknown> } | { error: { message: string } };
 
@@ -79,9 +73,12 @@ export function useNotificationPolling(options?: { unreadOnly?: boolean }) {
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
+    let initialFetchTimeout: NodeJS.Timeout | null = null;
 
     const startPolling = () => {
-      void fetchNotifications();
+      initialFetchTimeout = setTimeout(() => {
+        void fetchNotifications();
+      }, 0);
       intervalId = setInterval(() => {
         if (document.visibilityState === "visible") {
           void fetchNotifications();
@@ -94,11 +91,14 @@ export function useNotificationPolling(options?: { unreadOnly?: boolean }) {
         clearInterval(intervalId);
         intervalId = null;
       }
+      if (initialFetchTimeout) {
+        clearTimeout(initialFetchTimeout);
+        initialFetchTimeout = null;
+      }
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        void fetchNotifications(); // Fetch ngay khi tab active lại
         startPolling();
       } else {
         stopPolling();

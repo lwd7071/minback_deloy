@@ -62,6 +62,7 @@ Tất cả dùng response/error envelope trong `engineering-rules.md`.
 | POST | `/api/v1/student/auth/logout` | Không có | `{ success: true }` + revoke/clear cookie |
 | GET | `/api/v1/teacher/class-sections/:classSectionId/students?page&pageSize&search` | Pagination/search | `StudentAdminDto[]` + `meta` pagination |
 | GET | `/api/v1/teacher/class-sections/:classSectionId/students/:studentId` | Không có | `StudentAdminDto` |
+| GET | `/api/v1/teacher/class-sections/:classSectionId/students/:studentId/profile` | Không có | `TeacherStudentProfileDto` |
 | PATCH | `/api/v1/teacher/class-sections/:classSectionId/students/:studentId` | `{ fullName?, email?, nickname? }` | `StudentAdminDto` |
 | POST | `/api/v1/teacher/class-sections/:classSectionId/students/:studentId/reset-pin` | Không có | `{ initialPin: string }` trả đúng một lần |
 | GET | `/api/v1/student/notifications?page&pageSize&unreadOnly` | Student cookie | `NotificationDto[]` + `meta` pagination có `unreadCount` |
@@ -105,6 +106,13 @@ type EvaluationHistoryDto = {
   changedBy: { id: string; displayName: string };
 };
 
+type TeacherStudentProfileDto = {
+  student: StudentAdminDto;
+  classSection: { id: string; code: string; name: string };
+  progress: { completed: number; total: number; percentage: number };
+  assignments: Array<AssignmentDto & { evaluation: EvaluationDto | null }>;
+};
+
 type NotificationSettingsDto = {
   emailEnabled: boolean;
   brevoConfigured: boolean;
@@ -138,6 +146,16 @@ Validation cố định:
 - Search Student trim, tối đa 100 ký tự; server tìm theo MSSV/fullName/nickname trong đúng lớp.
 - Student list sắp xếp mặc định `mssv asc`; Notification `createdAt desc`; EvaluationHistory `changedAt desc`.
 - Pagination dùng `page=1`, `pageSize=20`, tối đa 100 theo rule chung.
+- `GET /api/v1/teacher/class-sections/:classSectionId/students/:studentId/profile` chỉ lấy
+  identity từ Teacher session và hai path parameter. Service/repository phải scope đồng thời
+  `Student.id`, `Student.class_section_id`, `ClassSection.id` và `ClassSection.teacher_id`;
+  ClassSection hoặc Student ngoài ownership/context trả `404 NOT_FOUND`, không trả `403`.
+- Teacher Student Profile chỉ trả Assignment `published|closed` và Evaluation hiện hành của
+  Student đó; Assignment `draft`, Evaluation/feedback của Student khác và raw PIN/hash/session
+  không xuất hiện. `progress` dùng đúng công thức `graded|returned` trên Assignment
+  `published|closed`, làm tròn bằng `Math.round`, và trả `0/0/0` khi không có Assignment.
+- Đây là dữ liệu học tập riêng tư: response phải có `Cache-Control: no-store`; lỗi chỉ dùng
+  envelope chuẩn (`401 UNAUTHENTICATED`, `404 NOT_FOUND`, safe `500 INTERNAL_ERROR`).
 
 ### 2.4. Notification contract cố định
 
@@ -276,12 +294,16 @@ Phụ trách:
 
 - UI/API Teacher quản lý Student trong một ClassSection theo endpoint tại mục 2.2.
 - Xem danh sách, cập nhật Họ Tên/Email và trạng thái credentials phù hợp.
+- Xem hồ sơ học tập tổng hợp của một Student trong đúng ClassSection, gồm tiến độ,
+  Assignment đã công bố/đóng và Evaluation hiện hành.
 - Đổi/reset PIN từ Admin theo business rule.
 - Enforce nickname/MSSV unique trong lớp.
 
 Acceptance tối thiểu:
 
 - Không sửa Student ngoài ClassSection/Teacher context.
+- Teacher A không đọc được Teacher B/ClassSection B bằng endpoint profile; cùng nickname ở
+  ClassSection khác vẫn chỉ trả đúng enrollment theo path.
 - Reset PIN không trả hoặc lưu raw PIN quá thời điểm cấp một lần.
 - Không tự thay đổi credentials khi cập nhật Họ Tên/Email.
 - Trùng nickname/MSSV trả conflict/error đúng chuẩn.

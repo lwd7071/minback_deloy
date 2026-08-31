@@ -43,9 +43,9 @@ export async function getEvaluationHistory(
 
     if (message.includes("quyền")) {
       throw new ApiError(
-        403,
-        API_ERROR_CODES.forbidden,
-        "Không có quyền xem lịch sử Evaluation này",
+        404,
+        API_ERROR_CODES.notFound,
+        "Không tìm thấy Evaluation",
       );
     }
 

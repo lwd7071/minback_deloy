@@ -42,11 +42,6 @@ export function StudentProfileView() {
     fetch("/api/v1/student/profile", { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error(
-              "API Hồ sơ học tập (/api/v1/student/profile) chưa khả dụng (Đang chờ Dev A hoàn thành ở Sprint 5).",
-            );
-          }
           let message = "Không thể tải hồ sơ học tập";
           try {
             const body = (await res.json()) as { error?: { message?: string } };
@@ -83,7 +78,7 @@ export function StudentProfileView() {
     try {
       await fetch("/api/v1/student/auth/logout", { method: "POST" });
     } finally {
-      window.location.href = "/student/login";
+      router.replace("/student/login");
     }
   }
 

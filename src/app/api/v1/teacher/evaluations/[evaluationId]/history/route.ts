@@ -7,7 +7,6 @@
  * Response:
  * - 200: { data: EvaluationHistoryDto[] }
  * - 401: UNAUTHENTICATED
- * - 403: FORBIDDEN
  * - 404: NOT_FOUND
  */
 
@@ -25,7 +24,9 @@ export async function GET(
   try {
     const { evaluationId } = await params;
     const history = await getEvaluationHistory(evaluationId);
-    return successResponse(history);
+    return successResponse(history, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     return errorResponse(error);
   }

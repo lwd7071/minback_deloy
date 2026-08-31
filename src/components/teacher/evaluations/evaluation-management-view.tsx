@@ -9,7 +9,7 @@ import type {
   EvaluationStatus,
   EvaluationWithStudentDto,
 } from "@/types/evaluation";
-import type { StudentAdminDto } from "@/types/student";
+import type { EvaluationHistoryDto, StudentAdminDto } from "@/types/student";
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
 
@@ -30,6 +30,8 @@ export function EvaluationManagementView() {
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [status, setStatus] = useState<EvaluationStatus>("pending");
+  const [history, setHistory] = useState<EvaluationHistoryDto[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +143,7 @@ export function EvaluationManagementView() {
 
   async function selectClassSection(nextId: string): Promise<void> {
     setClassSectionId(nextId);
+    setHistory(null);
     setError(null);
     try {
       await loadClassSection(nextId);
@@ -153,6 +156,7 @@ export function EvaluationManagementView() {
 
   async function selectAssignment(nextId: string): Promise<void> {
     setAssignmentId(nextId);
+    setHistory(null);
     setError(null);
     try {
       await loadEvaluations(nextId, studentId);
@@ -165,6 +169,7 @@ export function EvaluationManagementView() {
 
   function selectStudent(nextId: string): void {
     setStudentId(nextId);
+    setHistory(null);
     applyEvaluation(nextId, evaluations);
   }
 
@@ -191,6 +196,7 @@ export function EvaluationManagementView() {
         throw new Error(apiMessage(body, "Không thể lưu đánh giá"));
       }
       await loadEvaluations(assignmentId, studentId);
+      setHistory(null);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Không thể lưu đánh giá",
@@ -210,6 +216,34 @@ export function EvaluationManagementView() {
   const selectedAssignment = assignments.find(
     (item) => item.id === assignmentId,
   );
+  const selectedEvaluation = evaluations.find(
+    (item) => item.studentId === studentId,
+  );
+
+  async function loadHistory(): Promise<void> {
+    if (!selectedEvaluation) return;
+    setHistoryLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/teacher/evaluations/${selectedEvaluation.id}/history`,
+        { cache: "no-store" },
+      );
+      const body = (await response.json()) as ApiResult<EvaluationHistoryDto[]>;
+      if (!response.ok || !("data" in body)) {
+        throw new Error(apiMessage(body, "Không thể tải lịch sử đánh giá"));
+      }
+      setHistory(body.data);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Không thể tải lịch sử đánh giá",
+      );
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
 
   return (
     <section className="surface">
@@ -303,7 +337,39 @@ export function EvaluationManagementView() {
           <button className="button" disabled={busy} type="submit">
             {busy ? "Đang lưu..." : "Lưu đánh giá"}
           </button>
+          {selectedEvaluation && (
+            <button
+              className="button button-secondary"
+              disabled={historyLoading}
+              type="button"
+              onClick={() => void loadHistory()}
+            >
+              {historyLoading ? "Đang tải lịch sử..." : "Xem lịch sử thay đổi"}
+            </button>
+          )}
         </form>
+      )}
+      {history && (
+        <section className="settings-stack" style={{ marginTop: "20px" }}>
+          <h2>Lịch sử thay đổi</h2>
+          {history.length === 0 ? (
+            <p className="muted">Chưa có thay đổi nào được ghi nhận.</p>
+          ) : (
+            <ul className="settings-stack">
+              {history.map((item) => (
+                <li key={item.id}>
+                  <strong>
+                    {new Date(item.changedAt).toLocaleString("vi-VN")}
+                  </strong>
+                  {" — "}
+                  {item.changedBy.displayName}: điểm {item.oldScore ?? "—"},
+                  trạng thái {item.oldStatus}
+                  {item.oldFeedback ? `, feedback: ${item.oldFeedback}` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
       {error ? <p className="form-error">{error}</p> : null}
     </section>

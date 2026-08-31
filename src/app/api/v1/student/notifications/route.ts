@@ -47,12 +47,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const result = await listNotificationsByStudentId(studentId, parsed.data);
 
-    return successResponse(result.notifications, undefined, {
-      page: parsed.data.page,
-      pageSize: parsed.data.pageSize,
-      total: result.total,
-      unreadCount: result.unreadCount,
-    });
+    return successResponse(
+      result.notifications,
+      { headers: { "Cache-Control": "no-store" } },
+      {
+        page: parsed.data.page,
+        pageSize: parsed.data.pageSize,
+        total: result.total,
+        unreadCount: result.unreadCount,
+      },
+    );
   } catch (error) {
     return errorResponse(error);
   }

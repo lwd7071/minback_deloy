@@ -49,9 +49,9 @@ async function requireTeacherClassAccess(
 
   if (classError || !classData) {
     throw new ApiError(
-      403,
-      API_ERROR_CODES.forbidden,
-      "Không có quyền truy cập lớp học phần này",
+      404,
+      API_ERROR_CODES.notFound,
+      "Không tìm thấy lớp học phần",
     );
   }
 

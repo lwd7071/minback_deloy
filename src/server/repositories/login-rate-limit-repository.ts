@@ -18,12 +18,6 @@ import { createHmac } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { LoginRateLimitRow } from "@/types/student";
 
-// Giới hạn rate-limit (cố định theo contract)
-const IDENTIFIER_MAX_ATTEMPTS = 5;
-const IP_MAX_ATTEMPTS_PER_WINDOW = 30;
-const BLOCK_DURATION_MINUTES = 15;
-const IP_WINDOW_MINUTES = 15;
-
 /**
  * Tạo HMAC-SHA256 hex từ một chuỗi đầu vào và secret.
  * Secret lấy từ RATE_LIMIT_HMAC_SECRET trong env.
@@ -69,8 +63,7 @@ async function getRateLimitRow(
     .maybeSingle();
 
   if (error) {
-    console.error(`[RateLimitRepo] Lỗi khi đọc rate-limit:`, error.message);
-    return null;
+    throw new Error("RATE_LIMIT_LOOKUP_FAILED");
   }
 
   return data as LoginRateLimitRow | null;
@@ -109,82 +102,21 @@ export async function checkBothBuckets(
 
 /**
  * Tăng attempt_count cho một bucket và set blocked_until nếu vượt ngưỡng.
- * Sử dụng upsert để xử lý row chưa tồn tại.
- *
- * Logic per scope:
- * - 'identifier': block sau IDENTIFIER_MAX_ATTEMPTS lần sai
- * - 'ip': reset window nếu window_started_at + 15 phút đã qua;
- *          block sau IP_MAX_ATTEMPTS_PER_WINDOW trong cùng window
+ * RPC giữ row lock xuyên suốt việc đọc/tính/ghi để các login đồng thời không
+ * làm mất attempt.
  */
 export async function incrementFailedAttempt(
   scope: "identifier" | "ip",
   keyHash: string,
 ): Promise<void> {
   const supabase = createAdminClient();
-  const now = new Date();
-
-  // Lấy row hiện tại để quyết định logic
-  const existing = await getRateLimitRow(scope, keyHash);
-
-  let attemptCount: number;
-  let windowStartedAt: Date;
-  let blockedUntil: Date | null = null;
-
-  if (!existing) {
-    // Row mới — lần sai đầu tiên
-    attemptCount = 1;
-    windowStartedAt = now;
-  } else if (scope === "ip") {
-    // IP: kiểm tra xem có cần reset window không
-    const windowStart = new Date(existing.window_started_at);
-    const windowAgeMs = now.getTime() - windowStart.getTime();
-    const windowExpiredMs = IP_WINDOW_MINUTES * 60 * 1000;
-
-    if (windowAgeMs > windowExpiredMs) {
-      // Window cũ đã hết — bắt đầu window mới
-      attemptCount = 1;
-      windowStartedAt = now;
-    } else {
-      // Vẫn trong window hiện tại
-      attemptCount = existing.attempt_count + 1;
-      windowStartedAt = windowStart;
-    }
-
-    if (attemptCount >= IP_MAX_ATTEMPTS_PER_WINDOW) {
-      blockedUntil = new Date(
-        now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000,
-      );
-    }
-  } else {
-    // Identifier: chỉ đếm tổng, không có window
-    attemptCount = existing.attempt_count + 1;
-    windowStartedAt = new Date(existing.window_started_at);
-
-    if (attemptCount >= IDENTIFIER_MAX_ATTEMPTS) {
-      blockedUntil = new Date(
-        now.getTime() + BLOCK_DURATION_MINUTES * 60 * 1000,
-      );
-    }
-  }
-
-  const { error } = await supabase.from("login_rate_limits").upsert(
-    {
-      scope,
-      key_hash: keyHash,
-      attempt_count: attemptCount,
-      window_started_at: windowStartedAt.toISOString(),
-      blocked_until: blockedUntil?.toISOString() ?? null,
-      updated_at: now.toISOString(),
-    },
-    { onConflict: "scope,key_hash" },
-  );
+  const { error } = await supabase.rpc("record_login_rate_limit_failure", {
+    p_scope: scope,
+    p_key_hash: keyHash,
+  });
 
   if (error) {
-    // Lỗi không nghiêm trọng với rate-limit — log nhưng không block request
-    console.error(
-      `[RateLimitRepo] Không thể tăng attempt_count cho ${scope}:`,
-      error.message,
-    );
+    throw new Error("RATE_LIMIT_INCREMENT_FAILED");
   }
 }
 
@@ -219,10 +151,7 @@ export async function resetIdentifierBucket(
     .eq("key_hash", identifierHash);
 
   if (error) {
-    console.error(
-      `[RateLimitRepo] Không thể reset identifier bucket:`,
-      error.message,
-    );
+    throw new Error("RATE_LIMIT_RESET_FAILED");
   }
 }
 

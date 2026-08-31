@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { StudentAdminDto } from "@/types/student";
+import type { TeacherStudentProfileDto } from "@/types/student-profile";
 
 type ApiResult<T> =
   | { data: T; meta?: { page: number; pageSize: number; total: number } }
@@ -34,6 +35,14 @@ export function StudentManagementView({
     useState<StudentAdminDto | null>(null);
   const [initialPin, setInitialPin] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
+
+  // State hồ sơ học tập Teacher xem trong đúng ClassSection hiện hành.
+  const [profileStudent, setProfileStudent] = useState<StudentAdminDto | null>(
+    null,
+  );
+  const [studentProfile, setStudentProfile] =
+    useState<TeacherStudentProfileDto | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // refreshKey tăng lên mỗi khi cần tải lại danh sách (sau save/reset PIN)
   const [refreshKey, setRefreshKey] = useState(0);
@@ -154,6 +163,31 @@ export function StudentManagementView({
     }
   }
 
+  async function handleViewProfile(st: StudentAdminDto) {
+    setProfileStudent(st);
+    setStudentProfile(null);
+    setProfileLoading(true);
+
+    try {
+      const res = await fetch(
+        `/api/v1/teacher/class-sections/${classSectionId}/students/${st.id}/profile`,
+        { cache: "no-store" },
+      );
+      const body = (await res.json()) as ApiResult<TeacherStudentProfileDto>;
+      if (!res.ok || !("data" in body)) {
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể tải hồ sơ học tập",
+        );
+      }
+      setStudentProfile(body.data);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Không thể tải hồ sơ học tập");
+      setProfileStudent(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
   return (
     <div className="settings-stack">
       {/* Ô tìm kiếm & tổng số */}
@@ -235,6 +269,17 @@ export function StudentManagementView({
                         padding: "4px 8px",
                         marginRight: "6px",
                       }}
+                      onClick={() => void handleViewProfile(st)}
+                    >
+                      Hồ sơ
+                    </button>
+                    <button
+                      className="button button-secondary"
+                      style={{
+                        fontSize: "0.75rem",
+                        padding: "4px 8px",
+                        marginRight: "6px",
+                      }}
                       onClick={() => startEdit(st)}
                     >
                       Sửa
@@ -251,6 +296,85 @@ export function StudentManagementView({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {profileStudent && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: "16px",
+          }}
+        >
+          <section
+            className="surface settings-stack"
+            style={{
+              width: "100%",
+              maxWidth: "720px",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "24px",
+            }}
+          >
+            <h3>Hồ sơ học tập: {profileStudent.fullName}</h3>
+            {profileLoading ? (
+              <p className="muted">Đang tải hồ sơ…</p>
+            ) : studentProfile ? (
+              <>
+                <p className="muted">
+                  {studentProfile.classSection.code} —{" "}
+                  {studentProfile.classSection.name}
+                </p>
+                <p>
+                  Tiến độ:{" "}
+                  <strong>
+                    {studentProfile.progress.completed}/
+                    {studentProfile.progress.total} (
+                    {studentProfile.progress.percentage}%)
+                  </strong>
+                </p>
+                {studentProfile.assignments.length === 0 ? (
+                  <p className="muted">Chưa có bài tập đã công bố hoặc đóng.</p>
+                ) : (
+                  <ul className="settings-stack">
+                    {studentProfile.assignments.map((assignment) => (
+                      <li key={assignment.id}>
+                        <strong>{assignment.title}</strong> —{" "}
+                        {assignment.status}
+                        <br />
+                        Điểm: {assignment.evaluation?.score ?? "Chưa chấm"};
+                        trạng thái:{" "}
+                        {assignment.evaluation?.status ?? "Chưa có đánh giá"}
+                        {assignment.evaluation?.feedback ? (
+                          <>
+                            <br />
+                            Nhận xét: {assignment.evaluation.feedback}
+                          </>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : null}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                className="button"
+                onClick={() => {
+                  setProfileStudent(null);
+                  setStudentProfile(null);
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </section>
         </div>
       )}
 

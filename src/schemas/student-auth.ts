@@ -67,8 +67,7 @@ export const studentEmailSchema = z
       .nullable(),
   )
   .nullable()
-  .optional()
-  .transform((val) => val ?? null);
+  .optional();
 
 // ─── Request body schemas ──────────────────────────────────────────────────────
 

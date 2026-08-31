@@ -320,8 +320,8 @@ export async function logoutStudent(sessionId: string): Promise<void> {
  * Luồng:
  * 1. Sinh PIN 6 số CSPRNG
  * 2. Hash BCrypt
- * 3. Update pin_hash + set must_change_pin=true trong DB
- * 4. Revoke TẤT CẢ session cũ của Student
+ * 3. Revoke TẤT CẢ session cũ của Student
+ * 4. Update pin_hash + set must_change_pin=true trong DB
  * 5. Trả initialPin (plain text) — chỉ hiển thị một lần duy nhất
  *
  * @returns { initialPin: string } — raw PIN để Teacher phân phối
@@ -332,22 +332,12 @@ export async function resetStudentPin(studentId: string): Promise<{
   const initialPin = generateRandomPin();
   const newPinHash = await hash(initialPin, BCRYPT_ROUNDS);
 
-  // Bước 1: Update PIN — bắt buộc thành công; throw nếu fail
-  await updateStudentPinHash(studentId, newPinHash);
+  // Thu hồi trước. Nếu bước này thất bại, không đổi PIN hoặc tiết lộ PIN mới;
+  // session cũ vì vậy không thể tiếp tục truy cập sau một reset báo thành công.
+  await revokeAllSessionsByStudentId(studentId);
 
-  // Bước 2: Revoke sessions — xử lý riêng để partial failure không block kết quả.
-  // Nếu revoke fail (hiếm gặp, thường do network), session cũ vẫn tự hết hạn
-  // sau SESSION_TIMEOUT_MINUTES — bảo mật vẫn đảm bảo vì PIN đã thay đổi.
-  try {
-    await revokeAllSessionsByStudentId(studentId);
-  } catch (err) {
-    // Log cảnh báo nhưng không throw — không để lỗi revoke rollback reset PIN đã thành công
-    console.error(
-      "[resetStudentPin] Không thể revoke sessions của student:",
-      studentId,
-      err,
-    );
-  }
+  // Chỉ phát hành PIN mới sau khi mọi session trước đó đã bị thu hồi.
+  await updateStudentPinHash(studentId, newPinHash);
 
   return { initialPin };
 }
