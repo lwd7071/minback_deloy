@@ -28,12 +28,10 @@ function teacherClientWithNoMatchingClass() {
 
   return {
     auth: {
-      getUser: vi
-        .fn()
-        .mockResolvedValue({
-          data: { user: { id: "teacher-a" } },
-          error: null,
-        }),
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: "teacher-a" } },
+        error: null,
+      }),
     },
     from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue(query) }),
   };
@@ -58,12 +56,10 @@ describe("Teacher resource privacy", () => {
   it("conceals another Teacher's Evaluation history as not found", async () => {
     vi.mocked(createClient).mockResolvedValue({
       auth: {
-        getUser: vi
-          .fn()
-          .mockResolvedValue({
-            data: { user: { id: "teacher-a" } },
-            error: null,
-          }),
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "teacher-a" } },
+          error: null,
+        }),
       },
     } as never);
     vi.mocked(listEvaluationHistory).mockRejectedValue(

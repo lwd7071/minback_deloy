@@ -21,7 +21,7 @@ async function readResult<T>(response: Response): Promise<T> {
   return body.data;
 }
 
-export function ChangeCredentialsForm() {
+export function ChangeCredentialsForm({ classCode }: { classCode: string }) {
   const router = useRouter();
 
   const [session, setSession] = useState<Session | null>(null);
@@ -47,11 +47,12 @@ export function ChangeCredentialsForm() {
           !data.mustChangeNickname &&
           !data.mustChangePin
         ) {
-          router.replace("/student/profile");
+          router.replace(`/class/${encodeURIComponent(classCode)}/profile`);
         }
       })
       .catch(() => {
-        if (active) router.replace("/student/login");
+        if (active)
+          router.replace(`/class/${encodeURIComponent(classCode)}/login`);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -60,7 +61,7 @@ export function ChangeCredentialsForm() {
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, classCode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,7 +90,7 @@ export function ChangeCredentialsForm() {
 
       // Nếu đã đổi đủ → vào profile
       if (updated.accessLevel === "full") {
-        router.replace("/student/profile");
+        router.replace(`/class/${encodeURIComponent(classCode)}/profile`);
       } else {
         // Cập nhật lại session state (còn cờ chưa đổi)
         setSession(updated);

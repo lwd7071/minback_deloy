@@ -87,6 +87,18 @@ export async function findClassSectionIdByCode(
   return data?.id ?? null;
 }
 
+export async function findClassSectionCodeById(
+  id: string,
+): Promise<string | null> {
+  const { data, error } = await createAdminClient()
+    .from("class_sections")
+    .select("code")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error("CLASS_SECTION_CODE_LOOKUP_FAILED");
+  return data?.code ?? null;
+}
+
 /**
  * Tìm Student theo ID và classSectionId.
  * Luôn scope theo classSectionId để tránh cross-class access.

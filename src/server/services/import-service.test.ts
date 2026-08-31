@@ -3,11 +3,35 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import {
+  buildImportPreview,
   MAX_IMPORT_FILE_BYTES,
   generateInitialPin,
   parseStudentCsv,
   validateImportFile,
 } from "./import-service";
+
+describe("buildImportPreview", () => {
+  it("reports duplicate MSSV without creating credentials or mutating data", () => {
+    const preview = buildImportPreview([
+      {
+        row: 2,
+        status: "valid",
+        student: { row: 2, mssv: "SV01", fullName: "An" },
+      },
+      {
+        row: 3,
+        status: "valid",
+        student: { row: 3, mssv: "SV01", fullName: "Bình" },
+      },
+    ]);
+    expect(preview.summary).toEqual({ total: 2, valid: 1, skipped: 1 });
+    expect(preview.rows[0]).not.toHaveProperty("initialPin");
+    expect(preview.rows[1]).toMatchObject({
+      status: "skipped",
+      errors: [{ field: "mssv" }],
+    });
+  });
+});
 
 describe("parseStudentCsv", () => {
   it("accepts trimmed, case-insensitive required headers and normalizes values", () => {

@@ -18,7 +18,7 @@ export function LogoutButton() {
       });
 
       if (res.ok) {
-        router.replace("/teacher/login");
+        router.replace("/admin/login");
         router.refresh();
         return;
       }

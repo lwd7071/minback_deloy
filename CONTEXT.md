@@ -48,6 +48,7 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - **Student Profile API (Sprint 5)**: `GET /api/v1/student/profile` chỉ nhận identity từ `requireFullStudentSession()`. Repository scope Student và ClassSection theo session, chỉ aggregate Assignment `published|closed` cùng Evaluation hiện hành của chính Student bằng tập ID (không N+1). Response có `Cache-Control: no-store`; progress đếm `graded|returned` và dùng `Math.round`, với không Assignment là `0/0/0`. Handoff: `docs/team/dev-a-sprint-5-handoff.md`.
 - **Hardening/release gate (Sprint 6)**: Benchmark local tái lập được bằng `npm run benchmark:local`; lookup MSSV import được batch 100 phần tử để hỗ trợ import giới hạn 2,000 rows. `EXPLAIN` baseline không chứng minh cần index mới. Core workflow synthetic và cleanup cùng test được kiểm tra trong integration suite. Handoff: `docs/team/dev-a-sprint-6-handoff.md`.
 - **Assignment files and submissions (post-MVP extension)**: Assignment attachment và Student submission dùng Cloudinary authenticated raw assets qua signed direct upload; Supabase chỉ giữ metadata/Cloudinary identifiers. Student Profile giữ grading progress và thêm submission progress. File binary không được trả qua API public URL.
+- **Frontend rebuild**: UI công khai dùng `/class/[code]/*`, Teacher dùng `/admin/*`; URL UI cũ không có redirect. Public lookup chỉ lộ code/name. Dashboard summary, import preview, paginated gradebook và atomic bulk Evaluation là API server-side có Teacher/privacy scope.
 
 ## Contracts
 

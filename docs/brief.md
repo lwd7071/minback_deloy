@@ -400,6 +400,7 @@ Submission
 - [Engineering Rules](team/engineering-rules.md) — quy chuẩn code, API, validation, security, test và review chung.
 - [Phân công Dev A](team/dev-a-assignment.md) — deliverable và QA chéo của Dev A theo từng sprint.
 - [Phân công Dev B](team/dev-b-assignment.md) — deliverable và QA chéo của Dev B theo từng sprint.
+- [Frontend rebuild handoff](team/frontend-rebuild-handoff.md) — routes `/class/[code]/*` và `/admin/*`, API summary/preview/gradebook/bulk và contract UI attachment/submission.
 
 **Lưu ý QA xuyên suốt:** trọng tâm kiểm thử là **student data isolation** — dữ liệu không được lộ chéo giữa các sinh viên, kể cả khi trùng nickname ở lớp khác nhau.
 

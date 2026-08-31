@@ -93,7 +93,7 @@ export function buildEvaluationEmail(
   const assignmentTitle = escapeHtml(input.assignmentTitle);
   const classCode = escapeHtml(input.classCode);
   const className = escapeHtml(input.className);
-  const loginUrl = `${appUrl.replace(/\/$/, "")}/student/login`;
+  const loginUrl = `${appUrl.replace(/\/$/, "")}/class/${encodeURIComponent(input.classCode)}/login`;
 
   return {
     subject: `[MinBack] Có kết quả mới - ${input.classCode}`,

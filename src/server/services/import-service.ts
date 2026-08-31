@@ -14,6 +14,7 @@ import {
   updateImportedStudent,
 } from "@/server/repositories/import-repository";
 import type { ImportResultDto, ImportRowDto } from "@/types/import";
+import type { ImportPreviewDto } from "@/types/frontend-rebuild";
 
 const BCRYPT_ROUNDS = 10;
 const REQUIRED_HEADERS = ["mssv", "họ tên"] as const;
@@ -179,6 +180,50 @@ export async function parseStudentXlsx(
     records.push({ row: rowNumber, cells });
   });
   return parseStudentRecords(records);
+}
+
+export function buildImportPreview(
+  parsedRows: ParsedCsvRow[],
+): ImportPreviewDto {
+  const seenMssvs = new Set<string>();
+  const rows: ImportPreviewDto["rows"] = parsedRows.map((parsedRow) => {
+    if (parsedRow.status === "skipped") return parsedRow;
+    if (seenMssvs.has(parsedRow.student.mssv)) {
+      return {
+        row: parsedRow.row,
+        status: "skipped",
+        errors: [{ field: "mssv", message: "MSSV bị trùng trong tệp import" }],
+      };
+    }
+    seenMssvs.add(parsedRow.student.mssv);
+    return {
+      row: parsedRow.row,
+      status: "valid",
+      student: {
+        mssv: parsedRow.student.mssv,
+        fullName: parsedRow.student.fullName,
+        email: parsedRow.student.email,
+      },
+    };
+  });
+  return {
+    summary: {
+      total: rows.length,
+      valid: rows.filter((row) => row.status === "valid").length,
+      skipped: rows.filter((row) => row.status === "skipped").length,
+    },
+    rows,
+  };
+}
+
+export function previewStudentCsv(text: string): ImportPreviewDto {
+  return buildImportPreview(parseStudentCsv(text));
+}
+
+export async function previewStudentXlsx(
+  buffer: ArrayBuffer,
+): Promise<ImportPreviewDto> {
+  return buildImportPreview(await parseStudentXlsx(buffer));
 }
 
 export function generateInitialPin(): string {

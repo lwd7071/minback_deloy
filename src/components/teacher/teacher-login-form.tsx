@@ -23,7 +23,7 @@ export function TeacherLoginForm() {
       });
 
       if (res.ok) {
-        router.push("/teacher/dashboard");
+        router.push("/admin/dashboard");
         return;
       }
 

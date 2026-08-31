@@ -51,6 +51,8 @@ describe("brevo-email-service", () => {
     expect(email.htmlContent).toContain("Lớp &amp; Một");
     expect(email.htmlContent).not.toContain('onerror="bad"');
     expect(email.htmlContent).not.toContain("score");
+    expect(email.htmlContent).toContain("/class/SE-01/login");
+    expect(email.htmlContent).not.toContain("/student/login");
   });
 
   it("accepts only HTTP 201 with a messageId", async () => {

@@ -106,7 +106,7 @@ export function AssignmentDetailView({
         const body = (await response.json()) as ApiResult<never>;
         throw new Error(apiMessage(body, "Không thể xóa bài tập"));
       }
-      router.push("/teacher/assignments");
+      router.back();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Không thể xóa bài tập",

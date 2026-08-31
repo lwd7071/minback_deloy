@@ -2,66 +2,91 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { SubmissionUploadPanel } from "./submission-upload-panel";
 import { useNotificationPolling } from "./use-notification-polling";
+import { NotificationBell } from "@/components/ui/notification-bell";
+import { Avatar } from "@/components/ui/avatar";
+
+import { StudentAssignmentModal } from "./student-assignment-modal";
+
+export type StudentProfileAssignment = {
+  id: string;
+  title: string;
+  description: string;
+  assignedDate: string;
+  dueDate: string;
+  status: "draft" | "published" | "closed";
+  maxScore: number;
+  attachments: Array<{
+    id: string;
+    originalName: string;
+    bytes: number;
+    format: string;
+    downloadUrl: string;
+  }>;
+  submission: {
+    attemptCount: number;
+    latestAttempt: {
+      id: string;
+      attemptNumber: number;
+      submittedAt: string;
+      isLate: boolean;
+      files: Array<{
+        id: string;
+        originalName: string;
+        bytes: number;
+        format: string;
+        uploadedAt: string;
+        downloadUrl: string;
+      }>;
+    } | null;
+  };
+  evaluation: {
+    id: string;
+    score: number | null;
+    feedback: string;
+    status: "pending" | "graded" | "returned";
+    updatedAt: string;
+  } | null;
+};
 
 type StudentProfileDto = {
   student: { mssv: string; fullName: string; nickname: string };
   classSection: { id: string; code: string; name: string };
   progress: { completed: number; total: number; percentage: number };
   submissionProgress: { completed: number; total: number; percentage: number };
-  assignments: Array<{
-    id: string;
-    title: string;
-    description: string;
-    assignedDate: string;
-    dueDate: string;
-    status: "draft" | "published" | "closed";
-    maxScore: number;
-    attachments: Array<{
-      id: string;
-      originalName: string;
-      bytes: number;
-      format: string;
-      downloadUrl: string;
-    }>;
-    submission: {
-      attemptCount: number;
-      latestAttempt: {
-        id: string;
-        attemptNumber: number;
-        submittedAt: string;
-        isLate: boolean;
-        files: Array<{
-          id: string;
-          originalName: string;
-          bytes: number;
-          format: string;
-          uploadedAt: string;
-          downloadUrl: string;
-        }>;
-      } | null;
-    };
-    evaluation: {
-      id: string;
-      score: number | null;
-      feedback: string;
-      status: "pending" | "graded" | "returned";
-      updatedAt: string;
-    } | null;
-  }>;
+  assignments: StudentProfileAssignment[];
 };
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
 
-export function StudentProfileView() {
+function ProgressRing({ percentage, size = 70 }: { percentage: number; size?: number }) {
+  const r = (size - 14) / 2;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - percentage / 100);
+  return (
+    <div className="ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={r} stroke="#EEF1F4" strokeWidth="7" fill="none"/>
+        <circle cx={size/2} cy={size/2} r={r} stroke="var(--primary)" strokeWidth="7"
+          fill="none" strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }} />
+      </svg>
+      <div className="pct">{percentage}%</div>
+    </div>
+  );
+}
+
+export function StudentProfileView({ classCode }: { classCode: string }) {
   const router = useRouter();
   const [profile, setProfile] = useState<StudentProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const { unreadCount } = useNotificationPolling();
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
+    string | null
+  >(null);
+  const notificationState = useNotificationPolling();
 
   useEffect(() => {
     let active = true;
@@ -85,7 +110,15 @@ export function StudentProfileView() {
         return body.data;
       })
       .then((data) => {
-        if (active) setProfile(data);
+        if (active) {
+          if (classCode && data.classSection.code !== classCode.toUpperCase()) {
+            router.replace(
+              `/class/${encodeURIComponent(data.classSection.code)}/profile`,
+            );
+            return;
+          }
+          setProfile(data);
+        }
       })
       .catch((err) => {
         if (active) {
@@ -99,13 +132,14 @@ export function StudentProfileView() {
     return () => {
       active = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, classCode, router]);
 
   async function handleLogout() {
     try {
       await fetch("/api/v1/student/auth/logout", { method: "POST" });
     } finally {
-      router.replace("/student/login");
+      setProfile(null);
+      router.replace(`/class/${encodeURIComponent(classCode)}/login`);
     }
   }
 
@@ -130,259 +164,139 @@ export function StudentProfileView() {
 
   const { student, classSection, progress, submissionProgress, assignments } =
     profile;
+  const completedScores = assignments
+    .filter(
+      (assignment) =>
+        assignment.evaluation?.score !== null &&
+        assignment.evaluation?.score !== undefined &&
+        (assignment.evaluation.status === "graded" ||
+          assignment.evaluation.status === "returned"),
+    )
+    .map(
+      (assignment) =>
+        (assignment.evaluation!.score! / assignment.maxScore) * 100,
+    );
+  const averageScore = completedScores.length
+    ? Math.round(
+        completedScores.reduce((sum, score) => sum + score, 0) /
+          completedScores.length,
+      )
+    : null;
 
   return (
-    <div className="settings-stack">
-      {/* Header hồ sơ */}
-      <div className="settings-row" style={{ alignItems: "flex-start" }}>
-        <div>
-          <h2>{student.fullName}</h2>
-          <p className="muted" style={{ margin: "4px 0" }}>
-            MSSV: <strong>{student.mssv}</strong> — Nickname:{" "}
-            <strong>{student.nickname}</strong>
-          </p>
-          <p className="muted" style={{ margin: 0 }}>
-            Lớp học phần: <strong>{classSection.code}</strong> —{" "}
-            {classSection.name}
-          </p>
+    <div>
+      <div className="app-topbar">
+        <div className="who">
+          <Avatar name={student.fullName} size={42} />
+          <div>
+            <div className="name">{student.fullName}</div>
+            <div className="class-tag">{classSection.code} · {classSection.name}</div>
+          </div>
         </div>
-
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <Link
-            href="/student/notifications"
-            className="button button-secondary"
-            style={{ textDecoration: "none", position: "relative" }}
-          >
-            🔔 Thông báo
-            {unreadCount > 0 && (
-              <span
-                style={{
-                  marginLeft: "6px",
-                  background: "var(--accent)",
-                  color: "#fff",
-                  borderRadius: "10px",
-                  padding: "1px 6px",
-                  fontSize: "0.7rem",
-                }}
-              >
-                {unreadCount}
-              </span>
-            )}
-          </Link>
+          <NotificationBell
+            unreadCount={notificationState.unreadCount}
+            notifications={notificationState.notifications.slice(0, 50)}
+            onMarkRead={(id) => void notificationState.markAsRead(id)}
+          />
           <button
-            className="button button-secondary"
+            className="btn btn-secondary"
+            style={{ minHeight: 36, padding: '6px 14px', fontSize: 13 }}
             onClick={() => void handleLogout()}
           >
             Đăng xuất
           </button>
         </div>
       </div>
-      <p className="muted">
-        Tiến độ nộp bài: {submissionProgress.completed} /{" "}
-        {submissionProgress.total} ({submissionProgress.percentage}%)
-      </p>
 
-      {/* Progress Card */}
-      <div
-        style={{
-          border: "1px solid var(--border)",
-          borderRadius: "12px",
-          padding: "20px",
-          background: "var(--surface)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "8px",
-          }}
-        >
-          <strong>Tiến độ học tập</strong>
-          <span className="muted">
-            {progress.completed} / {progress.total} bài hoàn thành (
-            {progress.percentage}%)
-          </span>
-        </div>
-        <div
-          style={{
-            height: "10px",
-            width: "100%",
-            background: "var(--border)",
-            borderRadius: "5px",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: `${Math.min(100, Math.max(0, progress.percentage))}%`,
-              background: "var(--accent)",
-              transition: "width 0.3s ease",
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Danh sách Bài tập & Đánh giá */}
-      <div>
-        <h3>Danh sách Bài tập & Kết quả</h3>
-        {assignments.length === 0 ? (
-          <p className="muted">Chưa có bài tập nào được giao trong lớp này.</p>
-        ) : (
-          <div style={{ display: "grid", gap: "16px", marginTop: "12px" }}>
-            {assignments.map((asm) => {
-              const evalData = asm.evaluation;
-              const hasScore = evalData && evalData.score !== null;
-
-              return (
-                <div
-                  key={asm.id}
-                  style={{
-                    border: "1px solid var(--border)",
-                    borderRadius: "12px",
-                    padding: "20px",
-                    background: "var(--surface)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: "12px",
-                    }}
-                  >
-                    <div>
-                      <h4 style={{ margin: "0 0 6px 0" }}>{asm.title}</h4>
-                      {asm.description && (
-                        <p
-                          className="muted"
-                          style={{ margin: "0 0 8px 0", fontSize: "0.88rem" }}
-                        >
-                          {asm.description}
-                        </p>
-                      )}
-                      <span className="muted" style={{ fontSize: "0.78rem" }}>
-                        Hạn nộp:{" "}
-                        {new Date(asm.dueDate).toLocaleDateString("vi-VN")}
-                      </span>
-                      {asm.attachments.length > 0 ? (
-                        <p className="muted" style={{ fontSize: "0.82rem" }}>
-                          Tài liệu:{" "}
-                          {asm.attachments.map((file) => (
-                            <a
-                              key={file.id}
-                              href={file.downloadUrl}
-                              style={{ marginLeft: "6px" }}
-                            >
-                              {file.originalName}
-                            </a>
-                          ))}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    {/* Score badge */}
-                    <div style={{ textAlign: "right" }}>
-                      {evalData ? (
-                        evalData.status === "pending" ? (
-                          <span
-                            style={{
-                              background: "#fef0c7",
-                              color: "#dc6803",
-                              padding: "4px 10px",
-                              borderRadius: "16px",
-                              fontSize: "0.8rem",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Đang chờ chấm
-                          </span>
-                        ) : (
-                          <div>
-                            <span
-                              style={{
-                                fontSize: "1.4rem",
-                                fontWeight: 700,
-                                color: "var(--accent)",
-                              }}
-                            >
-                              {hasScore ? evalData.score : "—"}
-                            </span>
-                            <span
-                              className="muted"
-                              style={{ fontSize: "0.85rem" }}
-                            >
-                              {" "}
-                              / {asm.maxScore}
-                            </span>
-                          </div>
-                        )
-                      ) : (
-                        <span className="muted" style={{ fontSize: "0.8rem" }}>
-                          Chưa có kết quả
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Feedback section */}
-                  {evalData && evalData.feedback && (
-                    <div
-                      style={{
-                        marginTop: "14px",
-                        padding: "12px 14px",
-                        background:
-                          "color-mix(in srgb, var(--accent) 4%, var(--surface))",
-                        borderLeft: "3px solid var(--accent)",
-                        borderRadius: "0 8px 8px 0",
-                      }}
-                    >
-                      <strong
-                        style={{ fontSize: "0.82rem", color: "var(--muted)" }}
-                      >
-                        Nhận xét từ giáo viên:
-                      </strong>
-                      <p
-                        style={{
-                          margin: "4px 0 0 0",
-                          fontSize: "0.9rem",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {evalData.feedback}
-                      </p>
-                    </div>
-                  )}
-                  {asm.submission.latestAttempt ? (
-                    <p className="muted" style={{ marginTop: "12px" }}>
-                      Lần nộp #{asm.submission.latestAttempt.attemptNumber}
-                      {asm.submission.latestAttempt.isLate
-                        ? " (nộp trễ)"
-                        : ""}:{" "}
-                      {asm.submission.latestAttempt.files.map((file) => (
-                        <a
-                          key={file.id}
-                          href={file.downloadUrl}
-                          style={{ marginLeft: "6px" }}
-                        >
-                          {file.originalName}
-                        </a>
-                      ))}
-                    </p>
-                  ) : null}
-                  <SubmissionUploadPanel
-                    assignmentId={asm.id}
-                    status={asm.status}
-                    submission={asm.submission}
-                    onSubmitted={() => setRefreshKey((value) => value + 1)}
-                  />
-                </div>
-              );
-            })}
+      <div className="sp-body">
+        {/* Sidebar */}
+        <div className="stack">
+          <div className="card progress-card stack">
+            <div className="ring-wrap" style={{ marginBottom: 16 }}>
+              <ProgressRing percentage={progress.percentage} size={78} />
+              <div>
+                <b style={{ display: 'block', fontSize: 15, marginBottom: 2 }}>{progress.percentage}%</b>
+                <span className="muted" style={{ fontSize: 13 }}>{progress.completed} / {progress.total} đã chấm</span>
+              </div>
+            </div>
+            
+            <div>
+              <div className="stat-row">
+                <span>Điểm TB chuẩn hóa</span>
+                <span>{averageScore === null ? "—" : `${averageScore}%`}</span>
+              </div>
+              <div className="stat-row">
+                <span>Tiến độ nộp bài</span>
+                <span>{submissionProgress.completed} / {submissionProgress.total}</span>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Main Content */}
+        <div className="card">
+          <h3 style={{ margin: '0 0 20px', fontSize: 18 }}>Bài tập</h3>
+          {assignments.length === 0 ? (
+            <p className="muted">Chưa có bài tập nào được giao trong lớp này.</p>
+          ) : (
+            <div>
+              {assignments.map((asm) => {
+                const evalData = asm.evaluation;
+                const hasScore = evalData && evalData.score !== null;
+                
+                let pillClass = "pill pending";
+                let pillText = "Chưa nộp";
+                if (evalData?.status === "graded") {
+                  pillClass = "pill graded";
+                  pillText = "Đã chấm";
+                } else if (evalData?.status === "returned") {
+                  pillClass = "pill returned";
+                  pillText = "Cần nộp lại";
+                } else if (asm.submission.latestAttempt) {
+                  pillClass = "pill pending";
+                  pillText = "Đã nộp";
+                } else if (asm.status === "published") {
+                  pillClass = "pill pending";
+                  pillText = "Đang mở";
+                }
+
+                return (
+                  <div key={asm.id} className="assign-block">
+                    <div className="assign-item" onClick={() => setSelectedAssignmentId(asm.id)}>
+                      <div className="icon-circle active">📝</div>
+                      <div className="info">
+                        <b>{asm.title}</b>
+                        <span>Hạn nộp: {new Date(asm.dueDate).toLocaleDateString("vi-VN")}</span>
+                      </div>
+                      <span className={pillClass}>{pillText}</span>
+                      <div className="assign-score">
+                        {hasScore ? evalData.score : "—"}
+                      </div>
+                    </div>
+
+                    {/* Expandable feedback if any */}
+                    {evalData && evalData.feedback && selectedAssignmentId !== asm.id && (
+                      <div className="feedback-box">
+                        <b>Nhận xét:</b> {evalData.feedback.slice(0, 80)}{evalData.feedback.length > 80 ? '...' : ''}
+                      </div>
+                    )}
+                    
+                    <StudentAssignmentModal
+                      assignment={asm}
+                      open={selectedAssignmentId === asm.id}
+                      onClose={() => setSelectedAssignmentId(null)}
+                      onSubmitted={() => {
+                        setRefreshKey((value) => value + 1);
+                        setSelectedAssignmentId(null);
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

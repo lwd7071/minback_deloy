@@ -40,6 +40,7 @@ export function SubmissionUploadPanel({
 }) {
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(): Promise<void> {
@@ -48,6 +49,7 @@ export function SubmissionUploadPanel({
       return;
     }
     setBusy(true);
+    setUploadedCount(0);
     setError(null);
     try {
       const uploaded: UploadedAsset[] = [];
@@ -96,6 +98,7 @@ export function SubmissionUploadPanel({
           format: cloudinaryBody.format,
           bytes: cloudinaryBody.bytes,
         });
+        setUploadedCount(uploaded.length);
       }
       const finalizeResponse = await fetch(
         `/api/v1/student/assignments/${assignmentId}/submissions`,
@@ -111,6 +114,7 @@ export function SubmissionUploadPanel({
       if (!finalizeResponse.ok)
         throw new Error(finalizeBody.error?.message ?? "Không thể lưu bài nộp");
       setFiles([]);
+      setUploadedCount(0);
       onSubmitted();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể nộp bài");
@@ -133,6 +137,22 @@ export function SubmissionUploadPanel({
         />
       </label>
       <p className="muted">Đã nộp {submission.attemptCount}/10 lần.</p>
+      {files.length > 0 ? (
+        <div className="stack" aria-live="polite">
+          {files.map((file, index) => (
+            <div className="split" key={`${file.name}-${file.lastModified}`}>
+              <span>{file.name}</span>
+              <span className="badge">
+                {index < uploadedCount
+                  ? "Đã tải"
+                  : busy && index === uploadedCount
+                    ? "Đang tải…"
+                    : "Chờ tải"}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <button
         className="button"
         disabled={busy || files.length === 0}

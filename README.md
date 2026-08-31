@@ -17,6 +17,12 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
+URL hiện hành sau frontend rebuild:
+
+- Student: `/class/{CLASS_CODE}` → login/onboarding/profile.
+- Teacher/Admin: `/admin/login` → `/admin/dashboard`.
+- Các URL UI `/student/*` và `/teacher/*` cũ đã bị xóa có chủ đích; API `/api/v1/student/*` và `/api/v1/teacher/*` không đổi prefix.
+
 Điền credential Supabase vào `.env.local` trước khi chạy các chức năng kết nối database/auth. Không commit `.env.local`.
 
 ## Cloudinary files

@@ -392,3 +392,21 @@ Sprint 6 closes measurable engineering gaps only. Do not add post-MVP Rubric/Aca
 - [x] Document: Cloudinary setup, accepted ZIP malware-scanning risk and `exceljs` audit risk in `assignment-files-handoff.md`.
 - [ ] VERIFY: run exactly one clean Supabase reset, DB test/lint, health and full integration against the new migration once Docker Desktop is available.
 - [ ] VERIFY: run opt-in Cloudinary smoke upload → signed download → destroy with a synthetic file and same-test cleanup after authorization to mutate the configured Cloudinary account.
+
+## Frontend full rebuild
+
+- [x] Checkpoint Cloudinary/submission changes separately before UI work.
+- [x] Add public lookup, dashboard summaries, import preview, paginated gradebook and atomic bulk Evaluation contracts.
+- [x] Replace UI routes with `/class/[code]/*` and `/admin/*`; delete old Student/Teacher UI routes without redirects.
+- [x] Add accessible Soft Neumorphism primitives, Student file/submission flow and Admin dashboard/class/grade flows.
+- [x] Verify targeted tests, full unit, lint, typecheck and production build locally.
+- [ ] VERIFY: run one clean reset plus DB test/lint, health and full integration when Docker is available.
+- [ ] VERIFY: complete responsive browser review at 375/768/1440 when browser runtime is available.
+
+### Frontend rebuild verification — 2026-08-31
+
+- Cloudinary/submission backend was checkpointed separately as `092c60c` before the frontend rewrite.
+- Static application gate: ESLint pass with 0 errors, TypeScript pass, unit suite 65/65 across 21 files, production build pass and `git diff --check` pass.
+- Build route manifest contains only the new UI families `/admin/*` and `/class/[code]/*`; the old `/teacher/*` and `/student/*` UI routes have no pages or redirects. Evaluation emails now link to the canonical class login URL.
+- Audit is clean: 0 vulnerabilities across 664 dependencies. Repository-wide Prettier remains red only for generated baseline `AGENTS.md`; all changed source and handoff files are formatted.
+- Database and integration verification is intentionally open because the new migration has not run against local Supabase: Docker remained unavailable after the already exhausted three-attempt environment diagnosis. Responsive browser verification is also open because the in-app browser runtime could not create its kernel assets directory.

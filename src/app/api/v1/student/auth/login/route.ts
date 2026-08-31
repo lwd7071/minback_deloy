@@ -63,6 +63,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    return errorResponse(error);
+    const response = errorResponse(error);
+    if (error instanceof ApiError && error.code === "LOGIN_RATE_LIMITED") {
+      response.headers.set("Retry-After", "900");
+    }
+    return response;
   }
 }
