@@ -13,11 +13,11 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 
-import { errorResponse, successResponse } from "@/lib/api/response";
-import { studentLoginSchema } from "@/schemas/student-auth";
-import { loginStudent } from "@/server/services/student-auth-service";
-import { ApiError } from "@/lib/api/errors";
-import { assertSameOrigin } from "@/lib/api/origin";
+import { errorResponse, successResponse } from "@/lib/api/response";  // trợ giúp chuẩn hóa cấu trúc json 
+import { studentLoginSchema } from "@/schemas/student-auth"; // tính hợp lệ input 
+import { loginStudent } from "@/server/services/student-auth-service"; // xử lý logic đăng nhập của sinh viên 
+import { ApiError } from "@/lib/api/errors"; // xử lý lỗi 
+import { assertSameOrigin } from "@/lib/api/origin"; //  kiểm tra tính hợp lệ của request  
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {

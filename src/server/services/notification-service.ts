@@ -1,5 +1,6 @@
 import "server-only";
 
+import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { createClient } from "@/lib/supabase/server";
 import { shouldAttemptEvaluationEmail } from "@/server/services/email-notification-policy";
 import {
@@ -38,7 +39,11 @@ export async function createEvaluationNotification(
     .single();
 
   if (evaluationError || !evaluation) {
-    throw new Error("NOTIFICATION_EVALUATION_CONTEXT_UNAVAILABLE");
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Không tải được dữ liệu Evaluation để tạo thông báo",
+    );
   }
 
   const context = evaluation as unknown as EvaluationContext & {
@@ -65,7 +70,11 @@ export async function createEvaluationNotification(
     });
 
   if (notificationError) {
-    throw new Error("WEB_NOTIFICATION_INSERT_FAILED");
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Không thể tạo thông báo",
+    );
   }
 
   const student = context.students;

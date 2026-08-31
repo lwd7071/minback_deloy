@@ -1,3 +1,5 @@
+import "server-only";
+
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { findStudentProfileData } from "@/server/repositories/student-profile-repository";
 import type { EvaluationStatus } from "@/types/evaluation";
@@ -81,16 +83,12 @@ export async function getStudentProfile(
     };
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    if (
-      error instanceof Error &&
-      error.message.startsWith("STUDENT_PROFILE_")
-    ) {
-      throw new ApiError(
-        500,
-        API_ERROR_CODES.internal,
-        "Đã xảy ra lỗi hệ thống",
-      );
-    }
-    throw error;
+    // Mọi lỗi không phải ApiError từ repository đều là lỗi hệ thống
+    // Không phân biệt lỗi bằng string-matching (fragile pattern)
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Đã xảy ra lỗi hệ thống",
+    );
   }
 }

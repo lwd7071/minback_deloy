@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"; // thư viện xử lý response json chuẩn 
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import type { ApiFailure, ApiMeta, ApiSuccess } from "@/types/api";
+import type { ApiFailure, ApiMeta, ApiSuccess } from "@/types/api"; // các interface 
 
 export function successResponse<T>(
   data: T,

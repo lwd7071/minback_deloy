@@ -15,43 +15,44 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { EvaluationHistoryDto } from "@/types/student";
 
 /**
- * Lấy lịch sử thay đổi của một Evaluation theo evaluationId.
- * Kết hợp với thông tin Teacher (displayName) bằng JOIN.
- * Sắp xếp: changed_at desc (mới nhất trước).
- *
- * @param evaluationId - ID của Evaluation
- * @param teacherId - Teacher đang request (để authorize: phải sở hữu lớp chứa evaluation này)
+ * Tìm teacher_id sở hữu lớp chứa Evaluation này.
+ * Trả về:
+ * - undefined nếu Evaluation không tồn tại
+ * - string | null là teacher_id nếu tìm thấy
  */
-export async function listEvaluationHistory(
+export async function findEvaluationOwnerTeacherId(
   evaluationId: string,
-  teacherId: string,
-): Promise<EvaluationHistoryDto[]> {
+): Promise<string | null | undefined> {
   const supabase = createAdminClient();
 
-  // Bước 1: Xác minh Teacher có quyền truy cập Evaluation này
-  // Authorization chain: evaluations → assignments → class_sections → teacher_id = teacherId
   const { data: evalData, error: evalError } = await supabase
     .from("evaluations")
     .select("id, assignments(class_sections(teacher_id))")
     .eq("id", evaluationId)
-    .single();
+    .maybeSingle();
 
   if (evalError || !evalData) {
-    throw new Error("Không tìm thấy Evaluation");
+    return undefined;
   }
 
-  // Kiểm tra quyền Teacher
   const classSection = (
     evalData as unknown as {
       assignments: { class_sections: { teacher_id: string } | null } | null;
     }
   ).assignments?.class_sections;
 
-  if (!classSection || classSection.teacher_id !== teacherId) {
-    throw new Error("Không có quyền truy cập lịch sử Evaluation này");
-  }
+  return classSection?.teacher_id ?? null;
+}
 
-  // Bước 2: Lấy history và JOIN với teachers để lấy display_name
+/**
+ * Lấy danh sách lịch sử thay đổi của Evaluation theo evaluationId.
+ * Sắp xếp: changed_at desc (mới nhất trước).
+ */
+export async function listEvaluationHistoryRows(
+  evaluationId: string,
+): Promise<EvaluationHistoryDto[]> {
+  const supabase = createAdminClient();
+
   const { data: historyData, error: historyError } = await supabase
     .from("evaluation_history")
     .select(

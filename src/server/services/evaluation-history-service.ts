@@ -8,7 +8,10 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import { listEvaluationHistory } from "@/server/repositories/evaluation-history-repository";
+import {
+  findEvaluationOwnerTeacherId,
+  listEvaluationHistoryRows,
+} from "@/server/repositories/evaluation-history-repository";
 import type { EvaluationHistoryDto } from "@/types/student";
 
 /**
@@ -35,28 +38,23 @@ export async function getEvaluationHistory(
     );
   }
 
-  // listEvaluationHistory sẽ tự kiểm tra authorization chain bên trong
-  try {
-    return await listEvaluationHistory(evaluationId, authData.user.id);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Lỗi hệ thống";
+  const ownerTeacherId = await findEvaluationOwnerTeacherId(evaluationId);
 
-    if (message.includes("quyền")) {
-      throw new ApiError(
-        404,
-        API_ERROR_CODES.notFound,
-        "Không tìm thấy Evaluation",
-      );
-    }
-
-    if (message.includes("Không tìm thấy")) {
-      throw new ApiError(
-        404,
-        API_ERROR_CODES.notFound,
-        "Không tìm thấy Evaluation",
-      );
-    }
-
-    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
+  if (ownerTeacherId === undefined) {
+    throw new ApiError(
+      404,
+      API_ERROR_CODES.notFound,
+      "Không tìm thấy Evaluation",
+    );
   }
+
+  if (ownerTeacherId !== authData.user.id) {
+    throw new ApiError(
+      403,
+      API_ERROR_CODES.forbidden,
+      "Không có quyền xem lịch sử Evaluation này",
+    );
+  }
+
+  return listEvaluationHistoryRows(evaluationId);
 }
