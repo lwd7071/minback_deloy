@@ -28,7 +28,7 @@ export default async function StudentProfilePage({
     redirect(`/class/${encodeURIComponent(canonicalCode)}/profile`);
   }
   return (
-    <main className="student-shell" style={{padding: 0, maxWidth: '100%'}}>
+    <main className="student-shell">
       <StudentProfileView classCode={code.toUpperCase()} />
     </main>
   );

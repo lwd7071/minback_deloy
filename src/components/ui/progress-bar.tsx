@@ -10,7 +10,7 @@ export function ProgressBar({
   const percentage =
     max <= 0 ? 0 : Math.min(100, Math.round((value / max) * 100));
   return (
-    <div className="stack" style={{ gap: 7 }}>
+    <div className="progress-stack">
       <div
         className="progress-track"
         role="progressbar"

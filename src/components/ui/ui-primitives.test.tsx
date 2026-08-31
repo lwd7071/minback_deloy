@@ -1,9 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Modal } from "./modal";
 import { OtpInput } from "./otp-input";
+import { Button } from "./button";
+
+afterEach(cleanup);
 
 describe("OtpInput", () => {
   it("accepts a six-digit paste as one PIN value", () => {
@@ -32,5 +35,21 @@ describe("Modal", () => {
     );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("applies the requested size without changing dialog semantics", () => {
+    render(
+      <Modal open onClose={() => undefined} title="Chi tiết" size="lg">
+        Nội dung
+      </Modal>,
+    );
+    expect(screen.getByRole("dialog")).toHaveClass("modal-lg");
+  });
+});
+
+describe("Button", () => {
+  it("supports the compact shared control size", () => {
+    render(<Button size="sm">Lưu</Button>);
+    expect(screen.getByRole("button", { name: "Lưu" })).toHaveClass("btn-sm");
   });
 });

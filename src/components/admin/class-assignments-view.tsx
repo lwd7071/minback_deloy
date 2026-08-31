@@ -173,7 +173,7 @@ export function ClassAssignmentsView({
               <Badge variant={row.status}>{row.status}</Badge>
               <span className="muted">{row.dueDate}</span>
             </div>
-            <h2>{row.title}</h2>
+            <h3>{row.title}</h3>
             <p className="muted">{row.description || "Chưa có mô tả."}</p>
             <div className="cluster">
               <Link

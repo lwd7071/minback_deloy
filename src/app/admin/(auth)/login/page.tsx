@@ -6,12 +6,11 @@ export default function AdminLoginPage() {
     <main className="public-shell">
       <Card className="auth-wrap stack">
         <Link className="brand-lockup" href="/">
-          <span className="brand-mark">M</span>MinBack
+          MinBack
         </Link>
         <div>
-          <p className="eyebrow">Khu vực giảng viên</p>
-          <h1>Quản lý lớp học</h1>
-          <p className="muted">Đăng nhập bằng tài khoản Teacher được cấp.</p>
+          <h1>Đăng nhập giảng viên</h1>
+          <p className="muted">Mở không gian quản lý lớp học của bạn.</p>
         </div>
         <TeacherLoginForm />
       </Card>

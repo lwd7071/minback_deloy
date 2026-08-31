@@ -125,7 +125,7 @@ export function SubmissionUploadPanel({
 
   if (status !== "published") return null;
   return (
-    <div className="settings-stack" style={{ marginTop: "12px" }}>
+    <div className="submission-panel settings-stack">
       <label className="form-label">
         Nộp bài (tối đa 5 file, mỗi file 20 MB)
         <input

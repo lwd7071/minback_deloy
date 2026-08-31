@@ -6,9 +6,11 @@ import { OtpInput } from "@/components/ui/otp-input";
 export function PinLoginForm({
   classCode,
   initialNickname = "",
+  backUrl,
 }: {
   classCode: string;
   initialNickname?: string;
+  backUrl?: string;
 }) {
   const router = useRouter();
   const [nickname, setNickname] = useState(initialNickname);
@@ -61,7 +63,7 @@ export function PinLoginForm({
   }
   return (
     <form className="form-stack" onSubmit={(event) => void submit(event)}>
-      <div className="field">
+      <div className="form-field">
         <label className="form-label">Nickname</label>
         <input
           className="field-underline"
@@ -94,9 +96,8 @@ export function PinLoginForm({
       >
         Đăng nhập
       </Button>
-      <div className="auth-footer">
-        <a href={`/class/${encodeURIComponent(classCode)}`}>← Trở lại</a>
-        <span className="muted">Quên PIN? Hỏi giáo viên.</span>
+      <div className="split">
+        <a href={backUrl || `/class/${encodeURIComponent(classCode)}`}>← Trở lại</a>
       </div>
     </form>
   );

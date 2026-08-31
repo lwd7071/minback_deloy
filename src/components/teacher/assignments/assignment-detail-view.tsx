@@ -136,8 +136,7 @@ export function AssignmentDetailView({
         : ["closed", "published"];
 
   return (
-    <section className="surface">
-      <p className="eyebrow">Dev A</p>
+    <section className="surface editor-surface">
       <h1>Chỉnh sửa bài tập</h1>
       <form className="login-form" onSubmit={updateAssignment}>
         <label className="form-field">

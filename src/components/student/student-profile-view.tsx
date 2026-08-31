@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useNotificationPolling } from "./use-notification-polling";
-import { NotificationBell } from "@/components/ui/notification-bell";
+
 import { Avatar } from "@/components/ui/avatar";
+import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
+import { NotificationBell } from "@/components/ui/notification-bell";
 
 import { StudentAssignmentModal } from "./student-assignment-modal";
+import { useNotificationPolling } from "./use-notification-polling";
 
 export type StudentProfileAssignment = {
   id: string;
@@ -16,6 +18,8 @@ export type StudentProfileAssignment = {
   dueDate: string;
   status: "draft" | "published" | "closed";
   maxScore: number;
+  createdAt: string;
+  updatedAt: string;
   attachments: Array<{
     id: string;
     originalName: string;
@@ -45,6 +49,7 @@ export type StudentProfileAssignment = {
     score: number | null;
     feedback: string;
     status: "pending" | "graded" | "returned";
+    createdAt: string;
     updatedAt: string;
   } | null;
 };
@@ -59,20 +64,113 @@ type StudentProfileDto = {
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
 
-function ProgressRing({ percentage, size = 70 }: { percentage: number; size?: number }) {
-  const r = (size - 14) / 2;
-  const circumference = 2 * Math.PI * r;
+type RecentActivity = {
+  id: string;
+  icon: AppIconName;
+  tone: "blue" | "green";
+  label: string;
+  occurredAt: string;
+};
+
+const dateTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+function formatRelativeDate(value: string, now: number) {
+  const delta = new Date(value).getTime() - now;
+  const absolute = Math.abs(delta);
+  const future = delta > 0;
+  const units = [
+    { limit: 60_000, divisor: 1_000, name: "giây" },
+    { limit: 3_600_000, divisor: 60_000, name: "phút" },
+    { limit: 86_400_000, divisor: 3_600_000, name: "giờ" },
+    { limit: Number.POSITIVE_INFINITY, divisor: 86_400_000, name: "ngày" },
+  ];
+  const unit = units.find((candidate) => absolute < candidate.limit)!;
+  const amount = Math.max(1, Math.round(absolute / unit.divisor));
+  return future ? `còn ${amount} ${unit.name}` : `${amount} ${unit.name} trước`;
+}
+
+function getAssignmentStatus(assignment: StudentProfileAssignment) {
+  if (assignment.evaluation?.status === "returned") {
+    return { className: "pill returned", label: "Đã trả kết quả" };
+  }
+  if (assignment.evaluation?.status === "graded") {
+    return { className: "pill graded", label: "Đã chấm" };
+  }
+  if (assignment.submission.latestAttempt) {
+    return { className: "pill submitted", label: "Đã nộp" };
+  }
+  if (assignment.status === "closed") {
+    return { className: "pill closed", label: "Đã đóng" };
+  }
+  return { className: "pill overdue", label: "Chưa nộp" };
+}
+
+function ProgressRing({ percentage }: { percentage: number }) {
+  const size = 104;
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - percentage / 100);
+
   return (
-    <div className="ring" style={{ width: size, height: size }}>
+    <div
+      className="student-progress-ring"
+      aria-label={`Tiến độ chấm ${percentage}%`}
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size/2} cy={size/2} r={r} stroke="#EEF1F4" strokeWidth="7" fill="none"/>
-        <circle cx={size/2} cy={size/2} r={r} stroke="var(--primary)" strokeWidth="7"
-          fill="none" strokeLinecap="round"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="var(--surface-muted)"
+          strokeWidth="10"
+          fill="none"
+        />
+        <circle
+          className="student-progress-ring-value"
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          strokeWidth="10"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
       </svg>
-      <div className="pct">{percentage}%</div>
+      <strong>{percentage}%</strong>
+    </div>
+  );
+}
+
+function DashboardMetric({
+  icon,
+  tone,
+  label,
+  value,
+  note,
+}: {
+  icon: AppIconName;
+  tone: string;
+  label: string;
+  value: string | number;
+  note: string;
+}) {
+  return (
+    <div className="student-metric">
+      <span className={`student-icon-tile ${tone}`}>
+        <AppIcon name={icon} size={19} />
+      </span>
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        <small>{note}</small>
+      </div>
     </div>
   );
 }
@@ -86,43 +184,45 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<
     string | null
   >(null);
+  const [referenceTime] = useState(() => Date.now());
   const notificationState = useNotificationPolling();
 
   useEffect(() => {
     let active = true;
 
     fetch("/api/v1/student/profile", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) {
+      .then(async (response) => {
+        if (!response.ok) {
           let message = "Không thể tải hồ sơ học tập";
           try {
-            const body = (await res.json()) as { error?: { message?: string } };
+            const body = (await response.json()) as {
+              error?: { message?: string };
+            };
             if (body.error?.message) message = body.error.message;
           } catch {
-            // Ignored if non-json
+            // The fallback above is intentionally used for non-JSON responses.
           }
           throw new Error(message);
         }
-        const body = (await res.json()) as ApiResult<StudentProfileDto>;
-        if (!("data" in body)) {
-          throw new Error("Dữ liệu không hợp lệ");
-        }
+        const body = (await response.json()) as ApiResult<StudentProfileDto>;
+        if (!("data" in body)) throw new Error("Dữ liệu không hợp lệ");
         return body.data;
       })
       .then((data) => {
-        if (active) {
-          if (classCode && data.classSection.code !== classCode.toUpperCase()) {
-            router.replace(
-              `/class/${encodeURIComponent(data.classSection.code)}/profile`,
-            );
-            return;
-          }
-          setProfile(data);
+        if (!active) return;
+        if (classCode && data.classSection.code !== classCode.toUpperCase()) {
+          router.replace(
+            `/class/${encodeURIComponent(data.classSection.code)}/profile`,
+          );
+          return;
         }
+        setProfile(data);
       })
-      .catch((err) => {
+      .catch((fetchError: unknown) => {
         if (active) {
-          setError(err instanceof Error ? err.message : "Lỗi kết nối");
+          setError(
+            fetchError instanceof Error ? fetchError.message : "Lỗi kết nối",
+          );
         }
       })
       .finally(() => {
@@ -143,13 +243,99 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
     }
   }
 
+  const dashboard = useMemo(() => {
+    if (!profile) return null;
+    const scores = profile.assignments
+      .filter(
+        (assignment) =>
+          assignment.evaluation?.score !== null &&
+          assignment.evaluation?.score !== undefined &&
+          (assignment.evaluation.status === "graded" ||
+            assignment.evaluation.status === "returned"),
+      )
+      .map(
+        (assignment) =>
+          (assignment.evaluation!.score! / assignment.maxScore) * 100,
+      );
+    const averageScore = scores.length
+      ? Math.round(
+          scores.reduce((sum, score) => sum + score, 0) / scores.length,
+        )
+      : null;
+    const submitted = profile.assignments.filter(
+      (assignment) => assignment.submission.latestAttempt !== null,
+    ).length;
+    const graded = profile.assignments.filter(
+      (assignment) =>
+        assignment.evaluation?.status === "graded" ||
+        assignment.evaluation?.status === "returned",
+    ).length;
+    const upcoming = profile.assignments
+      .filter(
+        (assignment) =>
+          assignment.status === "published" &&
+          !assignment.submission.latestAttempt &&
+          new Date(assignment.dueDate).getTime() > referenceTime,
+      )
+      .sort(
+        (left, right) =>
+          new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime(),
+      )[0];
+    const recentActivities: RecentActivity[] = profile.assignments
+      .flatMap((assignment) => {
+        const activities: RecentActivity[] = [];
+        if (assignment.submission.latestAttempt) {
+          activities.push({
+            id: `submission-${assignment.submission.latestAttempt.id}`,
+            icon: "upload",
+            tone: "blue",
+            label: `Bạn đã nộp bài “${assignment.title}”`,
+            occurredAt: assignment.submission.latestAttempt.submittedAt,
+          });
+        }
+        if (
+          assignment.evaluation?.status === "graded" ||
+          assignment.evaluation?.status === "returned"
+        ) {
+          activities.push({
+            id: `evaluation-${assignment.evaluation.id}`,
+            icon: "fileCheck",
+            tone: "green",
+            label: `Giảng viên đã chấm bài “${assignment.title}”`,
+            occurredAt: assignment.evaluation.updatedAt,
+          });
+        }
+        return activities;
+      })
+      .sort(
+        (left, right) =>
+          new Date(right.occurredAt).getTime() -
+          new Date(left.occurredAt).getTime(),
+      )
+      .slice(0, 4);
+
+    return {
+      averageScore,
+      submitted,
+      graded,
+      notSubmitted: profile.assignments.length - submitted,
+      upcoming,
+      recentActivities,
+    };
+  }, [profile, referenceTime]);
+
   if (loading) {
-    return <p className="muted">Đang tải hồ sơ học tập…</p>;
+    return (
+      <div className="student-dashboard-state" aria-live="polite">
+        <span className="student-loading-mark" />
+        <p>Đang chuẩn bị dashboard của bạn…</p>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="settings-stack">
+      <div className="student-dashboard-state">
         <p className="form-error" role="alert">
           {error}
         </p>
@@ -160,40 +346,26 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
     );
   }
 
-  if (!profile) return null;
+  if (!profile || !dashboard) return null;
 
-  const { student, classSection, progress, submissionProgress, assignments } =
-    profile;
-  const completedScores = assignments
-    .filter(
-      (assignment) =>
-        assignment.evaluation?.score !== null &&
-        assignment.evaluation?.score !== undefined &&
-        (assignment.evaluation.status === "graded" ||
-          assignment.evaluation.status === "returned"),
-    )
-    .map(
-      (assignment) =>
-        (assignment.evaluation!.score! / assignment.maxScore) * 100,
-    );
-  const averageScore = completedScores.length
-    ? Math.round(
-        completedScores.reduce((sum, score) => sum + score, 0) /
-          completedScores.length,
-      )
-    : null;
+  const { student, classSection, progress, assignments } = profile;
 
   return (
-    <div>
-      <div className="app-topbar">
+    <div className="student-dashboard">
+      <header className="app-topbar student-dashboard-header">
         <div className="who">
-          <Avatar name={student.fullName} size={42} />
+          <Avatar name={student.fullName} size={52} />
           <div>
-            <div className="name">{student.fullName}</div>
-            <div className="class-tag">{classSection.code} · {classSection.name}</div>
+            <div className="student-name-line">
+              <span className="name">{student.fullName}</span>
+              <span className="badge badge-info">Sinh viên</span>
+            </div>
+            <div className="class-tag">
+              {student.mssv} · {classSection.code}
+            </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <div className="profile-actions">
           <NotificationBell
             unreadCount={notificationState.unreadCount}
             notifications={notificationState.notifications.slice(0, 50)}
@@ -201,103 +373,324 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
           />
           <button
             className="btn btn-secondary"
-            style={{ minHeight: 36, padding: '6px 14px', fontSize: 13 }}
             onClick={() => void handleLogout()}
           >
+            <AppIcon name="logout" size={17} />
             Đăng xuất
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="sp-body">
-        {/* Sidebar */}
-        <div className="stack">
-          <div className="card progress-card stack">
-            <div className="ring-wrap" style={{ marginBottom: 16 }}>
-              <ProgressRing percentage={progress.percentage} size={78} />
-              <div>
-                <b style={{ display: 'block', fontSize: 15, marginBottom: 2 }}>{progress.percentage}%</b>
-                <span className="muted" style={{ fontSize: 13 }}>{progress.completed} / {progress.total} đã chấm</span>
-              </div>
-            </div>
-            
+      <div className="student-dashboard-grid">
+        <aside className="student-overview-card">
+          <p className="eyebrow">Tổng quan tiến độ</p>
+          <div className="student-progress-summary">
+            <ProgressRing percentage={progress.percentage} />
             <div>
-              <div className="stat-row">
-                <span>Điểm TB chuẩn hóa</span>
-                <span>{averageScore === null ? "—" : `${averageScore}%`}</span>
-              </div>
-              <div className="stat-row">
-                <span>Tiến độ nộp bài</span>
-                <span>{submissionProgress.completed} / {submissionProgress.total}</span>
-              </div>
+              <strong>Tiến độ chung</strong>
+              <span>
+                {progress.completed} / {progress.total} bài đã chấm
+              </span>
             </div>
           </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="card">
-          <h3 style={{ margin: '0 0 20px', fontSize: 18 }}>Bài tập</h3>
-          {assignments.length === 0 ? (
-            <p className="muted">Chưa có bài tập nào được giao trong lớp này.</p>
-          ) : (
+          <div className="student-overview-stats">
             <div>
-              {assignments.map((asm) => {
-                const evalData = asm.evaluation;
-                const hasScore = evalData && evalData.score !== null;
-                
-                let pillClass = "pill pending";
-                let pillText = "Chưa nộp";
-                if (evalData?.status === "graded") {
-                  pillClass = "pill graded";
-                  pillText = "Đã chấm";
-                } else if (evalData?.status === "returned") {
-                  pillClass = "pill returned";
-                  pillText = "Cần nộp lại";
-                } else if (asm.submission.latestAttempt) {
-                  pillClass = "pill pending";
-                  pillText = "Đã nộp";
-                } else if (asm.status === "published") {
-                  pillClass = "pill pending";
-                  pillText = "Đang mở";
-                }
-
-                return (
-                  <div key={asm.id} className="assign-block">
-                    <div className="assign-item" onClick={() => setSelectedAssignmentId(asm.id)}>
-                      <div className="icon-circle active">📝</div>
-                      <div className="info">
-                        <b>{asm.title}</b>
-                        <span>Hạn nộp: {new Date(asm.dueDate).toLocaleDateString("vi-VN")}</span>
-                      </div>
-                      <span className={pillClass}>{pillText}</span>
-                      <div className="assign-score">
-                        {hasScore ? evalData.score : "—"}
-                      </div>
-                    </div>
-
-                    {/* Expandable feedback if any */}
-                    {evalData && evalData.feedback && selectedAssignmentId !== asm.id && (
-                      <div className="feedback-box">
-                        <b>Nhận xét:</b> {evalData.feedback.slice(0, 80)}{evalData.feedback.length > 80 ? '...' : ''}
-                      </div>
+              <span className="student-icon-tile blue">
+                <AppIcon name="star" size={18} />
+              </span>
+              <span>Điểm trung bình</span>
+              <strong>
+                {dashboard.averageScore === null
+                  ? "—"
+                  : `${dashboard.averageScore}%`}
+              </strong>
+            </div>
+            <div>
+              <span className="student-icon-tile green">
+                <AppIcon name="check" size={18} />
+              </span>
+              <span>Bài đã nộp</span>
+              <strong>
+                {dashboard.submitted} / {assignments.length}
+              </strong>
+            </div>
+            <div>
+              <span className="student-icon-tile amber">
+                <AppIcon name="clock" size={18} />
+              </span>
+              <span>Bài chưa nộp</span>
+              <strong>{dashboard.notSubmitted}</strong>
+            </div>
+          </div>
+          <div className="student-next-deadline">
+            <span className="student-icon-tile blue">
+              <AppIcon name="calendar" size={18} />
+            </span>
+            <div>
+              <span>Hạn nộp gần nhất</span>
+              {dashboard.upcoming ? (
+                <>
+                  <strong>{dashboard.upcoming.title}</strong>
+                  <small>
+                    {dateTimeFormatter.format(
+                      new Date(dashboard.upcoming.dueDate),
                     )}
-                    
-                    <StudentAssignmentModal
-                      assignment={asm}
-                      open={selectedAssignmentId === asm.id}
-                      onClose={() => setSelectedAssignmentId(null)}
-                      onSubmitted={() => {
-                        setRefreshKey((value) => value + 1);
-                        setSelectedAssignmentId(null);
-                      }}
-                    />
-                  </div>
-                );
-              })}
+                  </small>
+                  <span className="badge badge-info">
+                    {formatRelativeDate(
+                      dashboard.upcoming.dueDate,
+                      referenceTime,
+                    )}
+                  </span>
+                </>
+              ) : (
+                <strong>Không có bài đang chờ nộp</strong>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        <section className="student-class-card">
+          <div className="student-class-heading">
+            <span className="student-class-icon">
+              <AppIcon name="book" size={30} />
+            </span>
+            <div>
+              <p className="eyebrow">Tiến độ lớp</p>
+              <h1>{classSection.code}</h1>
+              <p>{classSection.name}</p>
+            </div>
+          </div>
+
+          <div className="student-metrics-grid">
+            <DashboardMetric
+              icon="book"
+              tone="blue"
+              label="Bài tập"
+              value={assignments.length}
+              note="Tổng số"
+            />
+            <DashboardMetric
+              icon="upload"
+              tone="green"
+              label="Đã nộp"
+              value={dashboard.submitted}
+              note="Bài"
+            />
+            <DashboardMetric
+              icon="fileCheck"
+              tone="blue"
+              label="Đã chấm"
+              value={dashboard.graded}
+              note="Bài"
+            />
+            <DashboardMetric
+              icon="clock"
+              tone="amber"
+              label="Chưa nộp"
+              value={dashboard.notSubmitted}
+              note="Bài"
+            />
+            <DashboardMetric
+              icon="star"
+              tone="violet"
+              label="Điểm TB"
+              value={
+                dashboard.averageScore === null
+                  ? "—"
+                  : `${dashboard.averageScore}%`
+              }
+              note="Chuẩn hóa"
+            />
+          </div>
+
+          <div className="student-assignment-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Danh sách bài tập</p>
+                <h2>Bài tập của bạn</h2>
+              </div>
+              <span className="muted">{assignments.length} bài</span>
+            </div>
+            {assignments.length === 0 ? (
+              <div className="empty-state">
+                <AppIcon name="book" size={24} />
+                <p>Chưa có bài tập nào được giao trong lớp này.</p>
+              </div>
+            ) : (
+              <div className="student-assignment-table-wrap">
+                <table className="student-assignment-table">
+                  <thead>
+                    <tr>
+                      <th>Bài tập</th>
+                      <th>Hạn nộp</th>
+                      <th>Trạng thái</th>
+                      <th>Điểm</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assignments.map((assignment) => {
+                      const status = getAssignmentStatus(assignment);
+                      const score = assignment.evaluation?.score;
+                      const shouldSubmit =
+                        !assignment.submission.latestAttempt &&
+                        assignment.status === "published";
+                      return (
+                        <tr key={assignment.id}>
+                          <td>
+                            <span
+                              className={`assignment-leading-icon ${
+                                assignment.submission.latestAttempt
+                                  ? "complete"
+                                  : "waiting"
+                              }`}
+                            >
+                              <AppIcon
+                                name={
+                                  assignment.submission.latestAttempt
+                                    ? "check"
+                                    : "clock"
+                                }
+                                size={18}
+                              />
+                            </span>
+                            <button
+                              className="assignment-title-button"
+                              onClick={() =>
+                                setSelectedAssignmentId(assignment.id)
+                              }
+                            >
+                              {assignment.title}
+                            </button>
+                          </td>
+                          <td>
+                            {dateTimeFormatter.format(
+                              new Date(assignment.dueDate),
+                            )}
+                          </td>
+                          <td>
+                            <span className={status.className}>
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="student-score-cell">
+                            {score === null || score === undefined
+                              ? "—"
+                              : `${score} / ${assignment.maxScore}`}
+                          </td>
+                          <td>
+                            <button
+                              className={
+                                shouldSubmit
+                                  ? "btn btn-primary btn-sm"
+                                  : "student-row-action"
+                              }
+                              aria-label={`${shouldSubmit ? "Nộp" : "Xem"} bài ${assignment.title}`}
+                              onClick={() =>
+                                setSelectedAssignmentId(assignment.id)
+                              }
+                            >
+                              {shouldSubmit ? (
+                                "Nộp bài"
+                              ) : (
+                                <AppIcon name="eye" size={18} />
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="student-dashboard-footer-grid">
+        <section className="student-feed-card">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Dòng thời gian</p>
+              <h2>Hoạt động gần đây</h2>
+            </div>
+          </div>
+          {dashboard.recentActivities.length ? (
+            <div className="student-feed-list">
+              {dashboard.recentActivities.map((activity) => (
+                <div key={activity.id} className="student-feed-item">
+                  <span className={`student-icon-tile ${activity.tone}`}>
+                    <AppIcon name={activity.icon} size={16} />
+                  </span>
+                  <span>{activity.label}</span>
+                  <time dateTime={activity.occurredAt}>
+                    {formatRelativeDate(activity.occurredAt, referenceTime)}
+                  </time>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="student-feed-empty">
+              Hoạt động nộp bài và chấm điểm sẽ xuất hiện tại đây.
             </div>
           )}
-        </div>
+        </section>
+
+        <section className="student-feed-card">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Cập nhật</p>
+              <h2>Thông báo</h2>
+            </div>
+            {notificationState.unreadCount ? (
+              <span className="badge badge-error">
+                {notificationState.unreadCount} chưa đọc
+              </span>
+            ) : null}
+          </div>
+          {notificationState.loading ? (
+            <p className="muted">Đang tải thông báo…</p>
+          ) : notificationState.error ? (
+            <p className="form-error">{notificationState.error}</p>
+          ) : notificationState.notifications.length ? (
+            <div className="student-feed-list">
+              {notificationState.notifications.slice(0, 4).map((item) => (
+                <button
+                  key={item.id}
+                  className="student-feed-item student-notification-row"
+                  onClick={() => void notificationState.markAsRead(item.id)}
+                >
+                  <span className="student-icon-tile blue">
+                    <AppIcon name="bell" size={16} />
+                  </span>
+                  <span>{item.message}</span>
+                  <time dateTime={item.createdAt}>
+                    {formatRelativeDate(item.createdAt, referenceTime)}
+                  </time>
+                  {!item.readAt ? <i aria-hidden="true" /> : null}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="student-feed-empty">Bạn chưa có thông báo nào.</div>
+          )}
+        </section>
       </div>
+
+      {assignments.map((assignment) => (
+        <StudentAssignmentModal
+          key={assignment.id}
+          assignment={assignment}
+          open={selectedAssignmentId === assignment.id}
+          onClose={() => setSelectedAssignmentId(null)}
+          onSubmitted={() => {
+            setRefreshKey((value) => value + 1);
+            setSelectedAssignmentId(null);
+          }}
+        />
+      ))}
     </div>
   );
 }

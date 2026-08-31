@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { NotificationDto } from "@/types/student";
+import { AppIcon } from "./app-icon";
+import { Card } from "./card";
 
 export function NotificationBell({
   unreadCount,
@@ -14,36 +16,24 @@ export function NotificationBell({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ position: "relative" }}>
+    <div className="notification-anchor">
       <button
         className="btn btn-secondary"
         aria-expanded={open}
         aria-label={`${unreadCount} thông báo chưa đọc`}
         onClick={() => setOpen((value) => !value)}
       >
-        🔔{" "}
+        <AppIcon name="bell" />
         {unreadCount ? (
           <span className="badge badge-error">{unreadCount}</span>
         ) : null}
       </button>
       {open ? (
-        <Card
-          className="stack"
-          style={{
-            position: "absolute",
-            right: 0,
-            top: "calc(100% + 10px)",
-            width: "min(88vw,380px)",
-            zIndex: 40,
-            maxHeight: 430,
-            overflow: "auto",
-          }}
-        >
+        <Card className="notification-popover">
           {notifications.length ? (
             notifications.map((item) => (
               <button
-                className="btn btn-ghost"
-                style={{ textAlign: "left", justifyContent: "flex-start" }}
+                className="notification-item"
                 key={item.id}
                 onClick={() => onMarkRead(item.id)}
               >
@@ -61,5 +51,3 @@ export function NotificationBell({
     </div>
   );
 }
-
-import { Card } from "./card";

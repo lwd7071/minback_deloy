@@ -18,11 +18,11 @@ export default async function ClassLoginPage({
 
   return (
     <main className="public-shell">
-      <Card className="auth-card stack" style={{margin: '0 auto'}}>
+      <Card className="auth-card stack" style={{ borderTop: "4px solid var(--primary)" }}>
         <Link className="brand-lockup" href="/">
-          <span className="brand-mark">M</span>MinBack
+          MinBack
         </Link>
-        <div style={{marginTop: 16}}>
+        <div className="auth-heading">
           <p className="auth-eyebrow">Đăng nhập lớp học phần</p>
           <h2 className="auth-title">{normalizedCode}</h2>
           <p className="auth-class">{className}</p>

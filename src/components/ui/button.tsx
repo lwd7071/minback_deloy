@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes } from "react";
 
 export function Button({
   variant = "primary",
+  size = "md",
   loading = false,
   className = "",
   children,
@@ -9,11 +10,12 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
+  size?: "sm" | "md";
   loading?: boolean;
 }) {
   return (
     <button
-      className={`btn btn-${variant} ${className}`}
+      className={`btn btn-${variant} ${size === "sm" ? "btn-sm" : ""} ${className}`}
       disabled={disabled || loading}
       {...props}
     >

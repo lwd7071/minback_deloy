@@ -122,7 +122,7 @@ export function BulkGradeView({
   if (!assignment) return <p className="muted">Đang tải danh sách chấm bài…</p>;
   return (
     <div className="stack">
-      <Card>
+      <Card className="grade-header">
         <div className="split">
           <div>
             <Badge variant={assignment.status}>{assignment.status}</Badge>
@@ -141,7 +141,7 @@ export function BulkGradeView({
         const submission = submissions[student.id];
         if (!draft) return null;
         return (
-          <Card className="stack" key={student.id}>
+          <Card className="grade-row" key={student.id}>
             <div className="split">
               <div>
                 <strong>

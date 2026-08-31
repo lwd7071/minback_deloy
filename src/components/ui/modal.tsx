@@ -2,17 +2,20 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "./app-icon";
 
 export function Modal({
   open,
   onClose,
   title,
+  size = "md",
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
+  size?: "sm" | "md" | "lg";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -55,7 +58,7 @@ export function Modal({
       }}
     >
       <div
-        className="modal-content stack"
+        className={`modal-content modal-${size} stack`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -65,7 +68,7 @@ export function Modal({
         <div className="split">
           <h2 id="modal-title">{title}</h2>
           <button className="btn btn-ghost" onClick={onClose} aria-label="Đóng">
-            ✕
+            <AppIcon name="close" />
           </button>
         </div>
         {children}

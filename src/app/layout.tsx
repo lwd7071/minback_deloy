@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Inter } from "next/font/google";
+import { Be_Vietnam_Pro, Inter } from "next/font/google";
 
 import "./globals.css";
+import "./workspace.css";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
   variable: "--font-inter",
+});
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-heading",
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -19,7 +25,11 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+      <body
+        className={`${inter.variable} ${beVietnamPro.variable} ${inter.className}`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

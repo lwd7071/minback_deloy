@@ -31,9 +31,8 @@ export default async function OnboardingPage({
   }
   return (
     <main className="public-shell">
-      <Card className="auth-wrap">
-        <p className="eyebrow">Lần đầu đăng nhập</p>
-        <h1>Đặt thông tin riêng của bạn</h1>
+      <Card className="auth-wrap stack">
+        <h1>Hoàn tất tài khoản</h1>
         <p className="muted">Đổi nickname và PIN trước khi mở hồ sơ học tập.</p>
         <ChangeCredentialsForm classCode={code.toUpperCase()} />
       </Card>

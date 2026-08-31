@@ -75,9 +75,11 @@ export function ClassCreateFlow() {
   }
   return (
     <div className="stack">
-      <Card>
-        <p className="eyebrow">Bước 1</p>
-        <h2>Tạo lớp học phần</h2>
+      <Card className="workflow-step">
+        <div className="workflow-heading">
+          <span className="step-number">1</span>
+          <h2>Thông tin lớp</h2>
+        </div>
         <form className="form-stack" onSubmit={(event) => void create(event)}>
           <label className="form-field">
             <span>Mã lớp</span>
@@ -101,9 +103,11 @@ export function ClassCreateFlow() {
         </form>
       </Card>
       {section ? (
-        <Card>
-          <p className="eyebrow">Bước 2</p>
-          <h2>Kiểm tra danh sách sinh viên</h2>
+        <Card className="workflow-step">
+          <div className="workflow-heading">
+            <span className="step-number">2</span>
+            <h2>Danh sách sinh viên</h2>
+          </div>
           <input
             type="file"
             accept=".csv,.xlsx"

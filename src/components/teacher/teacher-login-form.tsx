@@ -44,7 +44,7 @@ export function TeacherLoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="form-stack" onSubmit={handleSubmit}>
       <div className="form-field">
         <label htmlFor="email">Email</label>
         <input
