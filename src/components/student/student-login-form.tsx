@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 type ApiResult<T> = { data: T } | { error: { code: string; message: string } };
 
-async function readResult<T>(response: Response): Promise<T> {
+async function readResult<T>(response: Response): Promise<T> { // hàm hỗ trợ đọc json và kiểm tra lỗi có 2 trạng thái success và error
   const body = (await response.json()) as ApiResult<T>;
   if (!response.ok || !("data" in body)) {
     throw new Error("error" in body ? body.error.message : "Yêu cầu thất bại");
@@ -23,17 +23,19 @@ export function StudentLoginForm() {
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault(); // Ngăn trình duyệt reload trang mạc đinh khi submit
     setError(null);
     setBusy(true);
 
     try {
+      // gửi data lên api backend 
       const response = await fetch("/api/v1/student/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ classCode, nickname, pin }),
       });
 
+      // đọc kq response từ backend trả về
       const session = await readResult<{
         accessLevel: string;
         mustChangeNickname: boolean;
@@ -46,11 +48,13 @@ export function StudentLoginForm() {
         session.mustChangeNickname ||
         session.mustChangePin
       ) {
-        window.location.href = "/student/change-credentials";
+        router.push("/student/change-credentials");
       } else {
-        window.location.href = "/student/profile";
+        router.push("/student/profile");
+        router.refresh();
       }
     } catch (err) {
+      // nếu api báo lỗi thì vô đây hiển thị lỗi cho người dùng 
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
     } finally {
       setBusy(false);

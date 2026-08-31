@@ -35,7 +35,11 @@ export async function getNotificationSettings(): Promise<NotificationSettingsDto
 
   if (error || !data) {
     // requireTeacher already verified the teacher exists; this is unexpected
-    throw new Error("Failed to fetch notification settings");
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Không thể tải cài đặt thông báo",
+    );
   }
 
   return toDto(Boolean(data.email_notification_enabled));
@@ -54,7 +58,11 @@ export async function updateNotificationSettings(
     .single();
 
   if (error || !data) {
-    throw new Error("Failed to update notification settings");
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Không thể cập nhật cài đặt thông báo",
+    );
   }
 
   return toDto(Boolean(data.email_notification_enabled));

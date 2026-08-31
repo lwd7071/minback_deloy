@@ -83,7 +83,8 @@ export function StudentProfileView() {
     try {
       await fetch("/api/v1/student/auth/logout", { method: "POST" });
     } finally {
-      window.location.href = "/student/login";
+      router.push("/student/login");
+      router.refresh();
     }
   }
 

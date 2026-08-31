@@ -3,12 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import type { NotificationDto } from "@/types/student";
 
-type NotificationResponse = {
-  notifications: NotificationDto[];
-  unreadCount: number;
-  total: number;
-};
-
 type ApiResult<T> =
   { data: T; meta?: Record<string, unknown> } | { error: { message: string } };
 

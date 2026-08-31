@@ -6,6 +6,7 @@ export const metadata = {
     "Đăng nhập vào hồ sơ học tập của bạn bằng mã lớp học phần, nickname và PIN cá nhân.",
 };
 
+// phần /student/login frontend nè 
 export default function StudentLoginPage() {
   return (
     <section className="surface">
@@ -14,6 +15,7 @@ export default function StudentLoginPage() {
       <p className="muted">
         Nhập mã lớp học phần, nickname và PIN để truy cập hồ sơ học tập.
       </p>
+
       <StudentLoginForm />
     </section>
   );
