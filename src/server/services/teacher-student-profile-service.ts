@@ -4,6 +4,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findTeacherStudentProfileData } from "@/server/repositories/teacher-student-profile-repository";
 import { calculateProfileProgress } from "@/server/services/student-profile-service";
+import { calculateSubmissionProgress } from "@/server/services/student-profile-service";
 import type { TeacherStudentProfileDto } from "@/types/student-profile";
 
 export async function getTeacherStudentProfile(
@@ -30,6 +31,7 @@ export async function getTeacherStudentProfile(
       student: data.student,
       classSection: data.classSection,
       progress: calculateProfileProgress(data.assignments),
+      submissionProgress: calculateSubmissionProgress(data.assignments),
       assignments: data.assignments,
     };
   } catch (error) {

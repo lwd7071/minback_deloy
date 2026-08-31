@@ -383,3 +383,12 @@ Sprint 6 closes measurable engineering gaps only. Do not add post-MVP Rubric/Aca
 - Lint: `npm run lint` passed with 0 errors and 7 existing Next.js/unused-variable warnings in Dev B Student UI modules. They are documented as assigned external cleanup, not hidden as a passing zero-warning result.
 - A6 performance baseline: `npm run benchmark:local` imported 2,000 rows in 46,041.76 ms; ClassSection page 195.78 ms; Assignment list 240.38 ms; Evaluation list 1,417.57 ms; Student Profile 330.97 ms. `EXPLAIN (ANALYZE, BUFFERS)` showed small-data sequential scans (0.032–0.136 ms, 1–4 buffers), so no speculative index/migration was added. The observed 2,000-MSSV lookup failure was reproduced and fixed by batching lookups at 100 values; the benchmark then completed and its synthetic data was cleaned before the final reset.
 - Review: DTO, route identity, context filters, private cache headers, error envelopes, schema/history, fixture cleanup and Dev B integration boundaries for A4–A6 were reviewer-audited. Product owner explicitly delegated Dev B self sign-off on 2026-08-30; all review checkboxes above are therefore closed.
+
+## Post-MVP — Assignment attachments và Student submissions
+
+- [x] Implement: Cloudinary authenticated/raw signed-upload adapter, server-only credential validation and private signed download redirects.
+- [x] Implement: attachment audit lifecycle and immutable 1–5 file submission attempts with a 10-attempt transactional RPC.
+- [x] Implement: Student/Teacher ownership-scoped list/history/download endpoints and independent `submissionProgress`.
+- [x] Document: Cloudinary setup, accepted ZIP malware-scanning risk and `exceljs` audit risk in `assignment-files-handoff.md`.
+- [ ] VERIFY: run exactly one clean Supabase reset, DB test/lint, health and full integration against the new migration once Docker Desktop is available.
+- [ ] VERIFY: run opt-in Cloudinary smoke upload → signed download → destroy with a synthetic file and same-test cleanup after authorization to mutate the configured Cloudinary account.

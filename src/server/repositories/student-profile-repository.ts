@@ -1,9 +1,12 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { listActiveAttachmentsForAssignments } from "@/server/repositories/file-asset-repository";
+import { listStudentSubmissionSummaries } from "@/server/repositories/submission-repository";
 import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
 import type { EvaluationDto, EvaluationStatus } from "@/types/evaluation";
 import type { StudentProfileAssignmentDto } from "@/types/student-profile";
+import type { SubmissionSummaryDto } from "@/types/submission";
 
 type StudentRow = {
   id: string;
@@ -139,6 +142,45 @@ export async function findStudentProfileData(
       return [evaluation.assignmentId, evaluation];
     }),
   );
+  const assignmentIds = assignments.map((assignment) => assignment.id);
+  const [attachments, summaries] = await Promise.all([
+    listActiveAttachmentsForAssignments(assignmentIds),
+    listStudentSubmissionSummaries(studentId, assignmentIds),
+  ]);
+  const attachmentsByAssignment = new Map<
+    string,
+    StudentProfileAssignmentDto["attachments"]
+  >();
+  for (const attachment of attachments) {
+    const current = attachmentsByAssignment.get(attachment.assignment_id) ?? [];
+    current.push({
+      id: attachment.id,
+      originalName: attachment.original_name,
+      bytes: Number(attachment.bytes),
+      format: attachment.format,
+      uploadedAt: attachment.created_at,
+      downloadUrl: `/api/v1/student/assignments/${attachment.assignment_id}/attachments/${attachment.id}/download`,
+    });
+    attachmentsByAssignment.set(attachment.assignment_id, current);
+  }
+  const summariesByAssignment = new Map<string, SubmissionSummaryDto>(
+    summaries.map((summary) => [
+      summary.assignmentId,
+      {
+        attemptCount: summary.attemptCount,
+        latestAttempt: summary.latestAttempt
+          ? {
+              ...summary.latestAttempt,
+              files: summary.latestAttempt.files.map((file) => ({
+                ...file,
+                uploadedAt: file.createdAt,
+                downloadUrl: `/api/v1/student/assignments/${summary.assignmentId}/submissions/files/${file.id}/download`,
+              })),
+            }
+          : null,
+      },
+    ]),
+  );
 
   return {
     student: studentResult.data as StudentRow,
@@ -146,6 +188,11 @@ export async function findStudentProfileData(
     assignments: assignments.map((assignment) => ({
       ...assignment,
       evaluation: evaluationsByAssignment.get(assignment.id) ?? null,
+      attachments: attachmentsByAssignment.get(assignment.id) ?? [],
+      submission: summariesByAssignment.get(assignment.id) ?? {
+        latestAttempt: null,
+        attemptCount: 0,
+      },
     })),
   };
 }

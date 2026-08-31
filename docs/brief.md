@@ -356,9 +356,24 @@ RubricCriterion
 ├── criteria_name, max_score, display_order
 ```
 
-**Progress / "đã hoàn thành bài nào" (BR-012, giải quyết gap #3 trong review):**
-`Progress = số Assignment có Evaluation.status IN ('graded','returned') / tổng số Assignment có status IN ('published','closed') trong lớp.`
-→ Không cần entity `Submission` riêng ở MVP vì hệ thống không có tính năng nộp bài (upload file); "hoàn thành" được suy ra trực tiếp từ trạng thái chấm điểm.
+**Submission extension — file bài tập và bài nộp:**
+
+- Teacher có thể đính kèm tối đa 5 file cho Assignment `draft|published`; Assignment `closed` chỉ đọc/tải.
+- Student chỉ nộp khi Assignment `published`, mỗi lần 1–5 file, tối đa 10 attempts; attempt bất biến, nộp lại tạo attempt mới.
+- File cho phép: PDF, DOCX, XLSX, PPTX, TXT, ZIP, JPG/JPEG, PNG; tối đa 20 MB/file. Nộp sau 23:59:59 ngày `due_date` (Asia/Ho_Chi_Minh) được đánh dấu late khi Assignment còn published.
+- Binary lưu Cloudinary authenticated/raw; database chỉ lưu metadata/URL quản lý. File được tải qua URL ký ngắn hạn sau khi API authorize, không dùng Cloudinary URL công khai.
+- `gradingProgress` giữ contract cũ: Evaluation `graded|returned` / Assignment `published|closed`. `submissionProgress` mới: Assignment có ít nhất một finalized attempt / cùng mẫu số.
+
+```text
+AssignmentAttachment
+├── assignment_id, original_name, Cloudinary identifiers/URL, format, bytes
+├── active/deletion_pending/delete_failed/deleted, uploaded_by, deleted_at/by
+
+Submission
+├── assignment_id, student_id, latest_attempt_number
+└── SubmissionAttempt (attempt_number, submitted_at, is_late)
+    └── SubmissionFile (Cloudinary identifiers/URL, original_name, format, bytes)
+```
 
 **Nguyên tắc mở rộng Rubric (áp dụng sau MVP, không cần đổi bảng đã có):**
 - MVP: giáo viên nhập trực tiếp `Evaluation.score`; chưa tạo các bảng rubric trong migration MVP.

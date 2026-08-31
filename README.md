@@ -19,6 +19,16 @@ npm run dev
 
 Điền credential Supabase vào `.env.local` trước khi chạy các chức năng kết nối database/auth. Không commit `.env.local`.
 
+## Cloudinary files
+
+Để bật file đính kèm và bài nộp, thêm `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` và `CLOUDINARY_API_SECRET` vào `.env.local`, rồi tạo/cập nhật signed preset một lần cho từng môi trường:
+
+```powershell
+npm run cloudinary:setup
+```
+
+File được upload trực tiếp lên Cloudinary dưới dạng authenticated raw asset; browser không nhận API secret và download luôn đi qua API MinBack đã authorize.
+
 ## Supabase local
 
 ```powershell

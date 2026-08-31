@@ -14,6 +14,10 @@ type ProgressAssignment = {
   evaluation: { status: EvaluationStatus } | null;
 };
 
+type SubmissionProgressAssignment = {
+  submission: { latestAttempt: unknown | null };
+};
+
 export function calculateProfileProgress(
   assignments: readonly ProgressAssignment[],
 ): ProfileProgress {
@@ -26,6 +30,21 @@ export function calculateProfileProgress(
       assignment.evaluation?.status === "returned",
   ).length;
 
+  return {
+    completed,
+    total,
+    percentage: Math.round((completed / total) * 100),
+  };
+}
+
+export function calculateSubmissionProgress(
+  assignments: readonly SubmissionProgressAssignment[],
+): ProfileProgress {
+  const total = assignments.length;
+  if (total === 0) return { completed: 0, total: 0, percentage: 0 };
+  const completed = assignments.filter(
+    (assignment) => assignment.submission.latestAttempt !== null,
+  ).length;
   return {
     completed,
     total,
@@ -57,6 +76,7 @@ export async function getStudentProfile(
       },
       classSection: data.classSection,
       progress: calculateProfileProgress(data.assignments),
+      submissionProgress: calculateSubmissionProgress(data.assignments),
       assignments: data.assignments,
     };
   } catch (error) {

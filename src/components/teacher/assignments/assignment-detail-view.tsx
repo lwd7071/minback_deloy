@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
+import { AttachmentUploadPanel } from "./attachment-upload-panel";
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
 
@@ -219,6 +220,10 @@ export function AssignmentDetailView({
           </button>
         ) : null}
       </form>
+      <AttachmentUploadPanel
+        assignmentId={assignment.id}
+        disabled={assignment.status === "closed"}
+      />
       {error ? <p className="form-error">{error}</p> : null}
     </section>
   );

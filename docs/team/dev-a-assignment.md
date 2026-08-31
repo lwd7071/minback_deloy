@@ -448,4 +448,8 @@ Ngoài Definition of Done chung:
 - Import có báo cáo theo dòng và không làm lộ/lưu lại raw PIN sau bước cấp ban đầu.
 - Evaluation không thể liên kết Student và Assignment khác lớp.
 - Student Profile API đã có privacy regression test.
+
+## 7. Post-MVP — Assignment files và submissions
+
+Dev A sở hữu migration, Cloudinary server adapter, signed-upload handshake, download authorization, submission RPC, privacy/error regressions và DTO progress. Dev B sở hữu Student/Teacher presentation; không truyền Cloudinary URL trực tiếp vào UI và phải dùng internal download URL.
 - Dev B đã review code/test theo contract đã khóa; không mở lại quyết định thiết kế.

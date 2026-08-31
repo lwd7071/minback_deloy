@@ -422,3 +422,7 @@ Ngoài Definition of Done chung:
 - Notification/history không lộ chéo Student/Class.
 - Student UI không giữ dữ liệu riêng tư sau khi đổi session.
 - Dev A đã review code/test theo contract đã khóa; không mở lại quyết định thiết kế.
+
+## 7. Post-MVP — Assignment files và submissions
+
+Dev B hiển thị attachment, submission history, late badge, quota attempt và upload progress từ DTO/API đã khóa. UI không giữ Cloudinary credential/secret, không cache private response và chỉ dùng internal download URL do Dev A trả về.

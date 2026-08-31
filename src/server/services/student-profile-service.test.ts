@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { calculateProfileProgress } from "./student-profile-service";
+import {
+  calculateProfileProgress,
+  calculateSubmissionProgress,
+} from "./student-profile-service";
+import { isSubmissionLate } from "./submission-service";
 
 describe("calculateProfileProgress", () => {
   it("returns 0/0/0 when the Student has no visible Assignments", () => {
@@ -35,5 +39,28 @@ describe("calculateProfileProgress", () => {
     },
   ])("$name", ({ assignments, expected }) => {
     expect(calculateProfileProgress(assignments)).toEqual(expected);
+  });
+});
+
+describe("calculateSubmissionProgress", () => {
+  it("counts an Assignment once when it has any finalized latest attempt", () => {
+    expect(
+      calculateSubmissionProgress([
+        { submission: { latestAttempt: null } },
+        { submission: { latestAttempt: { id: "attempt-1" } } },
+        { submission: { latestAttempt: { id: "attempt-2" } } },
+      ]),
+    ).toEqual({ completed: 2, total: 3, percentage: 67 });
+  });
+});
+
+describe("isSubmissionLate", () => {
+  it("uses the end of the due date in Asia/Ho_Chi_Minh", () => {
+    const now = vi.spyOn(Date, "now");
+    now.mockReturnValue(new Date("2026-08-31T16:59:59.999Z").getTime());
+    expect(isSubmissionLate("2026-08-31")).toBe(false);
+    now.mockReturnValue(new Date("2026-08-31T17:00:00.000Z").getTime());
+    expect(isSubmissionLate("2026-08-31")).toBe(true);
+    now.mockRestore();
   });
 });

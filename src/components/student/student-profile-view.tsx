@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { SubmissionUploadPanel } from "./submission-upload-panel";
 import { useNotificationPolling } from "./use-notification-polling";
 
 type StudentProfileDto = {
   student: { mssv: string; fullName: string; nickname: string };
   classSection: { id: string; code: string; name: string };
   progress: { completed: number; total: number; percentage: number };
+  submissionProgress: { completed: number; total: number; percentage: number };
   assignments: Array<{
     id: string;
     title: string;
@@ -17,6 +19,30 @@ type StudentProfileDto = {
     dueDate: string;
     status: "draft" | "published" | "closed";
     maxScore: number;
+    attachments: Array<{
+      id: string;
+      originalName: string;
+      bytes: number;
+      format: string;
+      downloadUrl: string;
+    }>;
+    submission: {
+      attemptCount: number;
+      latestAttempt: {
+        id: string;
+        attemptNumber: number;
+        submittedAt: string;
+        isLate: boolean;
+        files: Array<{
+          id: string;
+          originalName: string;
+          bytes: number;
+          format: string;
+          uploadedAt: string;
+          downloadUrl: string;
+        }>;
+      } | null;
+    };
     evaluation: {
       id: string;
       score: number | null;
@@ -34,6 +60,7 @@ export function StudentProfileView() {
   const [profile, setProfile] = useState<StudentProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { unreadCount } = useNotificationPolling();
 
   useEffect(() => {
@@ -72,7 +99,7 @@ export function StudentProfileView() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshKey]);
 
   async function handleLogout() {
     try {
@@ -101,7 +128,8 @@ export function StudentProfileView() {
 
   if (!profile) return null;
 
-  const { student, classSection, progress, assignments } = profile;
+  const { student, classSection, progress, submissionProgress, assignments } =
+    profile;
 
   return (
     <div className="settings-stack">
@@ -149,6 +177,10 @@ export function StudentProfileView() {
           </button>
         </div>
       </div>
+      <p className="muted">
+        Tiến độ nộp bài: {submissionProgress.completed} /{" "}
+        {submissionProgress.total} ({submissionProgress.percentage}%)
+      </p>
 
       {/* Progress Card */}
       <div
@@ -235,6 +267,20 @@ export function StudentProfileView() {
                         Hạn nộp:{" "}
                         {new Date(asm.dueDate).toLocaleDateString("vi-VN")}
                       </span>
+                      {asm.attachments.length > 0 ? (
+                        <p className="muted" style={{ fontSize: "0.82rem" }}>
+                          Tài liệu:{" "}
+                          {asm.attachments.map((file) => (
+                            <a
+                              key={file.id}
+                              href={file.downloadUrl}
+                              style={{ marginLeft: "6px" }}
+                            >
+                              {file.originalName}
+                            </a>
+                          ))}
+                        </p>
+                      ) : null}
                     </div>
 
                     {/* Score badge */}
@@ -309,6 +355,29 @@ export function StudentProfileView() {
                       </p>
                     </div>
                   )}
+                  {asm.submission.latestAttempt ? (
+                    <p className="muted" style={{ marginTop: "12px" }}>
+                      Lần nộp #{asm.submission.latestAttempt.attemptNumber}
+                      {asm.submission.latestAttempt.isLate
+                        ? " (nộp trễ)"
+                        : ""}:{" "}
+                      {asm.submission.latestAttempt.files.map((file) => (
+                        <a
+                          key={file.id}
+                          href={file.downloadUrl}
+                          style={{ marginLeft: "6px" }}
+                        >
+                          {file.originalName}
+                        </a>
+                      ))}
+                    </p>
+                  ) : null}
+                  <SubmissionUploadPanel
+                    assignmentId={asm.id}
+                    status={asm.status}
+                    submission={asm.submission}
+                    onSubmitted={() => setRefreshKey((value) => value + 1)}
+                  />
                 </div>
               );
             })}
