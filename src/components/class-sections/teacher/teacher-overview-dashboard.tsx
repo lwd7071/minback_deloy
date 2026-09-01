@@ -1,0 +1,224 @@
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { AppIcon } from "@/components/ui/app-icon";
+import { DashboardMetric, MiniProgressRing } from "./class-summary-dashboard";
+import type { 
+  DashboardActivityItem, 
+  PendingGradingItem 
+} from "@/server/repositories/teacher-dashboard-repository";
+
+type DashboardOverviewData = {
+  metrics: {
+    classCount: number;
+    studentCount: number;
+    assignmentCount: number;
+    gradingPercentage: number;
+  };
+  pendingGrading: PendingGradingItem[];
+  classProgress: {
+    classSectionId: string;
+    classCode: string;
+    className: string;
+    completed: number;
+    total: number;
+    percentage: number;
+  }[];
+  recentActivity: DashboardActivityItem[];
+};
+
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function timeAgo(dateStr: string) {
+  const date = new Date(dateStr);
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " năm trước";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " tháng trước";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " ngày trước";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " giờ trước";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " phút trước";
+  return "Vừa xong";
+}
+
+export function TeacherOverviewDashboard() {
+  const [data, setData] = useState<DashboardOverviewData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/v1/teacher/dashboard-overview", { cache: "no-store" })
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok || !body.data)
+          throw new Error(body.error?.message ?? "Không thể tải dữ liệu");
+        return body.data as DashboardOverviewData;
+      })
+      .then((resData) => {
+        if (active) setData(resData);
+      })
+      .catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : "Đã xảy ra lỗi");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (error) {
+    return (
+      <div className="teacher-dash">
+        <p className="form-error">{error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    // Loading state could be added here
+    return <div className="teacher-dash"><p className="muted">Đang tải...</p></div>;
+  }
+
+  return (
+    <div className="teacher-dash">
+      <header className="teacher-dash-header">
+        <div className="teacher-dash-heading">
+          <span className="teacher-dash-icon">
+            <AppIcon name="study" size={28} />
+          </span>
+          <div>
+            <h1>Tổng quan</h1>
+          </div>
+        </div>
+      </header>
+
+      <div className="teacher-metrics-grid" aria-label="Tổng quan lớp học">
+        <DashboardMetric
+          icon="classes"
+          tone="blue"
+          label="Lớp"
+          value={data.metrics.classCount}
+        />
+        <DashboardMetric
+          icon="students"
+          tone="green"
+          label="Sinh viên"
+          value={data.metrics.studentCount}
+        />
+        <DashboardMetric
+          icon="book"
+          tone="amber"
+          label="Bài mở"
+          value={data.metrics.assignmentCount}
+        />
+        <DashboardMetric
+          icon="check"
+          tone="violet"
+          label="Đã chấm"
+          value={`${data.metrics.gradingPercentage}%`}
+        />
+      </div>
+
+      <div className="teacher-overview-panels">
+        {/* Left column: Pending Grading */}
+        <section className="overview-panel">
+          <h2 className="overview-panel-title">
+            <AppIcon name="gradebook" size={20} />
+            Bài cần chấm
+          </h2>
+          {data.pendingGrading.length > 0 ? (
+            <div className="pending-grading-list">
+              {data.pendingGrading.map((item) => (
+                <Link
+                  key={item.assignmentId}
+                  href={`/admin/classes/${item.classSectionId}/assignments/${item.assignmentId}`}
+                  className="pending-grading-card-link"
+                >
+                  <Card hover className="pending-grading-card">
+                    <div className="pending-card-head">
+                      <span className="badge badge-amber">{item.classCode}</span>
+                      <span className="pending-deadline">Hạn: {formatDate(item.dueDate)}</span>
+                    </div>
+                    <h3>{item.assignmentTitle}</h3>
+                    <div className="pending-card-footer">
+                      <AppIcon name="upload" size={16} />
+                      <strong>{item.pendingCount}</strong> bài nộp chờ chấm
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">Không có bài tập nào đang chờ chấm.</p>
+          )}
+        </section>
+
+        {/* Right column: Class Progress */}
+        <section className="overview-panel">
+          <h2 className="overview-panel-title">
+            <AppIcon name="classes" size={20} />
+            Tiến độ chấm theo lớp
+          </h2>
+          <div className="class-progress-list">
+            {data.classProgress.length > 0 ? (
+              data.classProgress.map((cls) => (
+                <div key={cls.classSectionId} className="class-progress-row">
+                  <div className="class-progress-header">
+                    <span className="class-code">{cls.classCode}</span>
+                    <span className="class-name">{cls.className}</span>
+                    <MiniProgressRing percentage={cls.percentage} />
+                  </div>
+                  <ProgressBar value={cls.completed} max={cls.total} />
+                </div>
+              ))
+            ) : (
+              <p className="muted">Chưa có lớp học nào.</p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* Full width bottom panel: Recent Activity */}
+      <section className="overview-panel activity-panel">
+        <h2 className="overview-panel-title">
+          <AppIcon name="clock" size={20} />
+          Hoạt động gần đây
+        </h2>
+        <div className="activity-feed">
+          {data.recentActivity.length > 0 ? (
+            data.recentActivity.map((activity, idx) => (
+              <div key={idx} className="activity-item">
+                <div className={`activity-icon-wrapper ${activity.type === 'graded' ? 'is-graded' : 'is-submission'}`}>
+                  <AppIcon name={activity.type === 'graded' ? "check" : "upload"} size={16} />
+                </div>
+                <div className="activity-content">
+                  <p>
+                    <strong>{activity.studentName}</strong> 
+                    {activity.type === 'graded' ? " đã được chấm bài " : " vừa nộp bài "} 
+                    <em>{activity.assignmentTitle}</em> 
+                    {" "}(Lớp {activity.classCode})
+                  </p>
+                  <span className="activity-time">{timeAgo(activity.timestamp)}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="muted">Chưa có hoạt động nào.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}

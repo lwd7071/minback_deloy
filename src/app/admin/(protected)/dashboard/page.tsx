@@ -1,4 +1,5 @@
-import { ClassSummaryDashboard } from "@/components/admin/class-summary-dashboard";
-export default function AdminDashboardPage() {
-  return <ClassSummaryDashboard />;
+import { TeacherOverviewDashboard } from "@/components/class-sections/teacher/teacher-overview-dashboard";
+
+export default function DashboardPage() {
+  return <TeacherOverviewDashboard />;
 }
