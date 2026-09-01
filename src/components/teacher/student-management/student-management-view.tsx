@@ -18,8 +18,18 @@ export function StudentManagementView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  // Debounce tìm kiếm 300ms để chống spam request và race condition
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // State sửa thông tin student
   const [editingStudent, setEditingStudent] = useState<StudentAdminDto | null>(
@@ -50,16 +60,22 @@ export function StudentManagementView({
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function load() {
       setLoading(true);
       try {
-        const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=20${search.trim() ? `&search=${encodeURIComponent(search.trim())}` : ""}`;
-        const res = await fetch(url, { cache: "no-store" });
+        const query = debouncedSearch.trim()
+          ? `&search=${encodeURIComponent(debouncedSearch.trim())}`
+          : "";
+        const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=20${query}`;
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         const body = (await res.json()) as ApiResult<StudentAdminDto[]>;
 
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
 
         if (!res.ok || !("data" in body)) {
           throw new Error(
@@ -73,11 +89,11 @@ export function StudentManagementView({
         if (body.meta) setTotal(body.meta.total);
         setError(null);
       } catch (err) {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setError(err instanceof Error ? err.message : "Lỗi kết nối");
         }
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -85,11 +101,11 @@ export function StudentManagementView({
 
     void load();
 
-    // Cleanup: huỷ setState khi component unmount hoặc deps thay đổi
+    // Hủy bỏ request đang bay dở khi người dùng đổi từ khóa hoặc đổi trang
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [classSectionId, page, search, refreshKey]);
+  }, [classSectionId, page, debouncedSearch, refreshKey]);
 
   function startEdit(st: StudentAdminDto) {
     setEditingStudent(st);
@@ -197,6 +213,7 @@ export function StudentManagementView({
           type="text"
           className="form-input"
           placeholder="Tìm theo MSSV, Họ tên, Nickname…"
+          autoComplete="off"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -206,12 +223,8 @@ export function StudentManagementView({
         <span className="muted">Tổng số: {total} sinh viên</span>
       </div>
 
-      {loading ? (
-        <p className="muted">Đang tải danh sách sinh viên…</p>
-      ) : error ? (
+      {error ? (
         <p className="form-error">{error}</p>
-      ) : students.length === 0 ? (
-        <p className="muted">Không tìm thấy sinh viên nào trong lớp này.</p>
       ) : (
         <div className="table-wrap">
           <table>
@@ -225,46 +238,66 @@ export function StudentManagementView({
                 <th>Thao tác</th>
               </tr>
             </thead>
-            <tbody>
-              {students.map((st) => (
-                <tr key={st.id}>
-                  <td>{st.mssv}</td>
-                  <td>{st.fullName}</td>
-                  <td>{st.nickname}</td>
-                  <td className="muted">{st.email ?? "—"}</td>
-                  <td>
-                    {st.mustChangePin ? (
-                      <span className="status-text status-warning">
-                        Cần đổi PIN
-                      </span>
-                    ) : (
-                      <span className="status-text status-success">
-                        Bình thường
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="button button-secondary button-sm"
-                      onClick={() => void handleViewProfile(st)}
-                    >
-                      Hồ sơ
-                    </button>
-                    <button
-                      className="button button-secondary button-sm"
-                      onClick={() => startEdit(st)}
-                    >
-                      Sửa
-                    </button>
-                    <button
-                      className="button button-secondary button-sm"
-                      onClick={() => void handleResetPin(st)}
-                    >
-                      Reset PIN
-                    </button>
+            <tbody style={{ opacity: loading && students.length > 0 ? 0.6 : 1, transition: "opacity 0.15s" }}>
+              {loading && students.length === 0 ? (
+                // Skeleton Rows: Giữ nguyên khung bảng chống layout shift
+                Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={`skeleton-${index}`}>
+                    <td><div style={{ height: "14px", width: "80px", background: "#e2e8f0", borderRadius: "4px" }} /></td>
+                    <td><div style={{ height: "14px", width: "140px", background: "#e2e8f0", borderRadius: "4px" }} /></td>
+                    <td><div style={{ height: "14px", width: "90px", background: "#f1f5f9", borderRadius: "4px" }} /></td>
+                    <td><div style={{ height: "14px", width: "160px", background: "#f1f5f9", borderRadius: "4px" }} /></td>
+                    <td><div style={{ height: "18px", width: "70px", background: "#e2e8f0", borderRadius: "9999px" }} /></td>
+                    <td><div style={{ height: "26px", width: "140px", background: "#f1f5f9", borderRadius: "4px" }} /></td>
+                  </tr>
+                ))
+              ) : students.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="muted" style={{ textAlign: "center", padding: "32px 0" }}>
+                    Không tìm thấy sinh viên nào trong lớp này.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                students.map((st) => (
+                  <tr key={st.id}>
+                    <td>{st.mssv}</td>
+                    <td>{st.fullName}</td>
+                    <td>{st.nickname}</td>
+                    <td className="muted">{st.email ?? "—"}</td>
+                    <td>
+                      {st.mustChangePin ? (
+                        <span className="status-text status-warning">
+                          Cần đổi PIN
+                        </span>
+                      ) : (
+                        <span className="status-text status-success">
+                          Bình thường
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        className="button button-secondary button-sm"
+                        onClick={() => void handleViewProfile(st)}
+                      >
+                        Hồ sơ
+                      </button>
+                      <button
+                        className="button button-secondary button-sm"
+                        onClick={() => startEdit(st)}
+                      >
+                        Sửa
+                      </button>
+                      <button
+                        className="button button-secondary button-sm"
+                        onClick={() => void handleResetPin(st)}
+                      >
+                        Reset PIN
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -352,6 +385,7 @@ export function StudentManagementView({
           <form
             className="dialog-form"
             onSubmit={(e) => void handleSaveEdit(e)}
+            autoComplete="off"
           >
             <div>
               <label className="form-label">Họ và tên</label>
@@ -359,6 +393,7 @@ export function StudentManagementView({
                 type="text"
                 className="form-input"
                 required
+                autoComplete="off"
                 value={editFullName}
                 onChange={(e) => setEditFullName(e.target.value)}
               />
@@ -370,6 +405,7 @@ export function StudentManagementView({
                 type="text"
                 className="form-input"
                 required
+                autoComplete="off"
                 value={editNickname}
                 onChange={(e) => setEditNickname(e.target.value)}
               />
@@ -380,6 +416,7 @@ export function StudentManagementView({
               <input
                 type="email"
                 className="form-input"
+                autoComplete="off"
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
               />

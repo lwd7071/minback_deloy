@@ -138,7 +138,7 @@ export function AssignmentDetailView({
   return (
     <section className="surface editor-surface">
       <h1>Chỉnh sửa bài tập</h1>
-      <form className="login-form" onSubmit={updateAssignment}>
+      <form className="stack" onSubmit={updateAssignment} autoComplete="off">
         <label className="form-field">
           <span className="form-label">Tên bài tập</span>
           <input

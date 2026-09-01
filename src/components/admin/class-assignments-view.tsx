@@ -93,11 +93,12 @@ export function ClassAssignmentsView({
       </div>
       {showCreate ? (
         <Card>
-          <form className="form-stack" onSubmit={(event) => void create(event)}>
+          <form className="form-stack" onSubmit={(event) => void create(event)} autoComplete="off">
             <label className="form-field">
               <span>Tên bài tập</span>
               <input
                 required
+                autoComplete="off"
                 value={draft.title}
                 onChange={(event) =>
                   setDraft((value) => ({ ...value, title: event.target.value }))

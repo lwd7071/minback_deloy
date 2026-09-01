@@ -80,11 +80,12 @@ export function ClassCreateFlow() {
           <span className="step-number">1</span>
           <h2>Thông tin lớp</h2>
         </div>
-        <form className="form-stack" onSubmit={(event) => void create(event)}>
+        <form className="form-stack" onSubmit={(event) => void create(event)} autoComplete="off">
           <label className="form-field">
             <span>Mã lớp</span>
             <input
               value={code}
+              autoComplete="off"
               disabled={Boolean(section)}
               onChange={(event) => setCode(event.target.value.toUpperCase())}
             />
@@ -93,6 +94,7 @@ export function ClassCreateFlow() {
             <span>Tên lớp</span>
             <input
               value={name}
+              autoComplete="off"
               disabled={Boolean(section)}
               onChange={(event) => setName(event.target.value)}
             />

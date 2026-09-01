@@ -3,18 +3,23 @@ import "server-only";
 import { z } from "zod";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
+import {
+  escapeHtml,
+  renderEvaluationReturnedEmail,
+} from "./templates/evaluation-returned-template";
+import { renderTestEmail } from "./templates/test-email-template";
 
 const BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 const BREVO_TIMEOUT_MS = 10_000;
 
-const brevoConfigSchema = z.object({
-  apiKey: z.string().trim().min(1),
-  senderEmail: z.email(),
+export const brevoConfigSchema = z.object({
+  apiKey: z.string().trim().min(1, "Thiếu BREVO_API_KEY"),
+  senderEmail: z.string().email("BREVO_SENDER_EMAIL không hợp lệ"),
   senderName: z.string().trim().min(1).max(100),
-  appUrl: z.url(),
+  appUrl: z.string().url("APP_URL không hợp lệ"),
 });
 
-const brevoSuccessSchema = z.object({ messageId: z.string().min(1) });
+export const brevoSuccessSchema = z.object({ messageId: z.string().min(1) });
 
 export type BrevoPublicConfig = {
   configured: boolean;
@@ -72,40 +77,23 @@ export function assertBrevoConfigured(): void {
   readBrevoConfig();
 }
 
-export function escapeHtml(value: string): string {
-  return value.replace(/[&<>'"]/g, (character) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      "'": "&#39;",
-      '"': "&quot;",
-    };
-    return entities[character];
-  });
-}
+// Re-export escapeHtml for backward compatibility with existing callers/tests
+export { escapeHtml };
 
+/**
+ * Xây dựng nội dung email thông báo kết quả bài tập.
+ * Đảm bảo backward compatibility và tách biệt template.
+ */
 export function buildEvaluationEmail(
   input: Omit<EvaluationEmailInput, "recipientEmail">,
   appUrl: string,
 ) {
-  const studentFullName = escapeHtml(input.studentFullName);
-  const assignmentTitle = escapeHtml(input.assignmentTitle);
-  const classCode = escapeHtml(input.classCode);
-  const className = escapeHtml(input.className);
-  const loginUrl = `${appUrl.replace(/\/$/, "")}/class/${encodeURIComponent(input.classCode)}/login`;
-
-  return {
-    subject: `[MinBack] Có kết quả mới - ${input.classCode}`,
-    htmlContent: [
-      `<p>Xin chào ${studentFullName},</p>`,
-      `<p>Giáo viên đã công bố kết quả bài tập “${assignmentTitle}” thuộc lớp học phần ${classCode} — ${className}.</p>`,
-      `<p>Vui lòng đăng nhập MinBack để xem điểm và feedback:<br><a href="${escapeHtml(loginUrl)}">${escapeHtml(loginUrl)}</a></p>`,
-      "<p>Đây là email tự động, vui lòng không trả lời.</p>",
-    ].join(""),
-  };
+  return renderEvaluationReturnedEmail(input, appUrl);
 }
 
+/**
+ * Gửi email thông báo kết quả bài tập tới sinh viên qua Brevo API.
+ */
 export async function sendEvaluationEmail(
   input: EvaluationEmailInput,
   fetchImpl: FetchLike = fetch,
@@ -150,11 +138,15 @@ export async function sendEvaluationEmail(
   }
 }
 
+/**
+ * Gửi email kiểm tra cấu hình Brevo tới email của Teacher đang đăng nhập.
+ */
 export async function sendTestEmail(
   recipientEmail: string,
   fetchImpl: FetchLike = fetch,
 ): Promise<{ messageId: string }> {
   const config = readBrevoConfig();
+  const content = renderTestEmail();
 
   try {
     const response = await fetchImpl(BREVO_ENDPOINT, {
@@ -167,9 +159,8 @@ export async function sendTestEmail(
       body: JSON.stringify({
         sender: { email: config.senderEmail, name: config.senderName },
         to: [{ email: recipientEmail }],
-        subject: "[MinBack] Kiểm tra cấu hình email",
-        htmlContent:
-          "<p>Cấu hình Brevo của MinBack đang hoạt động.</p><p>Đây là email tự động, vui lòng không trả lời.</p>",
+        subject: content.subject,
+        htmlContent: content.htmlContent,
       }),
       signal: AbortSignal.timeout(BREVO_TIMEOUT_MS),
     });

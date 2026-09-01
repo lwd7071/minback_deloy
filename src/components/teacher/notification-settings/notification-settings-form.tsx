@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CheckCircle2, AlertTriangle, Send, Mail, RefreshCw } from "lucide-react";
 
 type Settings = {
   emailEnabled: boolean;
@@ -9,7 +10,7 @@ type Settings = {
   senderName: string | null;
 };
 
-type ApiResult<T> = { data: T } | { error: { message: string } };
+type ApiResult<T> = { data: T } | { error: { message: string; code?: string } };
 
 async function readResult<T>(response: Response): Promise<T> {
   const body = (await response.json()) as ApiResult<T>;
@@ -21,27 +22,38 @@ async function readResult<T>(response: Response): Promise<T> {
 
 export function NotificationSettingsForm() {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isToggling, setIsToggling] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    void fetch("/api/v1/teacher/settings/notifications", { cache: "no-store" })
-      .then((response) => readResult<Settings>(response))
-      .then((data) => {
+    async function loadSettings() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch("/api/v1/teacher/settings/notifications", {
+          cache: "no-store",
+        });
+        const data = await readResult<Settings>(response);
         if (active) setSettings(data);
-      })
-      .catch((loadError: unknown) => {
+      } catch (loadError: unknown) {
         if (active) {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Không thể tải cấu hình",
+              : "Không thể tải cấu hình thông báo",
           );
         }
-      });
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+
+    void loadSettings();
 
     return () => {
       active = false;
@@ -49,8 +61,8 @@ export function NotificationSettingsForm() {
   }, []);
 
   async function toggleEmail() {
-    if (!settings) return;
-    setBusy(true);
+    if (!settings || isToggling || isSendingTest) return;
+    setIsToggling(true);
     setMessage(null);
     setError(null);
     try {
@@ -59,21 +71,27 @@ export function NotificationSettingsForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ emailEnabled: !settings.emailEnabled }),
       });
-      setSettings(await readResult<Settings>(response));
-      setMessage("Đã lưu cấu hình email.");
+      const updated = await readResult<Settings>(response);
+      setSettings(updated);
+      setMessage(
+        updated.emailEnabled
+          ? "Đã bật tính năng gửi email khi công bố kết quả."
+          : "Đã tắt tính năng gửi email thông báo.",
+      );
     } catch (saveError) {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : "Không thể lưu cấu hình",
+          : "Không thể lưu cài đặt email",
       );
     } finally {
-      setBusy(false);
+      setIsToggling(false);
     }
   }
 
   async function sendTest() {
-    setBusy(true);
+    if (isSendingTest || isToggling) return;
+    setIsSendingTest(true);
     setMessage(null);
     setError(null);
     try {
@@ -82,7 +100,7 @@ export function NotificationSettingsForm() {
         { method: "POST" },
       );
       await readResult<{ success: true }>(response);
-      setMessage("Đã gửi email thử tới email của Teacher đang đăng nhập.");
+      setMessage("Đã gửi email thử nghiệm thành công tới địa chỉ email của bạn.");
     } catch (testError) {
       setError(
         testError instanceof Error
@@ -90,72 +108,130 @@ export function NotificationSettingsForm() {
           : "Không thể gửi email thử",
       );
     } finally {
-      setBusy(false);
+      setIsSendingTest(false);
     }
   }
 
-  if (!settings && !error) return <p className="muted">Đang tải cấu hình…</p>;
+  // Loading skeleton state
+  if (isLoading) {
+    return (
+      <div className="settings-stack" aria-busy="true" aria-live="polite">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", borderBottom: "1px solid var(--border-color, #e2e8f0)" }}>
+          <div style={{ width: "60%" }}>
+            <div style={{ height: "18px", width: "200px", background: "#e2e8f0", borderRadius: "4px", marginBottom: "8px" }} />
+            <div style={{ height: "14px", width: "320px", background: "#f1f5f9", borderRadius: "4px" }} />
+          </div>
+          <div style={{ height: "36px", width: "90px", background: "#e2e8f0", borderRadius: "6px" }} />
+        </div>
+        <p className="muted" style={{ margin: "16px 0 0", fontSize: "14px" }}>Đang tải cài đặt thông báo…</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="settings-stack">
+    <div className="settings-stack" aria-live="polite">
       {settings ? (
         <>
-          <div className="settings-row">
+          {/* Main Email Toggle Section */}
+          <div className="settings-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
             <div>
-              <strong>Gửi email khi công bố kết quả</strong>
-              <p className="muted settings-help">
-                Email chỉ báo có kết quả mới; điểm và feedback chỉ xem trong
-                MinBack.
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Mail size={18} className="text-primary" />
+                <strong style={{ fontSize: "15px" }}>Gửi email khi công bố kết quả</strong>
+              </div>
+              <p className="muted settings-help" style={{ marginTop: "4px", fontSize: "13px" }}>
+                Tự động gửi email thông báo tới sinh viên khi bài tập chuyển sang trạng thái <strong>Công bố (returned)</strong>.
+                Điểm số và nhận xét chi tiết được bảo mật, sinh viên chỉ xem sau khi đăng nhập MinBack.
               </p>
             </div>
             <button
-              className="button"
+              className={`button ${settings.emailEnabled ? "button-primary" : "button-secondary"}`}
               type="button"
-              disabled={busy}
+              disabled={isToggling || isSendingTest}
               aria-pressed={settings.emailEnabled}
               onClick={() => void toggleEmail()}
+              style={{ minWidth: "100px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
             >
+              {isToggling ? (
+                <RefreshCw size={14} className="spin" />
+              ) : null}
               {settings.emailEnabled ? "Đang bật" : "Đang tắt"}
             </button>
           </div>
 
-          <dl className="settings-details">
-            <div>
-              <dt>Trạng thái Brevo</dt>
-              <dd>
-                {settings.brevoConfigured ? "Đã cấu hình" : "Chưa cấu hình"}
+          {/* Brevo Service & Sender Details */}
+          <dl className="settings-details" style={{ margin: "20px 0", padding: "16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+            <div style={{ marginBottom: "12px" }}>
+              <dt style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Trạng thái cấu hình Brevo</dt>
+              <dd style={{ margin: "4px 0 0", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+                {settings.brevoConfigured ? (
+                  <span style={{ color: "#16a34a", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <CheckCircle2 size={16} /> Đã cấu hình trên máy chủ
+                  </span>
+                ) : (
+                  <span style={{ color: "#d97706", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                    <AlertTriangle size={16} /> Chưa cấu hình đầy đủ (Thiếu API Key/Sender Email)
+                  </span>
+                )}
               </dd>
             </div>
-            <div>
-              <dt>Sender name</dt>
-              <dd>{settings.senderName ?? "—"}</dd>
+            <div style={{ marginBottom: "12px" }}>
+              <dt style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Tên người gửi (Sender Name)</dt>
+              <dd style={{ margin: "4px 0 0", fontSize: "14px" }}>{settings.senderName ?? "—"}</dd>
             </div>
             <div>
-              <dt>Sender email</dt>
-              <dd>{settings.senderEmail ?? "—"}</dd>
+              <dt style={{ fontSize: "13px", color: "#64748b", fontWeight: 500 }}>Địa chỉ người gửi (Sender Email)</dt>
+              <dd style={{ margin: "4px 0 0", fontSize: "14px", fontFamily: "monospace" }}>{settings.senderEmail ?? "—"}</dd>
             </div>
           </dl>
 
-          <button
-            className="button button-secondary"
-            type="button"
-            disabled={busy || !settings.brevoConfigured}
-            onClick={() => void sendTest()}
-          >
-            Gửi email thử
-          </button>
+          {/* Test Email Action Button */}
+          <div>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={isSendingTest || isToggling || !settings.brevoConfigured}
+              onClick={() => void sendTest()}
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}
+            >
+              {isSendingTest ? (
+                <RefreshCw size={14} className="spin" />
+              ) : (
+                <Send size={14} />
+              )}
+              {isSendingTest ? "Đang gửi email thử…" : "Gửi email thử nghiệm"}
+            </button>
+            {!settings.brevoConfigured && (
+              <span className="muted" style={{ marginLeft: "12px", fontSize: "13px" }}>
+                (Cần cấu hình Brevo server env trước khi gửi thử)
+              </span>
+            )}
+          </div>
         </>
       ) : null}
 
+      {/* Success Alert */}
       {message ? (
-        <p className="form-success" role="status">
+        <div
+          className="form-success"
+          role="status"
+          style={{ marginTop: "16px", padding: "10px 14px", borderRadius: "6px", background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}
+        >
+          <CheckCircle2 size={16} />
           {message}
-        </p>
+        </div>
       ) : null}
+
+      {/* Error Alert */}
       {error ? (
-        <p className="form-error" role="alert">
+        <div
+          className="form-error"
+          role="alert"
+          style={{ marginTop: "16px", padding: "10px 14px", borderRadius: "6px", background: "#fef2f2", border: "1px solid #fecaca", color: "#991b1b", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}
+        >
+          <AlertTriangle size={16} />
           {error}
-        </p>
+        </div>
       ) : null}
     </div>
   );
