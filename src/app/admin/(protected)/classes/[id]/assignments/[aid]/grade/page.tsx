@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BulkGradeView } from "@/components/admin/bulk-grade-view";
+import { BulkGradeView } from "@/components/evaluations/teacher/bulk-grade-view";
 export default async function GradePage({
   params,
 }: {
@@ -10,7 +10,7 @@ export default async function GradePage({
     <div className="stack">
       <Link
         className="btn btn-ghost"
-        href={`/admin/classes/${id}?tab=assignments`}
+        href={`/admin/classes/${id}/assignments`}
       >
         ← Quay lại lớp
       </Link>

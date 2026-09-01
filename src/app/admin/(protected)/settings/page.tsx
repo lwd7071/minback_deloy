@@ -1,4 +1,4 @@
-import { NotificationSettingsForm } from "@/components/teacher/notification-settings/notification-settings-form";
+import { NotificationSettingsForm } from "@/components/notifications/teacher/notification-settings-form";
 export default function AdminSettingsPage() {
   return (
     <div className="stack">

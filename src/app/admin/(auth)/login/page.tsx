@@ -1,4 +1,4 @@
-import { TeacherLoginForm } from "@/components/teacher/teacher-login-form";
+import { TeacherLoginForm } from "@/components/auth/teacher/teacher-login-form";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 export default function AdminLoginPage() {

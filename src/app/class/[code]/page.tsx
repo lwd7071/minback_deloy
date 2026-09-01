@@ -1,5 +1,4 @@
-import { PublicClassView } from "@/components/student/public-class-view";
-import Link from "next/link";
+import { PublicClassView } from "@/components/class-sections/student/public-class-view";
 
 export default async function ClassLookupPage({
   params,
@@ -9,10 +8,7 @@ export default async function ClassLookupPage({
   const { code } = await params;
   return (
     <main className="public-shell">
-      <div className="auth-wrap stack">
-
-        <PublicClassView code={code.toUpperCase()} />
-      </div>
+      <PublicClassView code={code.toUpperCase()} />
     </main>
   );
 }

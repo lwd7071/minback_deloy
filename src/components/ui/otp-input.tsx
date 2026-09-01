@@ -23,7 +23,7 @@ export function OtpInput({
   };
   return (
     <div
-      className="otp-row"
+      className="otp-input"
       onPaste={(event) => {
         const digits = event.clipboardData
           .getData("text")
@@ -48,7 +48,7 @@ export function OtpInput({
           ref={(node) => {
             refs.current[index] = node;
           }}
-          type="password"
+          type="tel"
           value={value[index] ?? ""}
           onChange={(event) =>
             setDigit(index, event.target.value.replace(/\D/g, "").slice(-1))

@@ -1,23 +1,18 @@
-import Link from "next/link";
-import { ClassDetailTabs } from "@/components/admin/class-detail-tabs";
+import { redirect } from "next/navigation";
+import { ClassOverviewView } from "@/components/class-sections/teacher/class-overview-view";
 import { getTeacherClassSection } from "@/server/services/class-sections/class-section-service";
 export default async function AdminClassPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const { tab } = await searchParams;
+  if (tab === "students" || tab === "assignments" || tab === "gradebook") {
+    redirect(`/admin/classes/${encodeURIComponent(id)}/${tab}`);
+  }
   const section = await getTeacherClassSection(id);
-  return (
-    <div className="stack">
-      <div className="page-head">
-        <Link className="btn btn-ghost" href="/admin/dashboard">
-          ← Tổng quan
-        </Link>
-        <p className="eyebrow">{section.code}</p>
-        <h1>{section.name}</h1>
-      </div>
-      <ClassDetailTabs classSectionId={id} />
-    </div>
-  );
+  return <ClassOverviewView classSectionId={id} code={section.code} name={section.name} />;
 }

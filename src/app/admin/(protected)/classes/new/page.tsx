@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClassCreateFlow } from "@/components/admin/class-create-flow";
+import { ClassCreateFlow } from "@/components/class-sections/teacher/class-create-flow";
 export default function CreateClassPage() {
   return (
     <div className="stack">

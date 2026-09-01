@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { WorkspaceHeader } from "@/components/layout/workspace-header";
 export default async function ProtectedAdminLayout({
   children,
 }: {
@@ -15,10 +15,5 @@ export default async function ProtectedAdminLayout({
       redirect("/admin/login");
     throw error;
   }
-  return (
-    <div className="admin-shell">
-      <AdminSidebar />
-      <main className="admin-content">{children}</main>
-    </div>
-  );
+  return <div className="workspace-page teacher-workspace"><WorkspaceHeader role="teacher" /><main className="workspace-main">{children}</main></div>;
 }

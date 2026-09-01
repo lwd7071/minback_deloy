@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Be_Vietnam_Pro, Inter } from "next/font/google";
+import { Be_Vietnam_Pro, IBM_Plex_Mono, Lora } from "next/font/google";
 
 import "./globals.css";
-import "./workspace.css";
 
-const inter = Inter({
+const body = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-inter",
+  variable: "--font-body",
+  weight: ["400", "500", "600", "700"],
 });
-const beVietnamPro = Be_Vietnam_Pro({
+const display = Lora({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-heading",
+  variable: "--font-display",
   weight: ["500", "600", "700"],
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-mono",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${beVietnamPro.variable} ${inter.className}`}
+        className={`${body.variable} ${display.variable} ${mono.variable} ${body.className}`}
       >
         {children}
       </body>

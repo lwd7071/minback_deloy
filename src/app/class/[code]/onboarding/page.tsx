@@ -1,4 +1,4 @@
-import { ChangeCredentialsForm } from "@/components/student/change-credentials-form";
+import { ChangeCredentialsForm } from "@/components/auth/student/change-credentials-form";
 import { Card } from "@/components/ui/card";
 import { redirect } from "next/navigation";
 import { requireAnyStudentSession } from "@/server/auth/student-session";
