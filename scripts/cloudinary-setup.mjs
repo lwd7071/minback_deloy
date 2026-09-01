@@ -37,13 +37,20 @@ const options = {
 };
 
 try {
-  await cloudinary.api.update_upload_preset(name, options);
-  process.stdout.write(`Cloudinary preset updated: ${name}\n`);
-} catch (error) {
-  if (error instanceof Error && error.message.includes("not found")) {
+  try {
+    await cloudinary.api.update_upload_preset(name, options);
+    process.stdout.write(`Cloudinary preset updated: ${name}\n`);
+  } catch (error) {
+    const cloudinaryError = error?.error ?? error;
+
+    if (cloudinaryError?.http_code !== 404) throw error;
+
     await cloudinary.api.create_upload_preset({ name, ...options });
     process.stdout.write(`Cloudinary preset created: ${name}\n`);
-  } else {
-    throw error;
   }
+} catch (error) {
+  const cloudinaryError = error?.error ?? error;
+  const status = cloudinaryError?.http_code ?? "unknown";
+  const message = cloudinaryError?.message ?? "Unknown Cloudinary error";
+  throw new Error(`Cloudinary preset setup failed (${status}): ${message}`);
 }

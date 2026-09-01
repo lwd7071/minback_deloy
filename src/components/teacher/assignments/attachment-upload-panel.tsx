@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { getCloudinaryUploadErrorMessage } from "@/lib/cloudinary-upload-error";
+import { normalizeCloudinaryRawUpload } from "@/lib/cloudinary-upload-response";
 import type { FileAssetDto } from "@/types/file-assets";
 
 type Props = { assignmentId: string; disabled: boolean };
@@ -58,25 +60,21 @@ export function AttachmentUploadPanel({ assignmentId, disabled }: Props) {
         method: "POST",
         body: form,
       });
-      const asset = await cloud.json();
-      if (!cloud.ok) throw new Error("Cloudinary từ chối file upload");
+      const asset = (await cloud.json()) as {
+        error?: { message?: string };
+        [key: string]: unknown;
+      };
+      if (!cloud.ok) {
+        throw new Error(getCloudinaryUploadErrorMessage(asset));
+      }
+      const uploadedAsset = normalizeCloudinaryRawUpload(asset, file.name);
       const saved = await fetch(
         `/api/v1/teacher/assignments/${assignmentId}/attachments`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            file: {
-              originalName: file.name,
-              assetId: asset.asset_id,
-              publicId: asset.public_id,
-              version: asset.version,
-              signature: asset.signature,
-              secureUrl: asset.secure_url,
-              resourceType: asset.resource_type,
-              format: asset.format,
-              bytes: asset.bytes,
-            },
+            file: uploadedAsset,
           }),
         },
       );

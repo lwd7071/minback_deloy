@@ -19,7 +19,7 @@
     "test:setup": "node scripts/test-setup.mjs",
     "test:health": "node scripts/test-health.mjs",
     "benchmark:local": "node scripts/perf-baseline.mjs",
-    "cloudinary:setup": "node scripts/cloudinary-setup.mjs",
+    "cloudinary:setup": "node --env-file=.env.local scripts/cloudinary-setup.mjs",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",

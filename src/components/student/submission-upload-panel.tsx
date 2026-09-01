@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { getCloudinaryUploadErrorMessage } from "@/lib/cloudinary-upload-error";
+import { normalizeCloudinaryRawUpload } from "@/lib/cloudinary-upload-response";
 import type { SubmissionSummaryDto } from "@/types/submission";
 
 type UploadSignature = {
@@ -84,20 +86,14 @@ export function SubmissionUploadPanel({
           method: "POST",
           body: form,
         });
-        const cloudinaryBody = await cloudinaryResponse.json();
-        if (!cloudinaryResponse.ok)
-          throw new Error("Cloudinary từ chối file upload");
-        uploaded.push({
-          originalName: file.name,
-          assetId: cloudinaryBody.asset_id,
-          publicId: cloudinaryBody.public_id,
-          version: cloudinaryBody.version,
-          signature: cloudinaryBody.signature,
-          secureUrl: cloudinaryBody.secure_url,
-          resourceType: cloudinaryBody.resource_type,
-          format: cloudinaryBody.format,
-          bytes: cloudinaryBody.bytes,
-        });
+        const cloudinaryBody =
+          (await cloudinaryResponse.json()) as UploadedAsset & {
+            error?: { message?: string };
+          };
+        if (!cloudinaryResponse.ok) {
+          throw new Error(getCloudinaryUploadErrorMessage(cloudinaryBody));
+        }
+        uploaded.push(normalizeCloudinaryRawUpload(cloudinaryBody, file.name));
         setUploadedCount(uploaded.length);
       }
       const finalizeResponse = await fetch(

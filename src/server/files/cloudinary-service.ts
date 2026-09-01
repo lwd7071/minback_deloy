@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { v2 as cloudinary } from "cloudinary";
 
 import { getServerEnv } from "@/lib/env/server";
+import { verifyCloudinaryResponseSignature } from "@/server/files/cloudinary-response-signature";
 import type { AllowedFileFormat } from "@/server/files/file-policy";
 
 export type UploadTarget = "assignment-attachment" | "submission";
@@ -89,23 +90,19 @@ export function verifyCloudinaryUpload(
     format: AllowedFileFormat;
   },
 ): boolean {
-  const { cloudinary: client } = configuredCloudinary();
+  const { env } = configuredCloudinary();
   const expectedPrefix = `${folderFor(expected.target, expected.assignmentId)}/`;
-  const utils = client.utils as typeof client.utils & {
-    verify_api_response_signature: (
-      publicId: string,
-      version: number,
-      signature: string,
-    ) => boolean;
-  };
   return (
     response.resourceType === "raw" &&
     response.format === expected.format &&
     response.publicId.startsWith(expectedPrefix) &&
-    utils.verify_api_response_signature(
-      response.publicId,
-      response.version,
-      response.signature,
+    verifyCloudinaryResponseSignature(
+      {
+        publicId: response.publicId,
+        version: response.version,
+        signature: response.signature,
+      },
+      env.CLOUDINARY_API_SECRET,
     )
   );
 }

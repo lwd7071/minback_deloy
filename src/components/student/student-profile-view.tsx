@@ -153,13 +153,11 @@ function DashboardMetric({
   tone,
   label,
   value,
-  note,
 }: {
   icon: AppIconName;
   tone: string;
   label: string;
   value: string | number;
-  note: string;
 }) {
   return (
     <div className="student-metric">
@@ -169,7 +167,6 @@ function DashboardMetric({
       <div>
         <span>{label}</span>
         <strong>{value}</strong>
-        <small>{note}</small>
       </div>
     </div>
   );
@@ -468,28 +465,24 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
               tone="blue"
               label="Bài tập"
               value={assignments.length}
-              note="Tổng số"
             />
             <DashboardMetric
-              icon="upload"
+              icon="check"
               tone="green"
               label="Đã nộp"
               value={dashboard.submitted}
-              note="Bài"
             />
             <DashboardMetric
               icon="fileCheck"
               tone="blue"
               label="Đã chấm"
               value={dashboard.graded}
-              note="Bài"
             />
             <DashboardMetric
               icon="clock"
               tone="amber"
               label="Chưa nộp"
               value={dashboard.notSubmitted}
-              note="Bài"
             />
             <DashboardMetric
               icon="star"
@@ -500,7 +493,6 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
                   ? "—"
                   : `${dashboard.averageScore}%`
               }
-              note="Chuẩn hóa"
             />
           </div>
 
