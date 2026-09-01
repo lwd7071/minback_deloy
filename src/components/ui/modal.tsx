@@ -54,23 +54,23 @@ export function Modal({
   if (!open || typeof document === "undefined") return null;
   return createPortal(
     <div
-      className="modal-overlay"
+      className="modal-backdrop modal-overlay"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
-        className={`modal-content modal-${size} stack`}
+        className={`modal modal-content modal-${size} stack`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         ref={panelRef}
         tabIndex={-1}
       >
-        <div className="split">
+        <div className="modal-header split">
           <h2 id="modal-title">{title}</h2>
-          <button className="btn btn-ghost" onClick={onClose} aria-label="Đóng">
+          <button className="modal-close btn btn-ghost" onClick={onClose} aria-label="Đóng">
             <AppIcon name="close" />
           </button>
         </div>

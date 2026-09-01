@@ -58,23 +58,25 @@ export async function listPendingGradingItems(
   if (aError) throw new Error("PENDING_GRADING_FETCH_FAILED");
   if (!assignmentsData?.length) return [];
 
-  const assignmentIds = assignmentsData.map(a => a.id);
+  const assignmentIds = assignmentsData.map((a) => a.id);
 
-  // Fetch submissions
-  const { data: submissionsData, error: sError } = await supabase
-    .from("submissions")
-    .select("assignment_id, student_id")
-    .in("assignment_id", assignmentIds);
+  // Chạy song song 2 truy vấn lấy bài nộp và đánh giá
+  const [submissionsResult, evaluationsResult] = await Promise.all([
+    supabase
+      .from("submissions")
+      .select("assignment_id, student_id")
+      .in("assignment_id", assignmentIds),
+    supabase
+      .from("evaluations")
+      .select("assignment_id, student_id, status")
+      .in("assignment_id", assignmentIds),
+  ]);
 
-  if (sError) throw new Error("PENDING_GRADING_FETCH_FAILED");
+  if (submissionsResult.error) throw new Error("PENDING_GRADING_FETCH_FAILED");
+  if (evaluationsResult.error) throw new Error("PENDING_GRADING_FETCH_FAILED");
 
-  // Fetch evaluations
-  const { data: evaluationsData, error: eError } = await supabase
-    .from("evaluations")
-    .select("assignment_id, student_id, status")
-    .in("assignment_id", assignmentIds);
-
-  if (eError) throw new Error("PENDING_GRADING_FETCH_FAILED");
+  const submissionsData = submissionsResult.data;
+  const evaluationsData = evaluationsResult.data;
 
   const evalMap = new Map<string, string>();
   for (const ev of evaluationsData ?? []) {

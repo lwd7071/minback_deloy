@@ -52,9 +52,14 @@ export function ClassDetailTabs({
         open={Boolean(assignmentId)}
         onClose={close}
         title="Chi tiết bài tập"
+        size="lg"
       >
         {assignmentId ? (
-          <AssignmentDetailView assignmentId={assignmentId} />
+          <AssignmentDetailView
+            assignmentId={assignmentId}
+            onClose={close}
+            onDeleted={close}
+          />
         ) : null}
       </Modal>
     </div>

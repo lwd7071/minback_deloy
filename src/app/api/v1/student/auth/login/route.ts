@@ -35,7 +35,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const parsed = studentLoginSchema.safeParse(body);
-    if (!parsed.success) {
+    if (!parsed.success) { // nếu lỗi trích ra filed va lý do qua message 
       const details = parsed.error.issues.map((e) => ({
         field: e.path.join("."),
         message: e.message,
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Lấy IP từ header (Next.js / Vercel / nginx forward)
-    const rawIp =
+    const rawIp = // đếm số lần đăng nhập sai qua trích xuất ip client 
       request.headers.get("x-forwarded-for") ??
       request.headers.get("x-real-ip");
 
@@ -63,10 +63,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    const response = errorResponse(error);
-    if (error instanceof ApiError && error.code === "LOGIN_RATE_LIMITED") {
-      response.headers.set("Retry-After", "900");
-    }
-    return response;
+    return errorResponse(error);
   }
 }

@@ -57,6 +57,8 @@ function timeAgo(dateStr: string) {
 export function TeacherOverviewDashboard() {
   const [data, setData] = useState<DashboardOverviewData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activityPage, setActivityPage] = useState(1);
+  const ACTIVITY_PAGE_SIZE = 5;
 
   useEffect(() => {
     let active = true;
@@ -192,28 +194,57 @@ export function TeacherOverviewDashboard() {
 
       {/* Full width bottom panel: Recent Activity */}
       <section className="overview-panel activity-panel">
-        <h2 className="overview-panel-title">
-          <AppIcon name="clock" size={20} />
-          Hoạt động gần đây
-        </h2>
+        <div className="activity-panel-header">
+          <h2 className="overview-panel-title">
+            <AppIcon name="clock" size={20} />
+            Hoạt động gần đây ({data.recentActivity.length})
+          </h2>
+          {Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE) > 1 && (
+            <div className="activity-pagination">
+              <span className="activity-page-info">
+                Trang {activityPage} / {Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE)}
+              </span>
+              <button
+                type="button"
+                className="button button-secondary button-sm"
+                disabled={activityPage <= 1}
+                onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                aria-label="Trang trước"
+              >
+                Trước
+              </button>
+              <button
+                type="button"
+                className="button button-secondary button-sm"
+                disabled={activityPage >= Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE)}
+                onClick={() => setActivityPage((p) => Math.min(Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE), p + 1))}
+                aria-label="Trang sau"
+              >
+                Sau
+              </button>
+            </div>
+          )}
+        </div>
         <div className="activity-feed">
           {data.recentActivity.length > 0 ? (
-            data.recentActivity.map((activity, idx) => (
-              <div key={idx} className="activity-item">
-                <div className={`activity-icon-wrapper ${activity.type === 'graded' ? 'is-graded' : 'is-submission'}`}>
-                  <AppIcon name={activity.type === 'graded' ? "check" : "upload"} size={16} />
+            data.recentActivity
+              .slice((activityPage - 1) * ACTIVITY_PAGE_SIZE, activityPage * ACTIVITY_PAGE_SIZE)
+              .map((activity, idx) => (
+                <div key={idx} className="activity-item">
+                  <div className={`activity-icon-wrapper ${activity.type === 'graded' ? 'is-graded' : 'is-submission'}`}>
+                    <AppIcon name={activity.type === 'graded' ? "check" : "upload"} size={16} />
+                  </div>
+                  <div className="activity-content">
+                    <p>
+                      <strong>{activity.studentName}</strong> 
+                      {activity.type === 'graded' ? " đã được chấm bài " : " vừa nộp bài "} 
+                      <em>{activity.assignmentTitle}</em> 
+                      {" "}(Lớp {activity.classCode})
+                    </p>
+                    <span className="activity-time">{timeAgo(activity.timestamp)}</span>
+                  </div>
                 </div>
-                <div className="activity-content">
-                  <p>
-                    <strong>{activity.studentName}</strong> 
-                    {activity.type === 'graded' ? " đã được chấm bài " : " vừa nộp bài "} 
-                    <em>{activity.assignmentTitle}</em> 
-                    {" "}(Lớp {activity.classCode})
-                  </p>
-                  <span className="activity-time">{timeAgo(activity.timestamp)}</span>
-                </div>
-              </div>
-            ))
+              ))
           ) : (
             <p className="muted">Chưa có hoạt động nào.</p>
           )}

@@ -64,10 +64,12 @@ export function PinLoginForm({
   return (
     <form className="form-stack" onSubmit={(event) => void submit(event)}>
       <div className="form-field">
-        <label className="form-label">Nickname</label>
+        <label className="form-label" htmlFor="student-identifier">Nickname hoặc MSSV</label>
         <input
+          id="student-identifier"
           className="field-underline"
-          autoComplete="username"
+          autoComplete="off"
+          placeholder="Nhập nickname hoặc mã số sinh viên"
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
         />

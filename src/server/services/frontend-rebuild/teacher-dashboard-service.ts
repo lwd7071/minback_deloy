@@ -2,7 +2,6 @@ import "server-only";
 
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import {
-  listClassGradingProgress,
   listPendingGradingItems,
   listRecentActivity,
 } from "@/server/repositories/teacher-dashboard-repository";
@@ -11,16 +10,25 @@ import { listClassSectionSummaries } from "@/server/repositories/frontend-rebuil
 export async function getTeacherDashboardOverview() {
   const { supabase, teacher } = await requireTeacher();
 
-  const [summariesResult, pendingGrading, classProgress, recentActivity] =
-    await Promise.all([
-      // Get all summaries for the top metrics
-      listClassSectionSummaries(supabase, teacher.id, 1, 100),
-      listPendingGradingItems(supabase, teacher.id, 6),
-      listClassGradingProgress(supabase, teacher.id),
-      listRecentActivity(supabase, teacher.id, 15),
-    ]);
+  // Chạy song song 3 truy vấn độc lập (loại bỏ lời gọi RPC trùng lặp listClassGradingProgress)
+  const [summariesResult, pendingGrading, recentActivity] = await Promise.all([
+    listClassSectionSummaries(supabase, teacher.id, 1, 100),
+    listPendingGradingItems(supabase, teacher.id, 6),
+    listRecentActivity(supabase, teacher.id, 15),
+  ]);
 
   const rows = summariesResult.rows;
+
+  // Tái sử dụng dữ liệu từ summariesResult.rows cho classProgress trực tiếp trong bộ nhớ (0ms DB cost)
+  const classProgress = rows.map((row) => ({
+    classSectionId: row.id,
+    classCode: row.code,
+    className: row.name,
+    completed: row.gradingProgress.completed,
+    total: row.gradingProgress.total,
+    percentage: row.gradingProgress.percentage,
+  }));
+
   const metrics = {
     classCount: rows.length,
     studentCount: rows.reduce((acc, r) => acc + r.studentCount, 0),

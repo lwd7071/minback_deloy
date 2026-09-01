@@ -205,11 +205,27 @@ export function ClassAssignmentsView({
         open={Boolean(selectedAssignmentId)}
         onClose={() => {
           setSelectedAssignmentId(null);
-          setRefreshKey((value) => value + 1);
         }}
         title="Chỉnh sửa bài tập"
+        size="lg"
       >
-        {selectedAssignmentId ? <AssignmentDetailView assignmentId={selectedAssignmentId} /> : null}
+        {selectedAssignmentId ? (
+          <AssignmentDetailView
+            assignmentId={selectedAssignmentId}
+            onSaved={(updated) => {
+              setRows((prev) =>
+                prev.map((row) => (row.id === updated.id ? updated : row)),
+              );
+            }}
+            onDeleted={() => {
+              setRows((prev) =>
+                prev.filter((row) => row.id !== selectedAssignmentId),
+              );
+              setSelectedAssignmentId(null);
+            }}
+            onClose={() => setSelectedAssignmentId(null)}
+          />
+        ) : null}
       </Modal>
     </div>
   );

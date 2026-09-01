@@ -14,13 +14,18 @@ export function OtpInput({
   length?: number;
 }) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
+
   const setDigit = (index: number, digit: string) => {
-    const chars = value.padEnd(length, " ").split("");
-    chars[index] = digit;
-    const next = chars.join("").replace(/\s/g, "").slice(0, length);
-    onChange(next);
-    if (digit && index < length - 1) refs.current[index + 1]?.focus();
+    const currentChars = Array.from({ length }, (_, i) => value[i] ?? "");
+    currentChars[index] = digit;
+    const nextValue = currentChars.join("").trimEnd();
+    onChange(nextValue);
+
+    if (digit && index < length - 1) {
+      refs.current[index + 1]?.focus();
+    }
   };
+
   return (
     <div
       className="otp-input"
@@ -32,7 +37,8 @@ export function OtpInput({
         if (digits) {
           event.preventDefault();
           onChange(digits);
-          refs.current[Math.min(digits.length, length) - 1]?.focus();
+          const targetIndex = Math.min(digits.length, length) - 1;
+          refs.current[Math.max(0, targetIndex)]?.focus();
         }
       }}
     >
@@ -50,16 +56,38 @@ export function OtpInput({
           }}
           type="tel"
           value={value[index] ?? ""}
-          onChange={(event) =>
-            setDigit(index, event.target.value.replace(/\D/g, "").slice(-1))
-          }
+          onChange={(event) => {
+            const rawChar = event.target.value.replace(/\D/g, "").slice(-1);
+            setDigit(index, rawChar);
+          }}
           onKeyDown={(event) => {
-            if (event.key === "Backspace" && !value[index] && index > 0)
+            if (event.key === "Backspace") {
+              if (!value[index] && index > 0) {
+                event.preventDefault();
+                const currentChars = Array.from(
+                  { length },
+                  (_, i) => value[i] ?? "",
+                );
+                currentChars[index - 1] = "";
+                onChange(currentChars.join("").trimEnd());
+                refs.current[index - 1]?.focus();
+              } else if (value[index]) {
+                event.preventDefault();
+                const currentChars = Array.from(
+                  { length },
+                  (_, i) => value[i] ?? "",
+                );
+                currentChars[index] = "";
+                onChange(currentChars.join("").trimEnd());
+                if (index > 0) {
+                  refs.current[index - 1]?.focus();
+                }
+              }
+            } else if (event.key === "ArrowLeft" && index > 0) {
               refs.current[index - 1]?.focus();
-            if (event.key === "ArrowLeft")
-              refs.current[Math.max(0, index - 1)]?.focus();
-            if (event.key === "ArrowRight")
-              refs.current[Math.min(length - 1, index + 1)]?.focus();
+            } else if (event.key === "ArrowRight" && index < length - 1) {
+              refs.current[index + 1]?.focus();
+            }
           }}
         />
       ))}

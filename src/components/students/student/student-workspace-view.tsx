@@ -9,7 +9,12 @@ import { useStudentWorkspace } from "@/components/layout/student/student-workspa
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
 
-type Section = "overview" | "assignments" | "notifications";
+export type Section =
+  | "overview"
+  | "assignments"
+  | "submissions"
+  | "grades"
+  | "notifications";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -108,8 +113,21 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
         <Card className="workspace-panel notification-page"><PanelTitle icon="bell" title="Thông báo" />{notifications.notifications.length ? notifications.notifications.map((item) => <button className="notification-item" key={item.id} onClick={() => void notifications.markAsRead(item.id)}><span>{item.message}</span><small>{formatDate(item.createdAt)}</small></button>) : <p className="muted">Chưa có thông báo nào.</p>}</Card>
       ) : (
         <Card className="workspace-panel workspace-table-panel">
-          <PanelTitle icon={section === "assignments" ? "book" : "bell"} title={navigationTitle(section)} />
-          <AssignmentRows assignments={assignments} onSelect={setSelectedAssignmentId} />
+          <PanelTitle
+            icon={section === "assignments" ? "book" : section === "submissions" ? "upload" : section === "grades" ? "gradebook" : "bell"}
+            title={navigationTitle(section)}
+          />
+          <AssignmentRows
+            assignments={
+              section === "submissions"
+                ? assignments.filter((a) => a.submission.latestAttempt !== null)
+                : section === "grades"
+                ? assignments.filter((a) => a.evaluation !== null)
+                : assignments
+            }
+            mode={section === "grades" ? "grades" : "assignments"}
+            onSelect={setSelectedAssignmentId}
+          />
         </Card>
       )}
       {selected ? <StudentAssignmentModal assignment={selected} open onClose={() => setSelectedAssignmentId(null)} onSubmitted={() => { setSelectedAssignmentId(null); void refresh(); }} /> : null}
@@ -118,7 +136,13 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
 }
 
 function navigationTitle(section: Exclude<Section, "overview">) {
-  return ({ assignments: "Bài tập", notifications: "Thông báo" })[section];
+  const titles: Record<Exclude<Section, "overview">, string> = {
+    assignments: "Bài tập",
+    submissions: "Bài đã nộp",
+    grades: "Bảng điểm",
+    notifications: "Thông báo",
+  };
+  return titles[section];
 }
 
 function Metric({ icon, label, value }: { icon: "book" | "upload" | "check" | "star"; label: string; value: string | number }) {
@@ -129,9 +153,9 @@ function PanelTitle({ icon, title, href }: { icon: "book" | "clock" | "gradebook
   return <div className="workspace-panel-title"><span><AppIcon name={icon} size={19} />{title}</span>{href ? <Link href={href}>Xem tất cả</Link> : null}</div>;
 }
 
-function AssignmentRows({ assignments, mode = "assignments", onSelect }: { assignments: StudentProfileAssignment[]; mode?: "assignments"; onSelect: (id: string) => void }) {
+function AssignmentRows({ assignments, mode = "assignments", onSelect }: { assignments: StudentProfileAssignment[]; mode?: "assignments" | "grades"; onSelect: (id: string) => void }) {
   if (!assignments.length) return <p className="muted">Chưa có dữ liệu để hiển thị.</p>;
-  return <div className="workspace-assignment-list">{assignments.map((assignment) => <button key={assignment.id} className="workspace-assignment-row" onClick={() => onSelect(assignment.id)}><span><strong>{assignment.title}</strong><small>Hạn nộp {formatDate(assignment.dueDate)}</small></span><span className={`workspace-status ${assignment.submission.latestAttempt ? "is-complete" : "is-pending"}`}>{assignment.evaluation ? (assignment.evaluation.score + " điểm") : assignment.submission.latestAttempt ? "Đã nộp" : "Chưa nộp"}</span></button>)}</div>;
+  return <div className="workspace-assignment-list">{assignments.map((assignment) => <button key={assignment.id} className="workspace-assignment-row" onClick={() => onSelect(assignment.id)}><span><strong>{assignment.title}</strong><small>Hạn nộp {formatDate(assignment.dueDate)}</small></span><span className={`workspace-status ${assignment.submission.latestAttempt ? "is-complete" : "is-pending"}`}>{assignment.evaluation ? (assignment.evaluation.score !== null ? `${assignment.evaluation.score} điểm` : "Đang chấm") : assignment.submission.latestAttempt ? "Đã nộp" : "Chưa nộp"}</span></button>)}</div>;
 }
 
 type StudentProfileAssignment = NonNullable<ReturnType<typeof useStudentWorkspace>["profile"]>["assignments"][number];
