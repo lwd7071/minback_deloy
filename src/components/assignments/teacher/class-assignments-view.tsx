@@ -1,12 +1,36 @@
 "use client";
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { formatDeadlineInfo } from "@/lib/deadline-utils";
 import type { AssignmentDto } from "@/types/assignment";
 import { AssignmentDetailView } from "./assignment-detail-view";
+
+function toDatetimeLocal(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function getDefaultDueDate(
+  daysAhead: number = 7,
+  hours: number = 23,
+  minutes: number = 59,
+): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(hours, minutes, 0, 0);
+  return toDatetimeLocal(d);
+}
+
 export function ClassAssignmentsView({
   classSectionId,
 }: {
@@ -21,10 +45,11 @@ export function ClassAssignmentsView({
   const [draft, setDraft] = useState({
     title: "",
     description: "",
-    assignedDate: "",
-    dueDate: "",
+    assignedDate: toDatetimeLocal(new Date()),
+    dueDate: getDefaultDueDate(7, 23, 59),
     maxScore: "10",
   });
+
   useEffect(() => {
     let active = true;
     void fetch(`/api/v1/teacher/class-sections/${classSectionId}/assignments`, {
@@ -49,6 +74,7 @@ export function ClassAssignmentsView({
       active = false;
     };
   }, [classSectionId, refreshKey]);
+
   async function create(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -59,20 +85,23 @@ export function ClassAssignmentsView({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ ...draft, maxScore: Number(draft.maxScore) }),
+          body: JSON.stringify({
+            ...draft,
+            maxScore: Number(draft.maxScore),
+          }),
         },
       );
       const body = await response.json();
-      if (!response.ok)
+      if (!response.ok || !body.data)
         throw new Error(body.error?.message ?? "Không thể tạo bài tập");
+      setShowCreate(false);
       setDraft({
         title: "",
         description: "",
-        assignedDate: "",
-        dueDate: "",
+        assignedDate: toDatetimeLocal(new Date()),
+        dueDate: getDefaultDueDate(7, 23, 59),
         maxScore: "10",
       });
-      setShowCreate(false);
       setRefreshKey((value) => value + 1);
     } catch (cause) {
       setError(
@@ -82,18 +111,29 @@ export function ClassAssignmentsView({
       setBusy(false);
     }
   }
-  if (error) return <p className="form-error">{error}</p>;
+
+  function setPresetTime(hours: number, minutes: number) {
+    setDraft((prev) => {
+      const baseDate = prev.dueDate ? new Date(prev.dueDate) : new Date();
+      if (Number.isNaN(baseDate.getTime())) return prev;
+      baseDate.setHours(hours, minutes, 0, 0);
+      return { ...prev, dueDate: toDatetimeLocal(baseDate) };
+    });
+  }
+
   return (
     <div className="stack">
+      {error ? <p className="form-error">{error}</p> : null}
       <div className="split">
         <div>
           <h2>Bài tập</h2>
           <p className="muted">Tạo, phát hành và chấm bài trong lớp này.</p>
         </div>
         <Button onClick={() => setShowCreate((value) => !value)}>
-          + Tạo bài tập
+          {showCreate ? "Đóng form" : "+ Tạo bài tập"}
         </Button>
       </div>
+
       {showCreate ? (
         <Card>
           <form className="form-stack" onSubmit={(event) => void create(event)} autoComplete="off">
@@ -108,9 +148,11 @@ export function ClassAssignmentsView({
                 }
               />
             </label>
+
             <label className="form-field">
               <span>Mô tả</span>
               <textarea
+                rows={4}
                 value={draft.description}
                 onChange={(event) =>
                   setDraft((value) => ({
@@ -120,12 +162,13 @@ export function ClassAssignmentsView({
                 }
               />
             </label>
+
             <div className="grid">
               <label className="form-field">
                 <span>Ngày giao</span>
                 <input
                   required
-                  type="date"
+                  type="datetime-local"
                   value={draft.assignedDate}
                   onChange={(event) =>
                     setDraft((value) => ({
@@ -135,11 +178,12 @@ export function ClassAssignmentsView({
                   }
                 />
               </label>
+
               <label className="form-field">
                 <span>Hạn nộp</span>
                 <input
                   required
-                  type="date"
+                  type="datetime-local"
                   value={draft.dueDate}
                   onChange={(event) =>
                     setDraft((value) => ({
@@ -149,6 +193,7 @@ export function ClassAssignmentsView({
                   }
                 />
               </label>
+
               <label className="form-field">
                 <span>Điểm tối đa</span>
                 <input
@@ -166,41 +211,58 @@ export function ClassAssignmentsView({
                 />
               </label>
             </div>
-            <Button loading={busy}>Tạo bản nháp</Button>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowCreate(false)}
+              >
+                Hủy
+              </button>
+              <Button loading={busy}>Tạo bản nháp bài tập</Button>
+            </div>
           </form>
         </Card>
       ) : null}
+
       <div className="grid">
-        {rows.map((row) => (
-          <Card hover className="stack" key={row.id}>
-            <div className="split">
-              <Badge variant={row.status}>{row.status}</Badge>
-              <span className="muted">{row.dueDate}</span>
-            </div>
-            <h3>{row.title}</h3>
-            <p className="muted">{row.description || "Chưa có mô tả."}</p>
-            <div className="cluster">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setSelectedAssignmentId(row.id)}
-              >
-                Chỉnh sửa
-              </button>
-              <Link
-                className="btn btn-primary"
-                href={`/admin/classes/${classSectionId}/assignments/${row.id}/grade`}
-              >
-                Chấm bài
-              </Link>
-            </div>
-          </Card>
-        ))}
+        {rows.map((row) => {
+          const deadline = formatDeadlineInfo(row.dueDate);
+          return (
+            <Card hover className="stack" key={row.id}>
+              <div className="split">
+                <Badge variant={row.status}>{row.status}</Badge>
+                <span className="muted" style={{ fontSize: "0.85rem", fontWeight: 500 }}>
+                  Hạn: <strong style={{ color: "var(--navy-900)" }}>{deadline.formattedShort}</strong>
+                </span>
+              </div>
+              <h3>{row.title}</h3>
+              <p className="muted">{row.description || "Chưa có mô tả."}</p>
+              <div className="cluster">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setSelectedAssignmentId(row.id)}
+                >
+                  Chỉnh sửa
+                </button>
+                <Link
+                  className="btn btn-primary"
+                  href={`/admin/classes/${classSectionId}/assignments/${row.id}/grade`}
+                >
+                  Chấm bài
+                </Link>
+              </div>
+            </Card>
+          );
+        })}
         {!rows.length ? (
           <Card>
             <p className="muted">Chưa có bài tập trong lớp.</p>
           </Card>
         ) : null}
       </div>
+
       <Modal
         open={Boolean(selectedAssignmentId)}
         onClose={() => {

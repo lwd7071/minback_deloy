@@ -8,6 +8,7 @@ import { useNotificationPolling } from "@/components/notifications/student/use-n
 import { useStudentWorkspace } from "@/components/layout/student/student-workspace";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
+import { formatDeadlineInfo } from "@/lib/deadline-utils";
 
 export type Section =
   | "overview"
@@ -101,13 +102,53 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
             </Card>
             <Card className="workspace-panel deadline-panel">
               <PanelTitle icon="clock" title="Hạn nộp gần nhất" />
-              {summary.upcoming ? <><strong>{summary.upcoming.title}</strong><p>{formatDate(summary.upcoming.dueDate)}</p><button className="btn btn-primary" onClick={() => setSelectedAssignmentId(summary.upcoming.id)}>Nộp bài</button></> : <p className="muted">Bạn không có bài đang chờ nộp.</p>}
+              {summary.upcoming ? (
+                <>
+                  <strong style={{ fontSize: "1.1rem" }}>{summary.upcoming.title}</strong>
+                  <p style={{ margin: "6px 0 10px 0" }}>
+                    Hạn chốt:{" "}
+                    <strong style={{ color: "var(--navy-900)" }}>
+                      {formatDeadlineInfo(summary.upcoming.dueDate).formattedShort}
+                    </strong>
+                  </p>
+                  <span
+                    className={`badge ${
+                      formatDeadlineInfo(summary.upcoming.dueDate).urgency === "urgent"
+                        ? "badge-danger"
+                        : formatDeadlineInfo(summary.upcoming.dueDate).urgency === "warning"
+                        ? "badge-warning"
+                        : "badge-neutral"
+                    }`}
+                    style={{ marginBottom: "14px", width: "fit-content", display: "inline-block" }}
+                  >
+                    ⏳ {formatDeadlineInfo(summary.upcoming.dueDate).timeRemainingNotice}
+                  </span>
+                  <div>
+                    <button className="btn btn-primary" onClick={() => setSelectedAssignmentId(summary.upcoming.id)}>
+                      Nộp bài ngay
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="muted">Bạn không có bài đang chờ nộp.</p>
+              )}
             </Card>
           </div>
-
         </>
       ) : section === "notifications" ? (
-        <Card className="workspace-panel notification-page"><PanelTitle icon="bell" title="Thông báo" />{notifications.notifications.length ? notifications.notifications.map((item) => <button className="notification-item" key={item.id} onClick={() => void notifications.markAsRead(item.id)}><span>{item.message}</span><small>{formatDate(item.createdAt)}</small></button>) : <p className="muted">Chưa có thông báo nào.</p>}</Card>
+        <Card className="workspace-panel notification-page">
+          <PanelTitle icon="bell" title="Thông báo" />
+          {notifications.notifications.length ? (
+            notifications.notifications.map((item) => (
+              <button className="notification-item" key={item.id} onClick={() => void notifications.markAsRead(item.id)}>
+                <span>{item.message}</span>
+                <small>{formatDate(item.createdAt)}</small>
+              </button>
+            ))
+          ) : (
+            <p className="muted">Chưa có thông báo nào.</p>
+          )}
+        </Card>
       ) : (
         <Card className="workspace-panel workspace-table-panel">
           <PanelTitle
@@ -127,7 +168,17 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
           />
         </Card>
       )}
-      {selected ? <StudentAssignmentModal assignment={selected} open onClose={() => setSelectedAssignmentId(null)} onSubmitted={() => { setSelectedAssignmentId(null); void refresh(); }} /> : null}
+      {selected ? (
+        <StudentAssignmentModal
+          assignment={selected}
+          open
+          onClose={() => setSelectedAssignmentId(null)}
+          onSubmitted={() => {
+            setSelectedAssignmentId(null);
+            void refresh();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -143,16 +194,101 @@ function navigationTitle(section: Exclude<Section, "overview">) {
 }
 
 function Metric({ icon, label, value }: { icon: "book" | "upload" | "check" | "star"; label: string; value: string | number }) {
-  return <div className="workspace-metric"><AppIcon name={icon} size={21} /><div><span>{label}</span><strong>{value}</strong></div></div>;
+  return (
+    <div className="workspace-metric">
+      <AppIcon name={icon} size={21} />
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
+    </div>
+  );
 }
 
 function PanelTitle({ icon, title, href }: { icon: "book" | "clock" | "gradebook" | "bell" | "upload"; title: string; href?: string }) {
-  return <div className="workspace-panel-title"><span><AppIcon name={icon} size={19} />{title}</span>{href ? <Link href={href}>Xem tất cả</Link> : null}</div>;
+  return (
+    <div className="workspace-panel-title">
+      <span>
+        <AppIcon name={icon} size={19} />
+        {title}
+      </span>
+      {href ? <Link href={href}>Xem tất cả</Link> : null}
+    </div>
+  );
 }
 
-function AssignmentRows({ assignments, mode = "assignments", onSelect }: { assignments: StudentProfileAssignment[]; mode?: "assignments" | "grades"; onSelect: (id: string) => void }) {
-  if (!assignments.length) return <p className="muted">Chưa có dữ liệu để hiển thị.</p>;
-  return <div className="workspace-assignment-list">{assignments.map((assignment) => <button key={assignment.id} className="workspace-assignment-row" onClick={() => onSelect(assignment.id)}><span><strong>{assignment.title}</strong><small>Hạn nộp {formatDate(assignment.dueDate)}</small></span><span className={`workspace-status ${assignment.submission.latestAttempt ? "is-complete" : "is-pending"}`}>{assignment.evaluation ? (assignment.evaluation.score !== null ? `${assignment.evaluation.score} điểm` : "Đang chấm") : assignment.submission.latestAttempt ? "Đã nộp" : "Chưa nộp"}</span></button>)}</div>;
+function AssignmentRows({
+  assignments,
+  mode = "assignments",
+  onSelect,
+}: {
+  assignments: StudentProfileAssignment[];
+  mode?: "assignments" | "grades";
+  onSelect: (id: string) => void;
+}) {
+  if (!assignments.length)
+    return <p className="muted">Chưa có dữ liệu để hiển thị.</p>;
+  return (
+    <div className="workspace-assignment-list">
+      {assignments.map((assignment) => {
+        const deadline = formatDeadlineInfo(assignment.dueDate);
+        return (
+          <button
+            key={assignment.id}
+            className="workspace-assignment-row"
+            onClick={() => onSelect(assignment.id)}
+            aria-label={`Xem chi tiết bài tập ${assignment.title}`}
+            type="button"
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px", textAlign: "left" }}>
+              <strong style={{ fontSize: "0.95rem" }}>{assignment.title}</strong>
+              <div className="assignment-badge-cluster">
+                <small style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                  Hạn chốt: <strong style={{ color: "var(--navy-900)" }}>{deadline.formattedShort}</strong>
+                </small>
+                {assignment.attachments && assignment.attachments.length > 0 ? (
+                  <span className="assignment-attachment-badge">
+                    📎 {assignment.attachments.length} tài liệu
+                  </span>
+                ) : null}
+                <span
+                  className="badge badge-neutral"
+                  style={{ fontSize: "0.72rem", padding: "1px 6px" }}
+                >
+                  Thang {assignment.maxScore}đ
+                </span>
+                {!assignment.submission.latestAttempt && !deadline.isExpired ? (
+                  <span
+                    className={`badge ${
+                      deadline.urgency === "urgent"
+                        ? "badge-danger"
+                        : deadline.urgency === "warning"
+                        ? "badge-warning"
+                        : "badge-neutral"
+                    }`}
+                    style={{ fontSize: "0.7rem", padding: "1px 6px" }}
+                  >
+                    {deadline.timeRemainingNotice}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <span
+              className={`workspace-status ${assignment.submission.latestAttempt ? "is-complete" : "is-pending"}`}
+            >
+              {assignment.evaluation
+                ? assignment.evaluation.score !== null
+                  ? `${assignment.evaluation.score} điểm`
+                  : "Đang chấm"
+                : assignment.submission.latestAttempt
+                ? "Đã nộp"
+                : "Chưa nộp"}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 type StudentProfileAssignment = NonNullable<ReturnType<typeof useStudentWorkspace>["profile"]>["assignments"][number];

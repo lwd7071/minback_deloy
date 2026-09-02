@@ -63,11 +63,16 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
         ? "/api/v1/student/auth/logout"
         : "/api/v1/teacher/auth/logout";
     await fetch(endpoint, { method: "POST" });
-    router.replace(
-      role === "student" && classCode
-        ? `/class/${encodeURIComponent(classCode)}/login`
-        : "/admin/login",
-    );
+    if (role === "student") {
+      router.replace(
+        classCode
+          ? `/class/${encodeURIComponent(classCode)}/login`
+          : "/",
+      );
+    } else {
+      router.replace("/admin/login");
+    }
+    router.refresh();
   }
 
   return (

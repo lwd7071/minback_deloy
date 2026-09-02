@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { StudentAdminDto } from "@/types/student";
 import type { TeacherStudentProfileDto } from "@/types/student-profile";
 import { Modal } from "@/components/ui/modal";
+import { Pagination } from "@/components/ui/pagination";
 
 type ApiResult<T> =
   | { data: T; meta?: { page: number; pageSize: number; total: number } }
@@ -20,6 +21,7 @@ export function StudentManagementView({
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
 
   // Debounce tìm kiếm 300ms để chống spam request và race condition
@@ -68,7 +70,7 @@ export function StudentManagementView({
         const query = debouncedSearch.trim()
           ? `&search=${encodeURIComponent(debouncedSearch.trim())}`
           : "";
-        const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=20${query}`;
+        const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=${pageSize}${query}`;
         const res = await fetch(url, {
           cache: "no-store",
           signal: controller.signal,
@@ -105,7 +107,7 @@ export function StudentManagementView({
     return () => {
       controller.abort();
     };
-  }, [classSectionId, page, debouncedSearch, refreshKey]);
+  }, [classSectionId, page, pageSize, debouncedSearch, refreshKey]);
 
   function startEdit(st: StudentAdminDto) {
     setEditingStudent(st);
@@ -344,6 +346,23 @@ export function StudentManagementView({
             </tbody>
           </table>
         </div>
+      )}
+
+      {!error && total > 0 && (
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          disabled={loading}
+          onPageChange={(newPage) => {
+            setPage(newPage);
+          }}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
+          pageSizeOptions={[20, 50, 100]}
+        />
       )}
 
       <Modal

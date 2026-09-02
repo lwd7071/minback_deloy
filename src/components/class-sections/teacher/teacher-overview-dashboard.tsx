@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { AppIcon } from "@/components/ui/app-icon";
+import { formatDeadlineInfo } from "@/lib/deadline-utils";
 import { DashboardMetric, MiniProgressRing } from "./class-summary-dashboard";
 import type {
   DashboardActivityItem,
@@ -149,29 +150,33 @@ export function TeacherOverviewDashboard() {
           </h2>
           {data.pendingGrading.length > 0 ? (
             <div className="pending-grading-list">
-              {data.pendingGrading.map((item) => (
-                <Link
-                  key={item.assignmentId}
-                  href={`/admin/classes/${item.classSectionId}/assignments/${item.assignmentId}`}
-                  className="pending-grading-card-link"
-                >
-                  <Card hover className="pending-grading-card">
-                    <div className="pending-card-head">
-                      <span className="badge badge-amber">
-                        {item.classCode}
-                      </span>
-                      <span className="pending-deadline">
-                        Hạn: {formatDate(item.dueDate)}
-                      </span>
-                    </div>
-                    <h3>{item.assignmentTitle}</h3>
-                    <div className="pending-card-footer">
-                      <AppIcon name="upload" size={16} />
-                      <strong>{item.pendingCount}</strong> bài nộp chờ chấm
-                    </div>
-                  </Card>
-                </Link>
-              ))}
+              {data.pendingGrading.map((item) => {
+                const deadline = formatDeadlineInfo(item.dueDate);
+                return (
+                  <Link
+                    key={item.assignmentId}
+                    href={`/admin/classes/${item.classSectionId}/assignments/${item.assignmentId}/grade`}
+                    className="pending-grading-card-link"
+                    aria-label={`Chấm bài tập ${item.assignmentTitle} lớp ${item.classCode} (${item.pendingCount} bài nộp chờ chấm)`}
+                  >
+                    <Card hover className="pending-grading-card">
+                      <div className="pending-card-head">
+                        <span className="badge badge-amber">
+                          {item.classCode}
+                        </span>
+                        <span className="pending-deadline">
+                          Hạn: {deadline.formattedShort}
+                        </span>
+                      </div>
+                      <h3>{item.assignmentTitle}</h3>
+                      <div className="pending-card-footer">
+                        <AppIcon name="upload" size={16} />
+                        <strong>{item.pendingCount}</strong> bài nộp chờ chấm
+                      </div>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <p className="muted">Không có bài tập nào đang chờ chấm.</p>

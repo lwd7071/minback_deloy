@@ -37,12 +37,25 @@ export function AssignmentDetailView({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  function toDatetimeLocal(val: string | Date): string {
+    if (!val) return "";
+    const d = typeof val === "string" ? new Date(val.includes("T") ? val : `${val}T23:59:00+07:00`) : val;
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
   function applyAssignment(next: AssignmentDto): void {
     setAssignment(next);
     setTitle(next.title);
     setDescription(next.description);
-    setAssignedDate(next.assignedDate);
-    setDueDate(next.dueDate);
+    setAssignedDate(toDatetimeLocal(next.assignedDate));
+    setDueDate(toDatetimeLocal(next.dueDate));
     setMaxScore(String(next.maxScore));
     setStatus(next.status);
   }
@@ -195,7 +208,7 @@ export function AssignmentDetailView({
             <span className="form-label">Ngày giao</span>
             <input
               className="form-input"
-              type="date"
+              type="datetime-local"
               value={assignedDate}
               onChange={(event) => setAssignedDate(event.target.value)}
               required
@@ -205,7 +218,7 @@ export function AssignmentDetailView({
             <span className="form-label">Hạn nộp</span>
             <input
               className="form-input"
-              type="date"
+              type="datetime-local"
               value={dueDate}
               onChange={(event) => setDueDate(event.target.value)}
               required

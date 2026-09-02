@@ -236,7 +236,8 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
       await fetch("/api/v1/student/auth/logout", { method: "POST" });
     } finally {
       setProfile(null);
-      router.replace(`/class/${encodeURIComponent(classCode)}/login`);
+      router.replace("/");
+      router.refresh();
     }
   }
 
