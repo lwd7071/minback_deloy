@@ -5,9 +5,9 @@ import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { AppIcon } from "@/components/ui/app-icon";
 import { DashboardMetric, MiniProgressRing } from "./class-summary-dashboard";
-import type { 
-  DashboardActivityItem, 
-  PendingGradingItem 
+import type {
+  DashboardActivityItem,
+  PendingGradingItem,
 } from "@/server/repositories/teacher-dashboard-repository";
 
 type DashboardOverviewData = {
@@ -75,7 +75,8 @@ export function TeacherOverviewDashboard() {
         if (active) setData(resData);
       })
       .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : "Đã xảy ra lỗi");
+        if (active)
+          setError(cause instanceof Error ? cause.message : "Đã xảy ra lỗi");
       });
     return () => {
       active = false;
@@ -92,7 +93,11 @@ export function TeacherOverviewDashboard() {
 
   if (!data) {
     // Loading state could be added here
-    return <div className="teacher-dash"><p className="muted">Đang tải...</p></div>;
+    return (
+      <div className="teacher-dash">
+        <p className="muted">Đang tải...</p>
+      </div>
+    );
   }
 
   return (
@@ -152,8 +157,12 @@ export function TeacherOverviewDashboard() {
                 >
                   <Card hover className="pending-grading-card">
                     <div className="pending-card-head">
-                      <span className="badge badge-amber">{item.classCode}</span>
-                      <span className="pending-deadline">Hạn: {formatDate(item.dueDate)}</span>
+                      <span className="badge badge-amber">
+                        {item.classCode}
+                      </span>
+                      <span className="pending-deadline">
+                        Hạn: {formatDate(item.dueDate)}
+                      </span>
                     </div>
                     <h3>{item.assignmentTitle}</h3>
                     <div className="pending-card-footer">
@@ -171,22 +180,39 @@ export function TeacherOverviewDashboard() {
 
         {/* Right column: Class Progress */}
         <section className="overview-panel">
-          <div className="activity-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <div
+            className="activity-panel-header"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "16px",
+            }}
+          >
             <h2 className="overview-panel-title" style={{ marginBottom: 0 }}>
               <AppIcon name="classes" size={20} />
               Tiến độ chấm theo lớp
             </h2>
-            {Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE) > 1 && (
-              <div className="activity-pagination" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span className="activity-page-info" style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                  Trang {classProgressPage} / {Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE)}
+            {Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE) >
+              1 && (
+              <div
+                className="activity-pagination"
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                <span className="activity-page-info is-compact">
+                  Trang {classProgressPage} /{" "}
+                  {Math.ceil(
+                    data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE,
+                  )}
                 </span>
                 <div style={{ display: "flex", gap: "6px" }}>
                   <button
                     type="button"
                     className="button button-secondary button-sm"
                     disabled={classProgressPage <= 1}
-                    onClick={() => setClassProgressPage((p) => Math.max(1, p - 1))}
+                    onClick={() =>
+                      setClassProgressPage((p) => Math.max(1, p - 1))
+                    }
                     aria-label="Trang trước"
                   >
                     Trước
@@ -194,8 +220,23 @@ export function TeacherOverviewDashboard() {
                   <button
                     type="button"
                     className="button button-secondary button-sm"
-                    disabled={classProgressPage >= Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE)}
-                    onClick={() => setClassProgressPage((p) => Math.min(Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE), p + 1))}
+                    disabled={
+                      classProgressPage >=
+                      Math.ceil(
+                        data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE,
+                      )
+                    }
+                    onClick={() =>
+                      setClassProgressPage((p) =>
+                        Math.min(
+                          Math.ceil(
+                            data.classProgress.length /
+                              CLASS_PROGRESS_PAGE_SIZE,
+                          ),
+                          p + 1,
+                        ),
+                      )
+                    }
                     aria-label="Trang sau"
                   >
                     Sau
@@ -207,7 +248,10 @@ export function TeacherOverviewDashboard() {
           <div className="class-progress-list">
             {data.classProgress.length > 0 ? (
               data.classProgress
-                .slice((classProgressPage - 1) * CLASS_PROGRESS_PAGE_SIZE, classProgressPage * CLASS_PROGRESS_PAGE_SIZE)
+                .slice(
+                  (classProgressPage - 1) * CLASS_PROGRESS_PAGE_SIZE,
+                  classProgressPage * CLASS_PROGRESS_PAGE_SIZE,
+                )
                 .map((cls) => (
                   <div key={cls.classSectionId} className="class-progress-row">
                     <div className="class-progress-header">
@@ -235,7 +279,8 @@ export function TeacherOverviewDashboard() {
           {Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE) > 1 && (
             <div className="activity-pagination">
               <span className="activity-page-info">
-                Trang {activityPage} / {Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE)}
+                Trang {activityPage} /{" "}
+                {Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE)}
               </span>
               <button
                 type="button"
@@ -249,8 +294,20 @@ export function TeacherOverviewDashboard() {
               <button
                 type="button"
                 className="button button-secondary button-sm"
-                disabled={activityPage >= Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE)}
-                onClick={() => setActivityPage((p) => Math.min(Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE), p + 1))}
+                disabled={
+                  activityPage >=
+                  Math.ceil(data.recentActivity.length / ACTIVITY_PAGE_SIZE)
+                }
+                onClick={() =>
+                  setActivityPage((p) =>
+                    Math.min(
+                      Math.ceil(
+                        data.recentActivity.length / ACTIVITY_PAGE_SIZE,
+                      ),
+                      p + 1,
+                    ),
+                  )
+                }
                 aria-label="Trang sau"
               >
                 Sau
@@ -261,20 +318,32 @@ export function TeacherOverviewDashboard() {
         <div className="activity-feed">
           {data.recentActivity.length > 0 ? (
             data.recentActivity
-              .slice((activityPage - 1) * ACTIVITY_PAGE_SIZE, activityPage * ACTIVITY_PAGE_SIZE)
+              .slice(
+                (activityPage - 1) * ACTIVITY_PAGE_SIZE,
+                activityPage * ACTIVITY_PAGE_SIZE,
+              )
               .map((activity, idx) => (
                 <div key={idx} className="activity-item">
-                  <div className={`activity-icon-wrapper ${activity.type === 'graded' ? 'is-graded' : 'is-submission'}`}>
-                    <AppIcon name={activity.type === 'graded' ? "check" : "upload"} size={16} />
+                  <div
+                    className={`activity-icon-wrapper ${activity.type === "graded" ? "is-graded" : "is-submission"}`}
+                  >
+                    <AppIcon
+                      name={activity.type === "graded" ? "check" : "upload"}
+                      size={16}
+                    />
                   </div>
                   <div className="activity-content">
                     <p>
-                      <strong>{activity.studentName}</strong> 
-                      {activity.type === 'graded' ? " đã được chấm bài " : " vừa nộp bài "} 
-                      <em>{activity.assignmentTitle}</em> 
-                      {" "}(Lớp {activity.classCode})
+                      <strong>{activity.studentName}</strong>
+                      {activity.type === "graded"
+                        ? " đã được chấm bài "
+                        : " vừa nộp bài "}
+                      <em>{activity.assignmentTitle}</em> (Lớp{" "}
+                      {activity.classCode})
                     </p>
-                    <span className="activity-time">{timeAgo(activity.timestamp)}</span>
+                    <span className="activity-time">
+                      {timeAgo(activity.timestamp)}
+                    </span>
                   </div>
                 </div>
               ))

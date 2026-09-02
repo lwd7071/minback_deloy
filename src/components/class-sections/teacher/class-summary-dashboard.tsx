@@ -31,11 +31,7 @@ export function DashboardMetric({
   );
 }
 
-export function MiniProgressRing({
-  percentage,
-}: {
-  percentage: number;
-}) {
+export function MiniProgressRing({ percentage }: { percentage: number }) {
   const size = 38;
   const radius = 14;
   const circumference = 2 * Math.PI * radius;
@@ -156,8 +152,15 @@ export function ClassSummaryDashboard() {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-start', alignItems: 'center' }}>
-        <div style={{ flex: 1, maxWidth: '400px' }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          justifyContent: "flex-start",
+          alignItems: "center",
+        }}
+      >
+        <div style={{ flex: 1, maxWidth: "400px" }}>
           <SearchInput
             value={search}
             onChange={(v) => {
@@ -211,21 +214,30 @@ export function ClassSummaryDashboard() {
       </div>
 
       {visible.length > 6 && (
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '32px' }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "center",
+            marginTop: "32px",
+          }}
+        >
           <button
             className="btn btn-outline"
             disabled={page === 1}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
             Trang trước
           </button>
-          <span style={{ display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--muted)' }}>
+          <span className="pagination-summary">
             {page} / {Math.ceil(visible.length / 6)}
           </span>
           <button
             className="btn btn-outline"
             disabled={page === Math.ceil(visible.length / 6)}
-            onClick={() => setPage(p => Math.min(Math.ceil(visible.length / 6), p + 1))}
+            onClick={() =>
+              setPage((p) => Math.min(Math.ceil(visible.length / 6), p + 1))
+            }
           >
             Trang sau
           </button>

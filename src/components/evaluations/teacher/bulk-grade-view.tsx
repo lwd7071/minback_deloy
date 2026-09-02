@@ -4,9 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppIcon } from "@/components/ui/app-icon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import type { AssignmentDto } from "@/types/assignment";
 import type {
@@ -226,7 +224,7 @@ export function BulkGradeView({
         <Link
           href={`/admin/classes/${classSectionId}/assignments`}
           className="btn btn-ghost btn-sm"
-          style={{ gap: "6px", color: "var(--muted)" }}
+          style={{ gap: "6px" }}
         >
           ← Quay lại danh sách bài tập
         </Link>
@@ -234,15 +232,23 @@ export function BulkGradeView({
 
       <header className="grade-header-card">
         <div className="grade-header-main">
-          <div className="cluster" style={{ gap: "10px", alignItems: "center" }}>
-            <span className="badge badge-amber">{assignment.status}</span>
+          <div
+            className="cluster"
+            style={{ gap: "10px", alignItems: "center" }}
+          >
+            <span className={`badge badge-${assignment.status}`}>
+              {assignment.status}
+            </span>
             <span className="muted" style={{ fontSize: "0.86rem" }}>
               Hạn nộp: {assignment.dueDate} · Điểm tối đa: {assignment.maxScore}
             </span>
           </div>
           <h1 style={{ margin: "6px 0 0" }}>{assignment.title}</h1>
           {assignment.description ? (
-            <p className="muted" style={{ margin: "4px 0 0", fontSize: "0.92rem" }}>
+            <p
+              className="muted"
+              style={{ margin: "4px 0 0", fontSize: "0.92rem" }}
+            >
               {assignment.description}
             </p>
           ) : null}
@@ -256,15 +262,15 @@ export function BulkGradeView({
           </div>
           <div className="grade-kpi-item">
             <span className="muted">Đã nộp bài</span>
-            <strong style={{ color: "var(--info)" }}>{metrics.submitted}</strong>
+            <strong className="text-info">{metrics.submitted}</strong>
           </div>
           <div className="grade-kpi-item">
             <span className="muted">Cần chấm</span>
-            <strong style={{ color: "var(--warning)" }}>{metrics.pending}</strong>
+            <strong className="text-warning">{metrics.pending}</strong>
           </div>
           <div className="grade-kpi-item">
             <span className="muted">Đã chấm xong</span>
-            <strong style={{ color: "var(--success)" }}>{metrics.graded}</strong>
+            <strong className="text-success">{metrics.graded}</strong>
           </div>
         </div>
       </header>
@@ -335,7 +341,10 @@ export function BulkGradeView({
                 if (!draft) return null;
 
                 return (
-                  <tr key={student.id} className={hasSub ? "" : "is-unsubmitted"}>
+                  <tr
+                    key={student.id}
+                    className={hasSub ? "" : "is-unsubmitted"}
+                  >
                     {/* Cột 1: Thông tin sinh viên */}
                     <td>
                       <div className="grade-student-cell">
@@ -397,7 +406,10 @@ export function BulkGradeView({
                               ))}
                             </div>
                           ) : (
-                            <span className="muted" style={{ fontSize: "0.82rem" }}>
+                            <span
+                              className="muted"
+                              style={{ fontSize: "0.82rem" }}
+                            >
                               Chưa tải file
                             </span>
                           )}
@@ -459,7 +471,10 @@ export function BulkGradeView({
               })
             ) : (
               <tr>
-                <td colSpan={5} style={{ textAlign: "center", padding: "40px" }}>
+                <td
+                  colSpan={5}
+                  style={{ textAlign: "center", padding: "40px" }}
+                >
                   <p className="muted">Không tìm thấy sinh viên nào phù hợp.</p>
                 </td>
               </tr>
@@ -475,20 +490,32 @@ export function BulkGradeView({
       >
         <div className="sticky-grade-content">
           <div className="grade-progress-info">
-            <div className="cluster" style={{ gap: "12px", alignItems: "center" }}>
+            <div
+              className="cluster"
+              style={{ gap: "12px", alignItems: "center" }}
+            >
               <span className="grade-progress-title">
-                Tiến độ chấm: <strong>{metrics.graded} / {metrics.submitted} bài nộp</strong> ({metrics.percentage}%)
+                Tiến độ chấm:{" "}
+                <strong>
+                  {metrics.graded} / {metrics.submitted} bài nộp
+                </strong>{" "}
+                ({metrics.percentage}%)
               </span>
             </div>
             <div style={{ width: "160px" }}>
-              <ProgressBar value={metrics.graded} max={Math.max(1, metrics.submitted)} />
+              <ProgressBar
+                value={metrics.graded}
+                max={Math.max(1, metrics.submitted)}
+              />
             </div>
           </div>
 
           <div className="grade-action-group">
             {message ? (
               <span
-                className={message.startsWith("Đã") ? "form-success" : "form-error"}
+                className={
+                  message.startsWith("Đã") ? "form-success" : "form-error"
+                }
                 style={{ fontSize: "0.86rem", fontWeight: 600 }}
               >
                 {message}

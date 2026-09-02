@@ -7,7 +7,7 @@ export default function CreateClassPage() {
         <Link className="btn btn-ghost" href="/admin/dashboard">
           ← Tổng quan
         </Link>
-        <h1>Tạo lớp và nhập danh sách</h1>
+        <h1>Tạo lớp học phần</h1>
       </div>
       <ClassCreateFlow />
     </div>

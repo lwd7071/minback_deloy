@@ -9,11 +9,7 @@ export default function AdminLoginPage() {
           <Link className="brand-lockup" href="/">
             MinBack
           </Link>
-          <Link
-            className="btn btn-ghost btn-sm"
-            href="/"
-            style={{ fontSize: "0.84rem", color: "var(--muted)" }}
-          >
+          <Link className="btn btn-ghost btn-sm auth-back-link" href="/">
             ← Trang chủ
           </Link>
         </div>
@@ -22,11 +18,8 @@ export default function AdminLoginPage() {
           <p className="muted">Mở không gian quản lý lớp học của bạn.</p>
         </div>
         <TeacherLoginForm />
-        <div style={{ textAlign: "center", marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--rule)" }}>
-          <Link
-            href="/"
-            style={{ fontSize: "0.86rem", color: "var(--muted)", display: "inline-flex", alignItems: "center", gap: "6px" }}
-          >
+        <div className="auth-home-link-wrap">
+          <Link href="/" className="auth-home-link">
             ← Về trang chủ MinBack
           </Link>
         </div>

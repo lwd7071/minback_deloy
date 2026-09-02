@@ -238,22 +238,65 @@ export function StudentManagementView({
                 <th>Thao tác</th>
               </tr>
             </thead>
-            <tbody style={{ opacity: loading && students.length > 0 ? 0.6 : 1, transition: "opacity 0.15s" }}>
+            <tbody
+              style={{
+                opacity: loading && students.length > 0 ? 0.6 : 1,
+                transition: "opacity 0.15s",
+              }}
+            >
               {loading && students.length === 0 ? (
                 // Skeleton Rows: Giữ nguyên khung bảng chống layout shift
                 Array.from({ length: 5 }).map((_, index) => (
                   <tr key={`skeleton-${index}`}>
-                    <td><div style={{ height: "14px", width: "80px", background: "#e2e8f0", borderRadius: "4px" }} /></td>
-                    <td><div style={{ height: "14px", width: "140px", background: "#e2e8f0", borderRadius: "4px" }} /></td>
-                    <td><div style={{ height: "14px", width: "90px", background: "#f1f5f9", borderRadius: "4px" }} /></td>
-                    <td><div style={{ height: "14px", width: "160px", background: "#f1f5f9", borderRadius: "4px" }} /></td>
-                    <td><div style={{ height: "18px", width: "70px", background: "#e2e8f0", borderRadius: "9999px" }} /></td>
-                    <td><div style={{ height: "26px", width: "140px", background: "#f1f5f9", borderRadius: "4px" }} /></td>
+                    <td>
+                      <div
+                        className="skeleton-block is-strong"
+                        style={{ height: "14px", width: "80px" }}
+                      />
+                    </td>
+                    <td>
+                      <div
+                        className="skeleton-block is-strong"
+                        style={{ height: "14px", width: "140px" }}
+                      />
+                    </td>
+                    <td>
+                      <div
+                        className="skeleton-block"
+                        style={{ height: "14px", width: "90px" }}
+                      />
+                    </td>
+                    <td>
+                      <div
+                        className="skeleton-block"
+                        style={{ height: "14px", width: "160px" }}
+                      />
+                    </td>
+                    <td>
+                      <div
+                        className="skeleton-block is-strong"
+                        style={{
+                          height: "18px",
+                          width: "70px",
+                          borderRadius: "9999px",
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <div
+                        className="skeleton-block"
+                        style={{ height: "26px", width: "140px" }}
+                      />
+                    </td>
                   </tr>
                 ))
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="muted" style={{ textAlign: "center", padding: "32px 0" }}>
+                  <td
+                    colSpan={6}
+                    className="muted"
+                    style={{ textAlign: "center", padding: "32px 0" }}
+                  >
                     Không tìm thấy sinh viên nào trong lớp này.
                   </td>
                 </tr>
