@@ -7,6 +7,7 @@ import type {
   ClassSectionUpdateInput,
 } from "@/schemas/class-section";
 import type { ClassSectionDto } from "@/types/class-section";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ClassSectionRow = {
   id: string;
@@ -25,6 +26,36 @@ function toDto(row: ClassSectionRow): ClassSectionDto {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export type AtomicStudentSetupInput = {
+  studentId: string;
+  mssv: string;
+  fullName: string;
+  email: string | null;
+  nickname: string;
+  pinHash: string;
+};
+
+export async function createClassSectionWithStudents(
+  supabase: SupabaseClient,
+  input: ClassSectionCreateInput,
+  students: AtomicStudentSetupInput[],
+): Promise<ClassSectionDto | null> {
+  const { data, error } = await supabase.rpc(
+    "create_class_section_with_students",
+    {
+      p_code: input.code,
+      p_name: input.name,
+      p_students: students,
+    },
+  );
+
+  if (error) {
+    if (error.code === "23505") return null;
+    throw new Error(`CLASS_SECTION_SETUP_FAILED:${error.code}`);
+  }
+  return data as ClassSectionDto;
 }
 
 export async function listClassSectionsByTeacher(

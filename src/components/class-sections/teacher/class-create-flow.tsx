@@ -1,142 +1,335 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import { classSectionCreateSchema } from "@/schemas/class-section";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { ClassSectionDto } from "@/types/class-section";
+import type { ClassSectionSetupDto } from "@/types/class-section";
 import type { ImportPreviewDto } from "@/types/frontend-rebuild";
-import type { ImportResultDto } from "@/types/import";
+
+type CreateClassStep = "details" | "roster" | "review" | "complete";
+type ApiResult<T> = { data: T } | { error: { code?: string; message: string } };
+
+const STEPS: Array<{ id: CreateClassStep; label: string }> = [
+  { id: "details", label: "Thông tin lớp" },
+  { id: "roster", label: "Danh sách sinh viên" },
+  { id: "review", label: "Xác nhận" },
+  { id: "complete", label: "Hoàn tất" },
+];
+
+function stepIndex(step: CreateClassStep): number {
+  return STEPS.findIndex((item) => item.id === step);
+}
+
+function csvCell(value: string): string {
+  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
+  return `"${safe.replaceAll('"', '""')}"`;
+}
+
 export function ClassCreateFlow() {
   const router = useRouter();
-  const [section, setSection] = useState<ClassSectionDto | null>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+  const previewControllerRef = useRef<AbortController | null>(null);
+  const previewSequenceRef = useRef(0);
+  const [step, setStep] = useState<CreateClassStep>("details");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreviewDto | null>(null);
-  const [result, setResult] = useState<ImportResultDto | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [skipRoster, setSkipRoster] = useState(false);
+  const [result, setResult] = useState<ClassSectionSetupDto | null>(null);
+  const [pinsDownloaded, setPinsDownloaded] = useState(false);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [submitBusy, setSubmitBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  async function create(event: React.FormEvent) {
+
+  const createdStudents = result?.import?.summary.created ?? 0;
+  const mustDownloadPins = createdStudents > 0 && !pinsDownloaded;
+
+  useEffect(() => {
+    return () => previewControllerRef.current?.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!mustDownloadPins) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [mustDownloadPins]);
+
+  function continueDetails(event: React.FormEvent) {
     event.preventDefault();
-    setBusy(true);
+    const parsed = classSectionCreateSchema.safeParse({ code, name });
+    if (!parsed.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const field = String(issue.path[0] ?? "form");
+        if (!errors[field]) errors[field] = issue.message;
+      }
+      setFieldErrors(errors);
+      codeInputRef.current?.focus();
+      return;
+    }
+    setCode(parsed.data.code);
+    setName(parsed.data.name);
+    setFieldErrors({});
+    setError(null);
+    setStep("roster");
+  }
+
+  function changeFile(nextFile: File | null) {
+    previewControllerRef.current?.abort();
+    previewSequenceRef.current += 1;
+    setFile(nextFile);
+    setPreview(null);
+    setSkipRoster(false);
+    setError(null);
+    setPreviewBusy(false);
+  }
+
+  async function inspectFile() {
+    if (!file || previewBusy) return;
+    previewControllerRef.current?.abort();
+    const controller = new AbortController();
+    const sequence = previewSequenceRef.current + 1;
+    previewSequenceRef.current = sequence;
+    previewControllerRef.current = controller;
+    setPreviewBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/v1/teacher/class-sections", {
+      const formData = new FormData();
+      formData.set("file", file);
+      const response = await fetch(
+        "/api/v1/teacher/class-section-import-previews",
+        { method: "POST", body: formData, signal: controller.signal },
+      );
+      const body = (await response.json()) as ApiResult<ImportPreviewDto>;
+      if (!response.ok || !("data" in body)) {
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể kiểm tra tệp",
+        );
+      }
+      if (previewSequenceRef.current === sequence) setPreview(body.data);
+    } catch (cause) {
+      if (!controller.signal.aborted) {
+        setError(
+          cause instanceof Error ? cause.message : "Không thể kiểm tra tệp",
+        );
+      }
+    } finally {
+      if (previewSequenceRef.current === sequence) setPreviewBusy(false);
+      if (previewControllerRef.current === controller) {
+        previewControllerRef.current = null;
+      }
+    }
+  }
+
+  function continueWithoutRoster() {
+    changeFile(null);
+    setSkipRoster(true);
+    setStep("review");
+  }
+
+  async function createClassSection() {
+    if (submitBusy || result) return;
+    setSubmitBusy(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.set("code", code);
+      formData.set("name", name);
+      if (!skipRoster && file) formData.set("file", file);
+      const response = await fetch("/api/v1/teacher/class-section-setups", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code, name }),
+        body: formData,
       });
-      const body = await response.json();
-      if (!response.ok || !body.data)
-        throw new Error(body.error?.message ?? "Không thể tạo lớp");
-      setSection(body.data);
+      const body = (await response.json()) as ApiResult<ClassSectionSetupDto>;
+      if (!response.ok || !("data" in body)) {
+        if (
+          response.status === 409 &&
+          "error" in body &&
+          body.error.code === "CONFLICT"
+        ) {
+          setFieldErrors({ code: body.error.message });
+          setStep("details");
+          window.setTimeout(() => codeInputRef.current?.focus(), 0);
+          return;
+        }
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể tạo lớp",
+        );
+      }
+      setResult(body.data);
+      setPinsDownloaded((body.data.import?.summary.created ?? 0) === 0);
+      setStep("complete");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể tạo lớp");
     } finally {
-      setBusy(false);
+      setSubmitBusy(false);
     }
   }
-  async function upload(path: string) {
-    if (!section || !file) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.set("file", file);
-      const response = await fetch(
-        `/api/v1/teacher/class-sections/${section.id}/import${path}`,
-        { method: "POST", body: form },
-      );
-      const body = await response.json();
-      if (!response.ok || !body.data)
-        throw new Error(body.error?.message ?? "Không thể đọc tệp");
-      if (path === "/preview") setPreview(body.data);
-      else setResult(body.data);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không thể xử lý tệp");
-    } finally {
-      setBusy(false);
-    }
-  }
+
   function downloadPins() {
-    if (!result) return;
-    const rows = result.rows
-      .filter((row) => row.status === "created")
-      .map((row) => `${row.initialNickname},${row.initialPin}`)
-      .join("\n");
-    const url = URL.createObjectURL(
-      new Blob([`Nickname,PIN\n${rows}`], { type: "text/csv" }),
-    );
+    if (!result?.import) return;
+    const rows = result.import.rows
+      .filter(
+        (row) =>
+          row.status === "created" && row.initialNickname && row.initialPin,
+      )
+      .map(
+        (row) => `${csvCell(row.initialNickname!)},${csvCell(row.initialPin!)}`,
+      );
+    const blob = new Blob([`Nickname,PIN\n${rows.join("\n")}\n`], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${section?.code ?? "class"}-pins.csv`;
+    anchor.download = `${result.classSection.code}-pins.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
+    setPinsDownloaded(true);
   }
+
   return (
-    <div className="stack">
-      <Card className="workflow-step">
-        <div className="workflow-heading">
-          <span className="step-number">1</span>
-          <h2>Thông tin lớp</h2>
-        </div>
-        <form className="form-stack" onSubmit={(event) => void create(event)}>
-          <label className="form-field">
-            <span>Mã lớp</span>
-            <input
-              value={code}
-              disabled={Boolean(section)}
-              onChange={(event) => setCode(event.target.value.toUpperCase())}
-            />
-          </label>
-          <label className="form-field">
-            <span>Tên lớp</span>
-            <input
-              value={name}
-              disabled={Boolean(section)}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <Button loading={busy} disabled={Boolean(section) || !code || !name}>
-            Tạo lớp
-          </Button>
-        </form>
-      </Card>
-      {section ? (
-        <Card className="workflow-step">
-          <div className="workflow-heading">
-            <span className="step-number">2</span>
-            <h2>Danh sách sinh viên</h2>
-          </div>
-          <input
-            type="file"
-            accept=".csv,.xlsx"
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              setPreview(null);
-              setResult(null);
-            }}
-          />
-          <div className="cluster">
-            <Button
-              variant="secondary"
-              disabled={!file || busy}
-              onClick={() => void upload("/preview")}
+    <div className="class-create-wizard">
+      <ol className="class-create-stepper" aria-label="Tiến trình tạo lớp">
+        {STEPS.map((item, index) => {
+          const current = item.id === step;
+          const complete = index < stepIndex(step);
+          return (
+            <li
+              className={`${current ? "is-current" : ""} ${complete ? "is-complete" : ""}`}
+              key={item.id}
+              aria-current={current ? "step" : undefined}
             >
-              Xem trước
+              <span>{complete ? "✓" : index + 1}</span>
+              <strong>{item.label}</strong>
+            </li>
+          );
+        })}
+      </ol>
+
+      {step === "details" ? (
+        <Card className="class-create-stage">
+          <p className="eyebrow">Bước 1 / 4</p>
+          <h2>Đặt thông tin nhận diện lớp</h2>
+          <p className="muted">Chưa có dữ liệu nào được tạo ở bước này.</p>
+          <form className="form-stack" onSubmit={continueDetails}>
+            <label className="form-field">
+              <span className="form-label">Mã lớp</span>
+              <input
+                ref={codeInputRef}
+                className="form-input"
+                value={code}
+                aria-invalid={Boolean(fieldErrors.code)}
+                aria-describedby={
+                  fieldErrors.code ? "class-code-error" : undefined
+                }
+                onChange={(event) => {
+                  setCode(event.target.value.toUpperCase());
+                  setFieldErrors((current) => ({ ...current, code: "" }));
+                }}
+                autoComplete="off"
+              />
+              {fieldErrors.code ? (
+                <small className="form-error" id="class-code-error">
+                  {fieldErrors.code}
+                </small>
+              ) : null}
+            </label>
+            <label className="form-field">
+              <span className="form-label">Tên lớp</span>
+              <input
+                className="form-input"
+                value={name}
+                aria-invalid={Boolean(fieldErrors.name)}
+                aria-describedby={
+                  fieldErrors.name ? "class-name-error" : undefined
+                }
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setFieldErrors((current) => ({ ...current, name: "" }));
+                }}
+              />
+              {fieldErrors.name ? (
+                <small className="form-error" id="class-name-error">
+                  {fieldErrors.name}
+                </small>
+              ) : null}
+            </label>
+            <div className="class-create-actions">
+              <Button type="submit">Tiếp tục</Button>
+            </div>
+          </form>
+        </Card>
+      ) : null}
+
+      {step === "roster" ? (
+        <Card className="class-create-stage">
+          <p className="eyebrow">Bước 2 / 4</p>
+          <h2>Chuẩn bị danh sách sinh viên</h2>
+          <p className="muted">
+            CSV/XLSX cần có cột MSSV, Họ Tên; Email là tùy chọn.
+          </p>
+          <label className="class-create-file">
+            <span className="form-label">Tệp danh sách</span>
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={(event) => changeFile(event.target.files?.[0] ?? null)}
+            />
+            <small>
+              {file
+                ? `${file.name} · ${Math.ceil(file.size / 1024)} KB`
+                : "Tối đa 5 MB và 2.000 dòng dữ liệu"}
+            </small>
+          </label>
+          <div className="class-create-actions is-split">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setStep("details")}
+            >
+              Quay lại
             </Button>
-            {preview ? (
-              <Button disabled={busy} onClick={() => void upload("")}>
-                Xác nhận import
+            <div className="cluster">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={continueWithoutRoster}
+              >
+                Bỏ qua, thêm sau
               </Button>
-            ) : null}
+              <Button
+                type="button"
+                loading={previewBusy}
+                disabled={!file}
+                onClick={() => void inspectFile()}
+              >
+                Kiểm tra tệp
+              </Button>
+            </div>
           </div>
           {preview ? (
-            <div className="stack">
-              <p>
-                <strong>{preview.summary.valid}</strong> hợp lệ ·{" "}
-                <strong>{preview.summary.skipped}</strong> bỏ qua
-              </p>
+            <div className="class-create-preview">
+              <div className="class-create-stats">
+                <span>
+                  <strong>{preview.summary.total}</strong>Tổng dòng
+                </span>
+                <span>
+                  <strong>{preview.summary.valid}</strong>Hợp lệ
+                </span>
+                <span>
+                  <strong>{preview.summary.skipped}</strong>Bỏ qua
+                </span>
+              </div>
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -155,34 +348,169 @@ export function ClassCreateFlow() {
                         <td>
                           {row.student?.fullName ?? row.errors?.[0]?.message}
                         </td>
-                        <td>{row.status}</td>
+                        <td>
+                          <span
+                            className={`status-text ${row.status === "valid" ? "status-success" : "status-warning"}`}
+                          >
+                            {row.status === "valid" ? "Hợp lệ" : "Bỏ qua"}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
-          ) : null}
-          {result ? (
-            <div className="form-notice">
-              <p>
-                Đã tạo {result.summary.created}, cập nhật{" "}
-                {result.summary.updated}, bỏ qua {result.summary.skipped}.
-              </p>
-              <div className="cluster">
-                <Button onClick={downloadPins}>Tải PIN một lần</Button>
+              {preview.rows.length > 100 ? (
+                <p className="muted">Đang hiển thị 100 dòng đầu tiên.</p>
+              ) : null}
+              {preview.summary.valid === 0 ? (
+                <p className="form-error">
+                  Tệp chưa có sinh viên hợp lệ. Hãy đổi tệp hoặc chọn thêm sinh
+                  viên sau.
+                </p>
+              ) : null}
+              <div className="class-create-actions">
                 <Button
-                  variant="secondary"
-                  onClick={() => router.push(`/admin/classes/${section.id}`)}
+                  type="button"
+                  disabled={preview.summary.valid === 0}
+                  onClick={() => setStep("review")}
                 >
-                  Đi tới lớp
+                  Tiếp tục xác nhận
                 </Button>
               </div>
             </div>
           ) : null}
         </Card>
       ) : null}
-      {error ? <p className="form-error">{error}</p> : null}
+
+      {step === "review" ? (
+        <Card className="class-create-stage">
+          <p className="eyebrow">Bước 3 / 4</p>
+          <h2>Kiểm tra trước khi tạo</h2>
+          <div className="class-create-review">
+            <section>
+              <span>Thông tin lớp</span>
+              <strong>{code}</strong>
+              <p>{name}</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                onClick={() => setStep("details")}
+              >
+                Chỉnh sửa
+              </Button>
+            </section>
+            <section>
+              <span>Danh sách sinh viên</span>
+              <strong>
+                {skipRoster
+                  ? "Thêm sau"
+                  : `${preview?.summary.valid ?? 0} sinh viên hợp lệ`}
+              </strong>
+              <p>
+                {skipRoster
+                  ? "Lớp sẽ được tạo chưa có sinh viên."
+                  : `${preview?.summary.skipped ?? 0} dòng bị bỏ qua từ ${file?.name ?? "tệp đã chọn"}.`}
+              </p>
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                onClick={() => setStep("roster")}
+              >
+                Chỉnh sửa
+              </Button>
+            </section>
+          </div>
+          <div className="form-notice">
+            <p>
+              Lớp và sinh viên chỉ được ghi vào hệ thống sau khi bạn xác nhận
+              bên dưới.
+            </p>
+          </div>
+          <div className="class-create-actions is-split">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setStep("roster")}
+            >
+              Quay lại
+            </Button>
+            <Button
+              type="button"
+              loading={submitBusy}
+              onClick={() => void createClassSection()}
+            >
+              {skipRoster
+                ? "Tạo lớp không có sinh viên"
+                : `Tạo lớp và thêm ${preview?.summary.valid ?? 0} sinh viên`}
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {step === "complete" && result ? (
+        <Card className="class-create-stage class-create-complete">
+          <span className="class-create-success" aria-hidden="true">
+            ✓
+          </span>
+          <p className="eyebrow">Bước 4 / 4</p>
+          <h2>Đã tạo lớp {result.classSection.code}</h2>
+          <p>{result.classSection.name}</p>
+          {result.import ? (
+            <p className="muted">
+              Đã thêm {result.import.summary.created} sinh viên · Bỏ qua{" "}
+              {result.import.summary.skipped} dòng.
+            </p>
+          ) : (
+            <p className="muted">
+              Bạn có thể thêm sinh viên từ trang quản lý lớp.
+            </p>
+          )}
+          {createdStudents > 0 ? (
+            <div
+              className={`pin-download-gate ${pinsDownloaded ? "is-done" : ""}`}
+            >
+              <strong>
+                {pinsDownloaded
+                  ? "Đã tải danh sách PIN"
+                  : "Tải PIN trước khi rời trang"}
+              </strong>
+              <p>
+                PIN chỉ xuất hiện trong kết quả này và không thể tải lại từ hệ
+                thống.
+              </p>
+              <Button
+                type="button"
+                variant={pinsDownloaded ? "secondary" : "primary"}
+                onClick={downloadPins}
+              >
+                {pinsDownloaded
+                  ? "Tải lại trong phiên này"
+                  : "Tải danh sách PIN"}
+              </Button>
+            </div>
+          ) : null}
+          <div className="class-create-actions">
+            <Button
+              type="button"
+              disabled={mustDownloadPins}
+              onClick={() =>
+                router.push(`/admin/classes/${result.classSection.id}`)
+              }
+            >
+              Đi tới lớp
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      {error ? (
+        <p className="form-error class-create-error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
