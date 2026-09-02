@@ -403,10 +403,7 @@ label {
   color: #71548c;
 }
 .page-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  display: none !important;
 }
 .page-head h1 {
   margin: 0;
@@ -426,13 +423,7 @@ label {
 }
 .workspace-topbar,
 .teacher-dash-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: 12px;
+  display: none !important;
 }
 .workspace-person {
   display: flex;
