@@ -155,7 +155,7 @@ export function ClassSummaryDashboard() {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-start', alignItems: 'center' }}>
         <div style={{ flex: 1, maxWidth: '400px' }}>
           <SearchInput
             value={search}
