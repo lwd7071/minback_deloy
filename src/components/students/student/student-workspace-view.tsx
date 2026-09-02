@@ -104,10 +104,7 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
               {summary.upcoming ? <><strong>{summary.upcoming.title}</strong><p>{formatDate(summary.upcoming.dueDate)}</p><button className="btn btn-primary" onClick={() => setSelectedAssignmentId(summary.upcoming.id)}>Nộp bài</button></> : <p className="muted">Bạn không có bài đang chờ nộp.</p>}
             </Card>
           </div>
-          <div className="student-dashboard-panels student-dashboard-secondary">
-            <Card className="workspace-panel"><PanelTitle icon="gradebook" title="Tiến độ" /><strong className="workspace-progress-number">{profile.progress.percentage}%</strong><p className="muted">{profile.progress.completed} / {profile.progress.total} bài đã chấm</p></Card>
-            <Card className="workspace-panel"><PanelTitle icon="bell" title="Thông báo" href={`/class/${profile.classSection.code}/notifications`} /><p className="muted">{notifications.unreadCount ? `${notifications.unreadCount} thông báo chưa đọc` : "Bạn đã xem hết thông báo."}</p></Card>
-          </div>
+
         </>
       ) : section === "notifications" ? (
         <Card className="workspace-panel notification-page"><PanelTitle icon="bell" title="Thông báo" />{notifications.notifications.length ? notifications.notifications.map((item) => <button className="notification-item" key={item.id} onClick={() => void notifications.markAsRead(item.id)}><span>{item.message}</span><small>{formatDate(item.createdAt)}</small></button>) : <p className="muted">Chưa có thông báo nào.</p>}</Card>
