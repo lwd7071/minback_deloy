@@ -19,15 +19,13 @@ export function Modal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
     returnFocusRef.current = document.activeElement as HTMLElement;
     const timer = window.setTimeout(() => panelRef.current?.focus(), 0);
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCloseRef.current();
+      if (event.key === "Escape") onClose();
       if (event.key !== "Tab" || !panelRef.current) return;
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(
         "button,a,input,select,textarea,[tabindex]:not([tabindex='-1'])",
@@ -50,7 +48,7 @@ export function Modal({
       document.removeEventListener("keydown", onKeyDown);
       returnFocusRef.current?.focus();
     };
-  }, [open]);
+  }, [onClose, open]);
   if (!open || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -70,7 +68,11 @@ export function Modal({
       >
         <div className="modal-header split">
           <h2 id="modal-title">{title}</h2>
-          <button className="modal-close btn btn-ghost" onClick={onClose} aria-label="Đóng">
+          <button
+            className="modal-close btn btn-ghost"
+            onClick={onClose}
+            aria-label="Đóng"
+          >
             <AppIcon name="close" />
           </button>
         </div>

@@ -16,7 +16,7 @@ export default async function OnboardingPage({
     session = await requireAnyStudentSession();
   } catch (error) {
     if (error instanceof ApiError) {
-      redirect(`/class/${encodeURIComponent(code.toUpperCase())}/login`);
+      redirect(`/class/${encodeURIComponent(code.toUpperCase())}`);
     }
     throw error;
   }

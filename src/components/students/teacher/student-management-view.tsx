@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { StudentAdminDto } from "@/types/student";
 import type { TeacherStudentProfileDto } from "@/types/student-profile";
 import { Modal } from "@/components/ui/modal";
@@ -12,8 +14,14 @@ type ApiResult<T> =
 
 export function StudentManagementView({
   classSectionId,
+  initialStudents,
+  initialMeta,
+  initialSearch,
 }: {
   classSectionId: string;
+  initialStudents: StudentAdminDto[];
+  initialMeta: { page: number; pageSize: number; total: number };
+  initialSearch: string;
 }) {
   const [students, setStudents] = useState<StudentAdminDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +35,15 @@ export function StudentManagementView({
   // Debounce tìm kiếm 300ms để chống spam request và race condition
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1);
+      if (search === initialSearch) return;
+      const params = new URLSearchParams();
+      if (search.trim()) params.set("q", search.trim());
+      router.replace(
+        `/admin/classes/${classSectionId}/students${params.size ? `?${params}` : ""}`,
+      );
     }, 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [classSectionId, initialSearch, router, search]);
 
   // State sửa thông tin student
   const [editingStudent, setEditingStudent] = useState<StudentAdminDto | null>(
@@ -145,8 +157,19 @@ export function StudentManagementView({
         );
       }
 
+      const updated = body.data;
+      const matches = `${updated.mssv} ${updated.fullName} ${updated.nickname}`
+        .toLowerCase()
+        .includes(initialSearch.toLowerCase());
+      setStudents((current) =>
+        matches
+          ? current.map((student) =>
+              student.id === updated.id ? updated : student,
+            )
+          : current.filter((student) => student.id !== updated.id),
+      );
+      if (!matches) setTotal((current) => Math.max(0, current - 1));
       setEditingStudent(null);
-      triggerRefresh();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Lưu thất bại");
     } finally {
@@ -173,7 +196,11 @@ export function StudentManagementView({
       }
 
       setInitialPin(body.data.initialPin);
-      triggerRefresh();
+      setStudents((current) =>
+        current.map((student) =>
+          student.id === st.id ? { ...student, mustChangePin: true } : student,
+        ),
+      );
     } catch (err) {
       alert(err instanceof Error ? err.message : "Lỗi reset PIN");
       setResetPinStudent(null);
@@ -219,7 +246,6 @@ export function StudentManagementView({
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setPage(1);
           }}
         />
         <span className="muted">Tổng số: {total} sinh viên</span>
@@ -240,59 +266,8 @@ export function StudentManagementView({
                 <th>Thao tác</th>
               </tr>
             </thead>
-            <tbody
-              style={{
-                opacity: loading && students.length > 0 ? 0.6 : 1,
-                transition: "opacity 0.15s",
-              }}
-            >
-              {loading && students.length === 0 ? (
-                // Skeleton Rows: Giữ nguyên khung bảng chống layout shift
-                Array.from({ length: 5 }).map((_, index) => (
-                  <tr key={`skeleton-${index}`}>
-                    <td>
-                      <div
-                        className="skeleton-block is-strong"
-                        style={{ height: "14px", width: "80px" }}
-                      />
-                    </td>
-                    <td>
-                      <div
-                        className="skeleton-block is-strong"
-                        style={{ height: "14px", width: "140px" }}
-                      />
-                    </td>
-                    <td>
-                      <div
-                        className="skeleton-block"
-                        style={{ height: "14px", width: "90px" }}
-                      />
-                    </td>
-                    <td>
-                      <div
-                        className="skeleton-block"
-                        style={{ height: "14px", width: "160px" }}
-                      />
-                    </td>
-                    <td>
-                      <div
-                        className="skeleton-block is-strong"
-                        style={{
-                          height: "18px",
-                          width: "70px",
-                          borderRadius: "9999px",
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <div
-                        className="skeleton-block"
-                        style={{ height: "26px", width: "140px" }}
-                      />
-                    </td>
-                  </tr>
-                ))
-              ) : students.length === 0 ? (
+            <tbody style={{ opacity: 1 }}>
+              {students.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}

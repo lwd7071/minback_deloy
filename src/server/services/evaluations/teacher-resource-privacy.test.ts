@@ -16,10 +16,7 @@ vi.mock("@/server/repositories/evaluation-history-repository", () => ({
 }));
 
 import { createClient } from "@/lib/supabase/server";
-import {
-  findEvaluationOwnerTeacherId,
-  listEvaluationHistoryRows,
-} from "@/server/repositories/evaluation-history-repository";
+import { findEvaluationOwnerTeacherId } from "@/server/repositories/evaluation-history-repository";
 import { getEvaluationHistory } from "./evaluation-history-service";
 import { getStudentInClass } from "@/server/services/students/student-management-service";
 

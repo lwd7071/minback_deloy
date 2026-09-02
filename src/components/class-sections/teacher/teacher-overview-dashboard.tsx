@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -11,7 +11,7 @@ import type {
   PendingGradingItem,
 } from "@/server/repositories/teacher-dashboard-repository";
 
-type DashboardOverviewData = {
+export type DashboardOverviewData = {
   metrics: {
     classCount: number;
     studentCount: number;
@@ -27,6 +27,7 @@ type DashboardOverviewData = {
     total: number;
     percentage: number;
   }[];
+  classProgressMeta: { page: number; pageSize: number; total: number };
   recentActivity: DashboardActivityItem[];
 };
 
@@ -55,51 +56,17 @@ function timeAgo(dateStr: string) {
   return "Vừa xong";
 }
 
-export function TeacherOverviewDashboard() {
-  const [data, setData] = useState<DashboardOverviewData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export function TeacherOverviewDashboard({
+  data,
+}: {
+  data: DashboardOverviewData;
+}) {
   const [activityPage, setActivityPage] = useState(1);
   const ACTIVITY_PAGE_SIZE = 5;
-  const [classProgressPage, setClassProgressPage] = useState(1);
-  const CLASS_PROGRESS_PAGE_SIZE = 3;
-
-  useEffect(() => {
-    let active = true;
-    void fetch("/api/v1/teacher/dashboard-overview", { cache: "no-store" })
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok || !body.data)
-          throw new Error(body.error?.message ?? "Không thể tải dữ liệu");
-        return body.data as DashboardOverviewData;
-      })
-      .then((resData) => {
-        if (active) setData(resData);
-      })
-      .catch((cause) => {
-        if (active)
-          setError(cause instanceof Error ? cause.message : "Đã xảy ra lỗi");
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (error) {
-    return (
-      <div className="teacher-dash">
-        <p className="form-error">{error}</p>
-      </div>
-    );
-  }
-
-  if (!data) {
-    // Loading state could be added here
-    return (
-      <div className="teacher-dash">
-        <p className="muted">Đang tải...</p>
-      </div>
-    );
-  }
+  const classProgressPages = Math.max(
+    1,
+    Math.ceil(data.classProgressMeta.total / data.classProgressMeta.pageSize),
+  );
 
   return (
     <div className="teacher-dash">
@@ -198,75 +165,49 @@ export function TeacherOverviewDashboard() {
               <AppIcon name="classes" size={20} />
               Tiến độ chấm theo lớp
             </h2>
-            {Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE) >
-              1 && (
+            {classProgressPages > 1 && (
               <div
                 className="activity-pagination"
                 style={{ display: "flex", alignItems: "center", gap: "12px" }}
               >
                 <span className="activity-page-info is-compact">
-                  Trang {classProgressPage} /{" "}
-                  {Math.ceil(
-                    data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE,
-                  )}
+                  Trang {data.classProgressMeta.page} / {classProgressPages}
                 </span>
                 <div style={{ display: "flex", gap: "6px" }}>
-                  <button
-                    type="button"
+                  <Link
+                    href={`/admin/dashboard?classPage=${Math.max(1, data.classProgressMeta.page - 1)}`}
                     className="button button-secondary button-sm"
-                    disabled={classProgressPage <= 1}
-                    onClick={() =>
-                      setClassProgressPage((p) => Math.max(1, p - 1))
-                    }
+                    aria-disabled={data.classProgressMeta.page <= 1}
                     aria-label="Trang trước"
                   >
                     Trước
-                  </button>
-                  <button
-                    type="button"
+                  </Link>
+                  <Link
+                    href={`/admin/dashboard?classPage=${Math.min(classProgressPages, data.classProgressMeta.page + 1)}`}
                     className="button button-secondary button-sm"
-                    disabled={
-                      classProgressPage >=
-                      Math.ceil(
-                        data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE,
-                      )
-                    }
-                    onClick={() =>
-                      setClassProgressPage((p) =>
-                        Math.min(
-                          Math.ceil(
-                            data.classProgress.length /
-                              CLASS_PROGRESS_PAGE_SIZE,
-                          ),
-                          p + 1,
-                        ),
-                      )
+                    aria-disabled={
+                      data.classProgressMeta.page >= classProgressPages
                     }
                     aria-label="Trang sau"
                   >
                     Sau
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}
           </div>
           <div className="class-progress-list">
             {data.classProgress.length > 0 ? (
-              data.classProgress
-                .slice(
-                  (classProgressPage - 1) * CLASS_PROGRESS_PAGE_SIZE,
-                  classProgressPage * CLASS_PROGRESS_PAGE_SIZE,
-                )
-                .map((cls) => (
-                  <div key={cls.classSectionId} className="class-progress-row">
-                    <div className="class-progress-header">
-                      <span className="class-code">{cls.classCode}</span>
-                      <span className="class-name">{cls.className}</span>
-                      <MiniProgressRing percentage={cls.percentage} />
-                    </div>
-                    <ProgressBar value={cls.completed} max={cls.total} />
+              data.classProgress.map((cls) => (
+                <div key={cls.classSectionId} className="class-progress-row">
+                  <div className="class-progress-header">
+                    <span className="class-code">{cls.classCode}</span>
+                    <span className="class-name">{cls.className}</span>
+                    <MiniProgressRing percentage={cls.percentage} />
                   </div>
-                ))
+                  <ProgressBar value={cls.completed} max={cls.total} />
+                </div>
+              ))
             ) : (
               <p className="muted">Chưa có lớp học nào.</p>
             )}

@@ -1,7 +1,42 @@
 import "server-only";
 
+/* Supabase's generated relation type cannot represent these nested joins. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { listClassSectionSummaries } from "./frontend-rebuild-repository";
+
+type NestedClassSection = {
+  id?: string;
+  code: string;
+  name?: string;
+  teacher_id?: string;
+};
+type NestedStudent = {
+  full_name: string;
+  class_sections: NestedClassSection | NestedClassSection[];
+};
+type NestedAssignment = { title: string };
+type SubmissionActivityRow = {
+  submitted_at: string;
+  submissions:
+    | {
+        students: NestedStudent | NestedStudent[];
+        assignments: NestedAssignment | NestedAssignment[];
+      }
+    | Array<{
+        students: NestedStudent | NestedStudent[];
+        assignments: NestedAssignment | NestedAssignment[];
+      }>;
+};
+type EvaluationActivityRow = {
+  updated_at: string;
+  students: NestedStudent | NestedStudent[];
+  assignments: NestedAssignment | NestedAssignment[];
+};
+
+function first<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+}
 
 export type PendingGradingItem = {
   assignmentId: string;
@@ -46,15 +81,17 @@ export async function listClassGradingProgress(
 export async function listPendingGradingItems(
   supabase: SupabaseClient,
   teacherId: string,
-  limit: number = 5
+  limit: number = 5,
 ): Promise<PendingGradingItem[]> {
   // Fetch assignments belonging to the teacher
   const { data: assignmentsData, error: aError } = await supabase
     .from("assignments")
-    .select("id, title, due_date, class_sections!inner(id, code, name, teacher_id)")
+    .select(
+      "id, title, due_date, class_sections!inner(id, code, name, teacher_id)",
+    )
     .eq("class_sections.teacher_id", teacherId)
     .in("status", ["published", "closed"]);
-    
+
   if (aError) throw new Error("PENDING_GRADING_FETCH_FAILED");
   if (!assignmentsData?.length) return [];
 
@@ -99,14 +136,16 @@ export async function listPendingGradingItems(
   for (const a of assignmentsData) {
     const count = pendingCountByAssignment.get(a.id) || 0;
     if (count > 0) {
-      // Cast to any to bypass Supabase typing quirks for nested joins
-      const classSection = a.class_sections as any;
+      const classSection = a.class_sections as unknown as
+        NestedClassSection | NestedClassSection[];
+      const section = first(classSection);
+      if (!section?.id || !section.name) continue;
       results.push({
         assignmentId: a.id,
         assignmentTitle: a.title,
-        classCode: Array.isArray(classSection) ? classSection[0].code : classSection.code,
-        className: Array.isArray(classSection) ? classSection[0].name : classSection.name,
-        classSectionId: Array.isArray(classSection) ? classSection[0].id : classSection.id,
+        classCode: section.code,
+        className: section.name,
+        classSectionId: section.id,
         dueDate: a.due_date,
         pendingCount: count,
       });
@@ -114,22 +153,23 @@ export async function listPendingGradingItems(
   }
 
   // Sort by nearest deadline first
-  results.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  results.sort(
+    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
+  );
   return results.slice(0, limit);
 }
 
 export async function listRecentActivity(
   supabase: SupabaseClient,
   teacherId: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<DashboardActivityItem[]> {
-  // To avoid complex cross-table sorting in JS if data is huge, we'll fetch recent 
+  // To avoid complex cross-table sorting in JS if data is huge, we'll fetch recent
   // submission_attempts and recent evaluations for the teacher, then merge and sort.
-  
+
   // Recent submissions
-  const { data: subData, error: subError } = await (supabase
-    .from("submission_attempts")
-    .select(`
+  const submissionResult = (await (
+    supabase.from("submission_attempts").select(`
       submitted_at,
       submissions!inner(
         assignment_id,
@@ -145,17 +185,21 @@ export async function listRecentActivity(
           title
         )
       )
-    `) as any)
+    `) as any
+  )
     .eq("submissions.students.class_sections.teacher_id", teacherId)
     .order("submitted_at", { ascending: false })
-    .limit(limit);
+    .limit(limit)) as unknown as {
+    data: SubmissionActivityRow[] | null;
+    error: unknown | null;
+  };
+  const { data: subData, error: subError } = submissionResult;
 
   if (subError) throw new Error("ACTIVITY_FETCH_FAILED");
 
   // Recent evaluations
-  const { data: evalData, error: evalError } = await (supabase
-    .from("evaluations")
-    .select(`
+  const evaluationResult = (await (
+    supabase.from("evaluations").select(`
       updated_at,
       status,
       students!inner(
@@ -168,22 +212,28 @@ export async function listRecentActivity(
       assignments!inner(
         title
       )
-    `) as any)
+    `) as any
+  )
     .eq("students.class_sections.teacher_id", teacherId)
     .in("status", ["graded", "returned"])
     .order("updated_at", { ascending: false })
-    .limit(limit);
+    .limit(limit)) as unknown as {
+    data: EvaluationActivityRow[] | null;
+    error: unknown | null;
+  };
+  const { data: evalData, error: evalError } = evaluationResult;
 
   if (evalError) throw new Error("ACTIVITY_FETCH_FAILED");
 
   const activities: DashboardActivityItem[] = [];
 
-  for (const row of (subData as any[]) ?? []) {
-    const subs = Array.isArray(row.submissions) ? row.submissions[0] : row.submissions;
-    const student = Array.isArray(subs.students) ? subs.students[0] : subs.students;
-    const assignment = Array.isArray(subs.assignments) ? subs.assignments[0] : subs.assignments;
-    const classSection = Array.isArray(student.class_sections) ? student.class_sections[0] : student.class_sections;
-    
+  for (const row of subData ?? []) {
+    const subs = first(row.submissions);
+    const student = first(subs?.students);
+    const assignment = first(subs?.assignments);
+    const classSection = first(student?.class_sections);
+    if (!student || !assignment || !classSection) continue;
+
     activities.push({
       type: "submission",
       studentName: student.full_name,
@@ -193,10 +243,11 @@ export async function listRecentActivity(
     });
   }
 
-  for (const row of (evalData as any[]) ?? []) {
-    const student = Array.isArray(row.students) ? row.students[0] : row.students;
-    const assignment = Array.isArray(row.assignments) ? row.assignments[0] : row.assignments;
-    const classSection = Array.isArray(student.class_sections) ? student.class_sections[0] : student.class_sections;
+  for (const row of evalData ?? []) {
+    const student = first(row.students);
+    const assignment = first(row.assignments);
+    const classSection = first(student?.class_sections);
+    if (!student || !assignment || !classSection) continue;
 
     activities.push({
       type: "graded",
@@ -207,6 +258,8 @@ export async function listRecentActivity(
     });
   }
 
-  activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  activities.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
   return activities.slice(0, limit);
 }

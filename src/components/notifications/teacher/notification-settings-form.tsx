@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -9,7 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-type Settings = {
+export type Settings = {
   emailEnabled: boolean;
   brevoConfigured: boolean;
   senderEmail: string | null;
@@ -26,48 +26,19 @@ async function readResult<T>(response: Response): Promise<T> {
   return body.data;
 }
 
-export function NotificationSettingsForm() {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function NotificationSettingsForm({
+  initialSettings,
+}: {
+  initialSettings: Settings;
+}) {
+  const [settings, setSettings] = useState<Settings>(initialSettings);
   const [isToggling, setIsToggling] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadSettings() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch("/api/v1/teacher/settings/notifications", {
-          cache: "no-store",
-        });
-        const data = await readResult<Settings>(response);
-        if (active) setSettings(data);
-      } catch (loadError: unknown) {
-        if (active) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Không thể tải cấu hình thông báo",
-          );
-        }
-      } finally {
-        if (active) setIsLoading(false);
-      }
-    }
-
-    void loadSettings();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   async function toggleEmail() {
-    if (!settings || isToggling || isSendingTest) return;
+    if (isToggling || isSendingTest) return;
     setIsToggling(true);
     setMessage(null);
     setError(null);
@@ -120,164 +91,131 @@ export function NotificationSettingsForm() {
     }
   }
 
-  // Loading skeleton state
-  if (isLoading) {
-    return (
-      <div className="settings-stack" aria-busy="true" aria-live="polite">
-        <div className="settings-skeleton-row">
-          <div style={{ width: "60%" }}>
-            <div
-              className="skeleton-block is-strong"
-              style={{ height: "18px", width: "200px", marginBottom: "8px" }}
-            />
-            <div
-              className="skeleton-block"
-              style={{ height: "14px", width: "320px" }}
-            />
-          </div>
-          <div
-            className="skeleton-block is-strong"
-            style={{ height: "36px", width: "90px" }}
-          />
-        </div>
-        <p className="muted" style={{ margin: "16px 0 0", fontSize: "14px" }}>
-          Đang tải cài đặt thông báo…
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="settings-stack" aria-live="polite">
-      {settings ? (
-        <>
-          {/* Main Email Toggle Section */}
-          <div
-            className="settings-row"
+      <>
+        {/* Main Email Toggle Section */}
+        <div
+          className="settings-row"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "16px",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Mail size={18} className="text-primary" />
+              <strong style={{ fontSize: "15px" }}>
+                Gửi email khi công bố kết quả
+              </strong>
+            </div>
+            <p
+              className="muted settings-help"
+              style={{ marginTop: "4px", fontSize: "13px" }}
+            >
+              Tự động gửi email thông báo tới sinh viên khi bài tập chuyển sang
+              trạng thái <strong>Công bố (returned)</strong>. Điểm số và nhận
+              xét chi tiết được bảo mật, sinh viên chỉ xem sau khi đăng nhập
+              MinBack.
+            </p>
+          </div>
+          <button
+            className={`button ${settings.emailEnabled ? "button-primary" : "button-secondary"}`}
+            type="button"
+            disabled={isToggling || isSendingTest}
+            aria-pressed={settings.emailEnabled}
+            onClick={() => void toggleEmail()}
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: "16px",
+              minWidth: "100px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            <div>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                <Mail size={18} className="text-primary" />
-                <strong style={{ fontSize: "15px" }}>
-                  Gửi email khi công bố kết quả
-                </strong>
-              </div>
-              <p
-                className="muted settings-help"
-                style={{ marginTop: "4px", fontSize: "13px" }}
-              >
-                Tự động gửi email thông báo tới sinh viên khi bài tập chuyển
-                sang trạng thái <strong>Công bố (returned)</strong>. Điểm số và
-                nhận xét chi tiết được bảo mật, sinh viên chỉ xem sau khi đăng
-                nhập MinBack.
-              </p>
-            </div>
-            <button
-              className={`button ${settings.emailEnabled ? "button-primary" : "button-secondary"}`}
-              type="button"
-              disabled={isToggling || isSendingTest}
-              aria-pressed={settings.emailEnabled}
-              onClick={() => void toggleEmail()}
+            {isToggling ? <RefreshCw size={14} className="spin" /> : null}
+            {settings.emailEnabled ? "Đang bật" : "Đang tắt"}
+          </button>
+        </div>
+
+        {/* Brevo Service & Sender Details */}
+        <dl className="settings-details">
+          <div style={{ marginBottom: "12px" }}>
+            <dt>Trạng thái cấu hình Brevo</dt>
+            <dd
               style={{
-                minWidth: "100px",
-                display: "inline-flex",
+                margin: "4px 0 0",
+                fontSize: "14px",
+                fontWeight: 600,
+                display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
                 gap: "6px",
               }}
             >
-              {isToggling ? <RefreshCw size={14} className="spin" /> : null}
-              {settings.emailEnabled ? "Đang bật" : "Đang tắt"}
-            </button>
+              {settings.brevoConfigured ? (
+                <span className="settings-state is-success">
+                  <CheckCircle2 size={16} /> Đã cấu hình trên máy chủ
+                </span>
+              ) : (
+                <span className="settings-state is-warning">
+                  <AlertTriangle size={16} /> Chưa cấu hình đầy đủ (Thiếu API
+                  Key/Sender Email)
+                </span>
+              )}
+            </dd>
           </div>
-
-          {/* Brevo Service & Sender Details */}
-          <dl className="settings-details">
-            <div style={{ marginBottom: "12px" }}>
-              <dt>Trạng thái cấu hình Brevo</dt>
-              <dd
-                style={{
-                  margin: "4px 0 0",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                {settings.brevoConfigured ? (
-                  <span className="settings-state is-success">
-                    <CheckCircle2 size={16} /> Đã cấu hình trên máy chủ
-                  </span>
-                ) : (
-                  <span className="settings-state is-warning">
-                    <AlertTriangle size={16} /> Chưa cấu hình đầy đủ (Thiếu API
-                    Key/Sender Email)
-                  </span>
-                )}
-              </dd>
-            </div>
-            <div style={{ marginBottom: "12px" }}>
-              <dt>Tên người gửi (Sender Name)</dt>
-              <dd style={{ margin: "4px 0 0", fontSize: "14px" }}>
-                {settings.senderName ?? "—"}
-              </dd>
-            </div>
-            <div>
-              <dt>Địa chỉ người gửi (Sender Email)</dt>
-              <dd
-                style={{
-                  margin: "4px 0 0",
-                  fontSize: "14px",
-                  fontFamily: "monospace",
-                }}
-              >
-                {settings.senderEmail ?? "—"}
-              </dd>
-            </div>
-          </dl>
-
-          {/* Test Email Action Button */}
+          <div style={{ marginBottom: "12px" }}>
+            <dt>Tên người gửi (Sender Name)</dt>
+            <dd style={{ margin: "4px 0 0", fontSize: "14px" }}>
+              {settings.senderName ?? "—"}
+            </dd>
+          </div>
           <div>
-            <button
-              className="button button-secondary"
-              type="button"
-              disabled={
-                isSendingTest || isToggling || !settings.brevoConfigured
-              }
-              onClick={() => void sendTest()}
+            <dt>Địa chỉ người gửi (Sender Email)</dt>
+            <dd
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
+                margin: "4px 0 0",
+                fontSize: "14px",
+                fontFamily: "monospace",
               }}
             >
-              {isSendingTest ? (
-                <RefreshCw size={14} className="spin" />
-              ) : (
-                <Send size={14} />
-              )}
-              {isSendingTest ? "Đang gửi email thử…" : "Gửi email thử nghiệm"}
-            </button>
-            {!settings.brevoConfigured && (
-              <span
-                className="muted"
-                style={{ marginLeft: "12px", fontSize: "13px" }}
-              >
-                (Cần cấu hình Brevo server env trước khi gửi thử)
-              </span>
-            )}
+              {settings.senderEmail ?? "—"}
+            </dd>
           </div>
-        </>
-      ) : null}
+        </dl>
+
+        {/* Test Email Action Button */}
+        <div>
+          <button
+            className="button button-secondary"
+            type="button"
+            disabled={isSendingTest || isToggling || !settings.brevoConfigured}
+            onClick={() => void sendTest()}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            {isSendingTest ? (
+              <RefreshCw size={14} className="spin" />
+            ) : (
+              <Send size={14} />
+            )}
+            {isSendingTest ? "Đang gửi email thử…" : "Gửi email thử nghiệm"}
+          </button>
+          {!settings.brevoConfigured && (
+            <span
+              className="muted"
+              style={{ marginLeft: "12px", fontSize: "13px" }}
+            >
+              (Cần cấu hình Brevo server env trước khi gửi thử)
+            </span>
+          )}
+        </div>
+      </>
 
       {/* Success Alert */}
       {message ? (

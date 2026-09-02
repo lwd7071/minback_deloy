@@ -19,6 +19,8 @@
     "test:setup": "node scripts/test-setup.mjs",
     "test:health": "node scripts/test-health.mjs",
     "benchmark:local": "node scripts/perf-baseline.mjs",
+    "perf:navigation": "node scripts/perf-navigation.mjs",
+    "perf:compare": "node scripts/perf-compare.mjs",
     "cloudinary:setup": "node --env-file=.env.local scripts/cloudinary-setup.mjs",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
@@ -43,6 +45,7 @@
     "zod": "^4.5.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/bcrypt": "^6.0.0",

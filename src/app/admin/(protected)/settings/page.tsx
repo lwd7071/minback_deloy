@@ -1,5 +1,14 @@
 import { NotificationSettingsForm } from "@/components/notifications/teacher/notification-settings-form";
-export default function AdminSettingsPage() {
+import { handleTeacherPageError } from "@/server/navigation/page-errors";
+import { getNotificationSettings } from "@/server/services/notifications/notification-settings-service";
+
+export default async function AdminSettingsPage() {
+  let settings;
+  try {
+    settings = await getNotificationSettings();
+  } catch (error) {
+    return handleTeacherPageError(error);
+  }
   return (
     <div className="stack">
       <div className="page-head">
@@ -7,7 +16,7 @@ export default function AdminSettingsPage() {
         <p className="muted">Quản lý email phản hồi gửi tới sinh viên.</p>
       </div>
       <section className="card">
-        <NotificationSettingsForm />
+        <NotificationSettingsForm initialSettings={settings} />
       </section>
     </div>
   );

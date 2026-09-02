@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
@@ -25,76 +26,83 @@ type FilterTab = "all" | "pending" | "graded" | "unsubmitted";
 
 export function BulkGradeView({
   classSectionId,
-  assignmentId,
+  assignment,
+  students: initialStudents,
+  studentMeta,
+  initialSearch,
+  evaluations,
+  submissions: initialSubmissions,
 }: {
   classSectionId: string;
-  assignmentId: string;
+  assignment: AssignmentDto;
+  students: StudentAdminDto[];
+  studentMeta: { page: number; pageSize: number; total: number };
+  initialSearch: string;
+  evaluations: EvaluationWithStudentDto[];
+  submissions: SubmissionListItemDto[];
 }) {
-  const [assignment, setAssignment] = useState<AssignmentDto | null>(null);
-  const [students, setStudents] = useState<StudentAdminDto[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
-  const [submissions, setSubmissions] = useState<
-    Record<string, SubmissionListItemDto>
-  >({});
+  const router = useRouter();
+  const [students] = useState<StudentAdminDto[]>(initialStudents);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>(() =>
+    Object.fromEntries(
+      initialStudents.map((student) => {
+        const current = evaluations.find(
+          (value) => value.studentId === student.id,
+        );
+        return [
+          student.id,
+          {
+            studentId: student.id,
+            score: current?.score == null ? "" : String(current.score),
+            feedback: current?.feedback ?? "",
+            status: current?.status ?? "pending",
+          },
+        ];
+      }),
+    ),
+  );
+  const [submissions] = useState<Record<string, SubmissionListItemDto>>(() =>
+    Object.fromEntries(
+      initialSubmissions.map((item) => [item.student.id, item]),
+    ),
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [hasChanges, setHasChanges] = useState(false);
+  const pages = Math.max(
+    1,
+    Math.ceil(studentMeta.total / studentMeta.pageSize),
+  );
 
   useEffect(() => {
-    let active = true;
-    void Promise.all([
-      fetch(`/api/v1/teacher/assignments/${assignmentId}`, {
-        cache: "no-store",
-      }).then((r) => r.json()),
-      fetch(
-        `/api/v1/teacher/class-sections/${classSectionId}/students?page=1&pageSize=100`,
-        { cache: "no-store" },
-      ).then((r) => r.json()),
-      fetch(`/api/v1/teacher/assignments/${assignmentId}/evaluations`, {
-        cache: "no-store",
-      }).then((r) => r.json()),
-      fetch(`/api/v1/teacher/assignments/${assignmentId}/submissions`, {
-        cache: "no-store",
-      }).then((r) => r.json()),
-    ]).then(([a, s, e, u]) => {
-      if (!active) return;
-      setAssignment(a.data);
-      const list = (s.data ?? []) as StudentAdminDto[];
-      const evaluations = (e.data ?? []) as EvaluationWithStudentDto[];
-      setStudents(list);
-      setDrafts(
-        Object.fromEntries(
-          list.map((student) => {
-            const current = evaluations.find(
-              (value) => value.studentId === student.id,
-            );
-            return [
-              student.id,
-              {
-                studentId: student.id,
-                score: current?.score == null ? "" : String(current.score),
-                feedback: current?.feedback ?? "",
-                status: current?.status ?? "pending",
-              },
-            ];
-          }),
-        ),
+    if (searchQuery === initialSearch) return;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set("q", searchQuery.trim());
+      router.replace(
+        `/admin/classes/${classSectionId}/assignments/${assignment.id}/grade${params.size ? `?${params}` : ""}`,
       );
-      setSubmissions(
-        Object.fromEntries(
-          ((u.data ?? []) as SubmissionListItemDto[]).map((item) => [
-            item.student.id,
-            item,
-          ]),
-        ),
-      );
-    });
-    return () => {
-      active = false;
-    };
-  }, [assignmentId, classSectionId]);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [assignment.id, classSectionId, initialSearch, router, searchQuery]);
+
+  const pageHref = (page: number) => {
+    const params = new URLSearchParams();
+    if (initialSearch) params.set("q", initialSearch);
+    if (page > 1) params.set("page", String(page));
+    return `/admin/classes/${classSectionId}/assignments/${assignment.id}/grade${params.size ? `?${params}` : ""}`;
+  };
+
+  function confirmNavigation(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (
+      hasChanges &&
+      !window.confirm("Bạn có thay đổi chưa lưu. Rời trang này?")
+    ) {
+      event.preventDefault();
+    }
+  }
 
   function update(id: string, patch: Partial<Draft>) {
     setHasChanges(true);
@@ -124,7 +132,7 @@ export function BulkGradeView({
     setMessage(null);
     try {
       const response = await fetch(
-        `/api/v1/teacher/assignments/${assignmentId}/evaluations/bulk`,
+        `/api/v1/teacher/assignments/${assignment.id}/evaluations/bulk`,
         {
           method: "PUT",
           headers: { "content-type": "application/json" },
@@ -208,14 +216,6 @@ export function BulkGradeView({
       return true;
     });
   }, [students, drafts, submissions, activeTab, searchQuery]);
-
-  if (!assignment) {
-    return (
-      <div className="teacher-dash">
-        <p className="muted">Đang tải danh sách chấm bài…</p>
-      </div>
-    );
-  }
 
   return (
     <div className="teacher-dash grade-workspace">
@@ -319,6 +319,31 @@ export function BulkGradeView({
           />
         </div>
       </div>
+
+      {pages > 1 ? (
+        <nav
+          className="pagination-summary cluster"
+          aria-label="Phân trang sinh viên"
+        >
+          <Link
+            href={pageHref(Math.max(1, studentMeta.page - 1))}
+            aria-disabled={studentMeta.page === 1}
+            onClick={confirmNavigation}
+          >
+            Trang trước
+          </Link>
+          <span>
+            {studentMeta.page} / {pages}
+          </span>
+          <Link
+            href={pageHref(Math.min(pages, studentMeta.page + 1))}
+            aria-disabled={studentMeta.page === pages}
+            onClick={confirmNavigation}
+          >
+            Trang sau
+          </Link>
+        </nav>
+      ) : null}
 
       {/* Spreadsheet / Table View */}
       <div className="data-table-wrap" style={{ overflowX: "auto" }}>

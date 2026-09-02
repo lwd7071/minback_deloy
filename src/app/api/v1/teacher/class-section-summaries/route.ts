@@ -9,6 +9,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const result = await getTeacherClassSectionSummaries({
       page: params.get("page") ?? undefined,
       pageSize: params.get("pageSize") ?? undefined,
+      search: params.get("search") ?? undefined,
     });
     return successResponse(result.data, undefined, result.meta);
   } catch (error) {

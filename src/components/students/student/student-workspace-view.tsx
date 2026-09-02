@@ -11,11 +11,7 @@ import { Card } from "@/components/ui/card";
 import { formatDeadlineInfo } from "@/lib/deadline-utils";
 
 export type Section =
-  | "overview"
-  | "assignments"
-  | "submissions"
-  | "grades"
-  | "notifications";
+  "overview" | "assignments" | "submissions" | "grades" | "notifications";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -27,7 +23,9 @@ function formatDate(value: string) {
 
 export function StudentWorkspaceView({ section }: { section: Section }) {
   const { profile, loading, error, refresh } = useStudentWorkspace();
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
+    string | null
+  >(null);
   const notifications = useNotificationPolling();
 
   const selected = profile?.assignments.find(
@@ -56,7 +54,8 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
     return { submitted, graded, upcoming };
   }, [profile]);
 
-  if (loading) return <div className="workspace-state">Đang tải không gian học tập…</div>;
+  if (loading)
+    return <div className="workspace-state">Đang tải không gian học tập…</div>;
   if (error || !profile || !summary) {
     return (
       <div className="workspace-state">
@@ -74,10 +73,16 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
     <div className="student-workspace-view">
       <header className="workspace-topbar">
         <div className="workspace-person">
-          <span className="workspace-avatar">{profile.student.fullName.slice(0, 1)}</span>
+          <span className="workspace-avatar">
+            {profile.student.fullName.slice(0, 1)}
+          </span>
           <div>
             <p className="eyebrow">{profile.classSection.code}</p>
-            <h1>{section === "overview" ? `Chào ${profile.student.fullName.split(" ").at(-1)}!` : navigationTitle(section)}</h1>
+            <h1>
+              {section === "overview"
+                ? `Chào ${profile.student.fullName.split(" ").at(-1)}!`
+                : navigationTitle(section)}
+            </h1>
           </div>
         </div>
         <span className="workspace-user-meta">{profile.student.mssv}</span>
@@ -87,18 +92,39 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
         <>
           <section className="student-summary-strip">
             <div className="student-class-signature">
-              <span className="signature-icon"><AppIcon name="book" size={28} /></span>
-              <div><span>Tiến độ lớp</span><strong>{profile.classSection.code}</strong><small>{profile.classSection.name}</small></div>
+              <span className="signature-icon">
+                <AppIcon name="book" size={28} />
+              </span>
+              <div>
+                <span>Tiến độ lớp</span>
+                <strong>{profile.classSection.code}</strong>
+                <small>{profile.classSection.name}</small>
+              </div>
             </div>
-            <Metric icon="book" label="Bài tập" value={profile.assignments.length} />
+            <Metric
+              icon="book"
+              label="Bài tập"
+              value={profile.assignments.length}
+            />
             <Metric icon="upload" label="Đã nộp" value={summary.submitted} />
             <Metric icon="check" label="Đã chấm" value={summary.graded} />
-            <Metric icon="star" label="Tiến độ" value={`${profile.progress.percentage}%`} />
+            <Metric
+              icon="star"
+              label="Tiến độ"
+              value={`${profile.progress.percentage}%`}
+            />
           </section>
           <div className="student-dashboard-panels">
             <Card className="workspace-panel">
-              <PanelTitle icon="book" title="Bài tập gần đây" href={`/class/${profile.classSection.code}/assignments`} />
-              <AssignmentRows assignments={profile.assignments.slice(0, 4)} onSelect={setSelectedAssignmentId} />
+              <PanelTitle
+                icon="book"
+                title="Bài tập gần đây"
+                href={`/class/${profile.classSection.code}/assignments`}
+              />
+              <AssignmentRows
+                assignments={profile.assignments.slice(0, 4)}
+                onSelect={setSelectedAssignmentId}
+              />
             </Card>
             <Card className="workspace-panel deadline-panel">
               <PanelTitle icon="clock" title="Hạn nộp gần nhất" />
@@ -152,7 +178,15 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
       ) : (
         <Card className="workspace-panel workspace-table-panel">
           <PanelTitle
-            icon={section === "assignments" ? "book" : section === "submissions" ? "upload" : section === "grades" ? "gradebook" : "bell"}
+            icon={
+              section === "assignments"
+                ? "book"
+                : section === "submissions"
+                  ? "upload"
+                  : section === "grades"
+                    ? "gradebook"
+                    : "bell"
+            }
             title={navigationTitle(section)}
           />
           <AssignmentRows
@@ -160,10 +194,9 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
               section === "submissions"
                 ? assignments.filter((a) => a.submission.latestAttempt !== null)
                 : section === "grades"
-                ? assignments.filter((a) => a.evaluation !== null)
-                : assignments
+                  ? assignments.filter((a) => a.evaluation !== null)
+                  : assignments
             }
-            mode={section === "grades" ? "grades" : "assignments"}
             onSelect={setSelectedAssignmentId}
           />
         </Card>
@@ -291,4 +324,6 @@ function AssignmentRows({
   );
 }
 
-type StudentProfileAssignment = NonNullable<ReturnType<typeof useStudentWorkspace>["profile"]>["assignments"][number];
+type StudentProfileAssignment = NonNullable<
+  ReturnType<typeof useStudentWorkspace>["profile"]
+>["assignments"][number];

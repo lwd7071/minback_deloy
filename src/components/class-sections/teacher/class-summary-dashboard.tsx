@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { SearchInput } from "@/components/ui/search-input";
@@ -65,52 +66,42 @@ export function MiniProgressRing({ percentage }: { percentage: number }) {
   );
 }
 
-export function ClassSummaryDashboard() {
-  const [rows, setRows] = useState<ClassSectionSummaryDto[]>([]);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    void fetch("/api/v1/teacher/class-section-summaries?page=1&pageSize=100", {
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok || !body.data)
-          throw new Error(body.error?.message ?? "Không thể tải lớp học phần");
-        return body.data as ClassSectionSummaryDto[];
-      })
-      .then((data) => {
-        if (active) setRows(data);
-      })
-      .catch((cause) => {
-        if (active)
-          setError(
-            cause instanceof Error ? cause.message : "Không thể tải lớp",
-          );
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-  const visible = rows.filter((row) =>
-    `${row.code} ${row.name}`.toLowerCase().includes(search.toLowerCase()),
-  );
+export function ClassSummaryDashboard({
+  rows,
+  meta,
+  metrics,
+  query,
+}: {
+  rows: ClassSectionSummaryDto[];
+  meta: { page: number; pageSize: number; total: number };
+  metrics: {
+    classCount: number;
+    studentCount: number;
+    assignmentCount: number;
+    gradingPercentage: number;
+  };
+  query: { search: string };
+}) {
+  const router = useRouter();
+  const [search, setSearch] = useState(query.search);
+  const pages = Math.max(1, Math.ceil(meta.total / meta.pageSize));
 
-  const totalStudents = rows.reduce((acc, r) => acc + r.studentCount, 0);
-  const totalAssignments = rows.reduce((acc, r) => acc + r.assignmentCount, 0);
-  const totalGradingCompleted = rows.reduce(
-    (acc, r) => acc + r.gradingProgress.completed,
-    0,
-  );
-  const totalGrading = rows.reduce(
-    (acc, r) => acc + r.gradingProgress.total,
-    0,
-  );
-  const avgGradingProgress = totalGrading
-    ? Math.round((totalGradingCompleted / totalGrading) * 100)
-    : 0;
+  useEffect(() => {
+    if (search === query.search) return;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search.trim()) params.set("q", search.trim());
+      router.replace(`/admin/classes${params.size ? `?${params}` : ""}`);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [query.search, router, search]);
+
+  const pageHref = (page: number) => {
+    const params = new URLSearchParams();
+    if (query.search) params.set("q", query.search);
+    if (page > 1) params.set("page", String(page));
+    return `/admin/classes${params.size ? `?${params}` : ""}`;
+  };
   return (
     <div className="teacher-dash">
       <header className="teacher-dash-header">
@@ -130,25 +121,25 @@ export function ClassSummaryDashboard() {
           icon="classes"
           tone="blue"
           label="Lớp"
-          value={rows.length}
+          value={metrics.classCount}
         />
         <DashboardMetric
           icon="students"
           tone="green"
           label="Sinh viên"
-          value={totalStudents}
+          value={metrics.studentCount}
         />
         <DashboardMetric
           icon="book"
           tone="amber"
           label="Bài mở"
-          value={totalAssignments}
+          value={metrics.assignmentCount}
         />
         <DashboardMetric
           icon="check"
           tone="violet"
           label="Đã chấm"
-          value={`${avgGradingProgress}%`}
+          value={`${metrics.gradingPercentage}%`}
         />
       </div>
 
@@ -163,10 +154,7 @@ export function ClassSummaryDashboard() {
         <div style={{ flex: 1, maxWidth: "400px" }}>
           <SearchInput
             value={search}
-            onChange={(v) => {
-              setSearch(v);
-              setPage(1);
-            }}
+            onChange={setSearch}
             placeholder="Tìm theo mã hoặc tên lớp"
           />
         </div>
@@ -175,10 +163,8 @@ export function ClassSummaryDashboard() {
         </Link>
       </div>
 
-      {error ? <p className="form-error">{error}</p> : null}
-
       <div className="teacher-class-grid">
-        {visible.slice((page - 1) * 6, page * 6).map((row) => {
+        {rows.map((row) => {
           const pct = row.gradingProgress.total
             ? Math.round(
                 (row.gradingProgress.completed / row.gradingProgress.total) *
@@ -213,7 +199,7 @@ export function ClassSummaryDashboard() {
         })}
       </div>
 
-      {visible.length > 6 && (
+      {pages > 1 && (
         <div
           style={{
             display: "flex",
@@ -222,29 +208,27 @@ export function ClassSummaryDashboard() {
             marginTop: "32px",
           }}
         >
-          <button
+          <Link
             className="btn btn-outline"
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            aria-disabled={meta.page === 1}
+            href={pageHref(Math.max(1, meta.page - 1))}
           >
             Trang trước
-          </button>
+          </Link>
           <span className="pagination-summary">
-            {page} / {Math.ceil(visible.length / 6)}
+            {meta.page} / {pages}
           </span>
-          <button
+          <Link
             className="btn btn-outline"
-            disabled={page === Math.ceil(visible.length / 6)}
-            onClick={() =>
-              setPage((p) => Math.min(Math.ceil(visible.length / 6), p + 1))
-            }
+            aria-disabled={meta.page === pages}
+            href={pageHref(Math.min(pages, meta.page + 1))}
           >
             Trang sau
-          </button>
+          </Link>
         </div>
       )}
 
-      {!error && !visible.length ? (
+      {!rows.length ? (
         <div className="teacher-empty-state">
           <span className="student-icon-tile blue">
             <AppIcon name="classes" size={22} />

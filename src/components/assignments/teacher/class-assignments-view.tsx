@@ -35,10 +35,12 @@ type StatusFilter = "all" | AssignmentStatus;
 
 export function ClassAssignmentsView({
   classSectionId,
+  initialAssignments,
 }: {
   classSectionId: string;
+  initialAssignments: AssignmentDto[];
 }) {
-  const [rows, setRows] = useState<AssignmentDto[]>([]);
+  const [rows, setRows] = useState<AssignmentDto[]>(initialAssignments);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -150,7 +152,11 @@ export function ClassAssignmentsView({
       {/* Form Tạo bài tập mới */}
       {showCreate ? (
         <Card>
-          <form className="form-stack" onSubmit={(event) => void create(event)} autoComplete="off">
+          <form
+            className="form-stack"
+            onSubmit={(event) => void create(event)}
+            autoComplete="off"
+          >
             <label className="form-field">
               <span>Tên bài tập</span>
               <input

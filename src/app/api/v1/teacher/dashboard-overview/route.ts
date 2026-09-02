@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { getTeacherDashboardOverview } from "@/server/services/frontend-rebuild/teacher-dashboard-service";
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   try {
     const result = await getTeacherDashboardOverview();
     return successResponse(result.data);

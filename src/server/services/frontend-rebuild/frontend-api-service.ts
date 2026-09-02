@@ -54,15 +54,11 @@ export async function getTeacherClassSectionSummaries(input: unknown) {
       "Phân trang không hợp lệ",
     );
   const query = parsed.data;
-  const result = await listClassSectionSummaries(
-    supabase,
-    teacher.id,
-    query.page,
-    query.pageSize,
-  );
+  const result = await listClassSectionSummaries(supabase, teacher.id, query);
   return {
     data: result.rows,
     meta: { page: query.page, pageSize: query.pageSize, total: result.total },
+    metrics: result.metrics,
   };
 }
 

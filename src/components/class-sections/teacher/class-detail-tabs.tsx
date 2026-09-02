@@ -1,9 +1,6 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs } from "@/components/ui/tabs";
-import { StudentManagementView } from "@/components/students/teacher/student-management-view";
-import { ClassAssignmentsView } from "@/components/assignments/teacher/class-assignments-view";
-import { GradebookView } from "@/components/evaluations/teacher/gradebook-view";
 import { Modal } from "@/components/ui/modal";
 import { AssignmentDetailView } from "@/components/assignments/teacher/assignment-detail-view";
 export function ClassDetailTabs({
@@ -20,10 +17,7 @@ export function ClassDetailTabs({
     : "students";
   const assignmentId = search.get("assignment");
   function change(next: string) {
-    const params = new URLSearchParams(search.toString());
-    params.set("tab", next);
-    params.delete("assignment");
-    router.replace(`?${params.toString()}`);
+    router.replace(`/admin/classes/${classSectionId}/${next}`);
   }
   function close() {
     const params = new URLSearchParams(search.toString());
@@ -41,13 +35,6 @@ export function ClassDetailTabs({
         activeTab={tab}
         onTabChange={change}
       />
-      {tab === "students" ? (
-        <StudentManagementView classSectionId={classSectionId} />
-      ) : tab === "assignments" ? (
-        <ClassAssignmentsView classSectionId={classSectionId} />
-      ) : (
-        <GradebookView classSectionId={classSectionId} />
-      )}
       <Modal
         open={Boolean(assignmentId)}
         onClose={close}
