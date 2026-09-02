@@ -103,16 +103,16 @@ function StudentNotificationBell({ classCode }: { classCode: string }) {
         )}
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "100%", right: 0, width: 320, background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 100, marginTop: 8, overflow: "hidden" }}>
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", fontWeight: 600, fontSize: "0.9rem" }}>Thông báo mới</div>
+        <div style={{ position: "absolute", top: "100%", right: 0, width: 320, background: "var(--paper-raised)", border: "1px solid var(--rule)", borderRadius: 8, boxShadow: "var(--shadow-paper)", zIndex: 100, marginTop: 8, overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--rule)", fontWeight: 600, fontSize: "0.9rem", color: "var(--ink-deep)" }}>Thông báo mới</div>
           <div style={{ maxHeight: 300, overflowY: "auto" }}>
             {notifications.slice(0, 3).map(notif => (
               <button 
                 key={notif.id} 
                 onClick={() => { void markAsRead(notif.id); setOpen(false); }}
-                style={{ display: "block", width: "100%", textAlign: "left", padding: "12px 16px", borderBottom: "1px solid var(--border)", background: notif.readAt ? "transparent" : "var(--muted-bg, rgba(0,0,0,0.02))", border: "none", cursor: "pointer" }}
+                style={{ display: "block", width: "100%", textAlign: "left", padding: "12px 16px", borderBottom: "1px solid var(--rule)", background: notif.readAt ? "transparent" : "var(--paper)", borderTop: "none", borderLeft: "none", borderRight: "none", cursor: "pointer" }}
               >
-                <div style={{ fontSize: "0.85rem", marginBottom: 4, color: "var(--foreground)", fontWeight: notif.readAt ? 400 : 500 }}>{notif.message}</div>
+                <div style={{ fontSize: "0.85rem", marginBottom: 4, color: "var(--ink-deep)", fontWeight: notif.readAt ? 400 : 500 }}>{notif.message}</div>
                 <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                   {new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(notif.createdAt))}
                 </div>
@@ -125,7 +125,7 @@ function StudentNotificationBell({ classCode }: { classCode: string }) {
           <Link 
             href={`/class/${encodeURIComponent(classCode)}/notifications`}
             onClick={() => setOpen(false)}
-            style={{ display: "block", padding: "10px", textAlign: "center", fontSize: "0.85rem", color: "var(--primary)", fontWeight: 500, textDecoration: "none", background: "var(--surface)" }}
+            style={{ display: "block", padding: "10px", textAlign: "center", fontSize: "0.85rem", color: "var(--warning)", fontWeight: 500, textDecoration: "none", background: "var(--paper-raised)" }}
           >
             Xem tất cả
           </Link>
