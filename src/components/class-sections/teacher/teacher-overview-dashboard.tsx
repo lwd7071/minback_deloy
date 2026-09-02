@@ -59,6 +59,8 @@ export function TeacherOverviewDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [activityPage, setActivityPage] = useState(1);
   const ACTIVITY_PAGE_SIZE = 5;
+  const [classProgressPage, setClassProgressPage] = useState(1);
+  const CLASS_PROGRESS_PAGE_SIZE = 3;
 
   useEffect(() => {
     let active = true;
@@ -169,22 +171,53 @@ export function TeacherOverviewDashboard() {
 
         {/* Right column: Class Progress */}
         <section className="overview-panel">
-          <h2 className="overview-panel-title">
-            <AppIcon name="classes" size={20} />
-            Tiến độ chấm theo lớp
-          </h2>
+          <div className="activity-panel-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+            <h2 className="overview-panel-title" style={{ marginBottom: 0 }}>
+              <AppIcon name="classes" size={20} />
+              Tiến độ chấm theo lớp
+            </h2>
+            {Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE) > 1 && (
+              <div className="activity-pagination" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span className="activity-page-info" style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  Trang {classProgressPage} / {Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE)}
+                </span>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    type="button"
+                    className="button button-secondary button-sm"
+                    disabled={classProgressPage <= 1}
+                    onClick={() => setClassProgressPage((p) => Math.max(1, p - 1))}
+                    aria-label="Trang trước"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-secondary button-sm"
+                    disabled={classProgressPage >= Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE)}
+                    onClick={() => setClassProgressPage((p) => Math.min(Math.ceil(data.classProgress.length / CLASS_PROGRESS_PAGE_SIZE), p + 1))}
+                    aria-label="Trang sau"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="class-progress-list">
             {data.classProgress.length > 0 ? (
-              data.classProgress.map((cls) => (
-                <div key={cls.classSectionId} className="class-progress-row">
-                  <div className="class-progress-header">
-                    <span className="class-code">{cls.classCode}</span>
-                    <span className="class-name">{cls.className}</span>
-                    <MiniProgressRing percentage={cls.percentage} />
+              data.classProgress
+                .slice((classProgressPage - 1) * CLASS_PROGRESS_PAGE_SIZE, classProgressPage * CLASS_PROGRESS_PAGE_SIZE)
+                .map((cls) => (
+                  <div key={cls.classSectionId} className="class-progress-row">
+                    <div className="class-progress-header">
+                      <span className="class-code">{cls.classCode}</span>
+                      <span className="class-name">{cls.className}</span>
+                      <MiniProgressRing percentage={cls.percentage} />
+                    </div>
+                    <ProgressBar value={cls.completed} max={cls.total} />
                   </div>
-                  <ProgressBar value={cls.completed} max={cls.total} />
-                </div>
-              ))
+                ))
             ) : (
               <p className="muted">Chưa có lớp học nào.</p>
             )}
