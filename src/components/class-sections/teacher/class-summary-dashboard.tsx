@@ -72,6 +72,7 @@ export function MiniProgressRing({
 export function ClassSummaryDashboard() {
   const [rows, setRows] = useState<ClassSectionSummaryDto[]>([]);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
@@ -159,7 +160,10 @@ export function ClassSummaryDashboard() {
         <div style={{ flex: 1, maxWidth: '400px' }}>
           <SearchInput
             value={search}
-            onChange={setSearch}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
             placeholder="Tìm theo mã hoặc tên lớp"
           />
         </div>
@@ -171,7 +175,7 @@ export function ClassSummaryDashboard() {
       {error ? <p className="form-error">{error}</p> : null}
 
       <div className="teacher-class-grid">
-        {visible.map((row) => {
+        {visible.slice((page - 1) * 6, page * 6).map((row) => {
           const pct = row.gradingProgress.total
             ? Math.round(
                 (row.gradingProgress.completed / row.gradingProgress.total) *
@@ -206,7 +210,27 @@ export function ClassSummaryDashboard() {
         })}
       </div>
 
-
+      {visible.length > 6 && (
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '32px' }}>
+          <button
+            className="btn btn-outline"
+            disabled={page === 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+          >
+            Trang trước
+          </button>
+          <span style={{ display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--muted)' }}>
+            {page} / {Math.ceil(visible.length / 6)}
+          </span>
+          <button
+            className="btn btn-outline"
+            disabled={page === Math.ceil(visible.length / 6)}
+            onClick={() => setPage(p => Math.min(Math.ceil(visible.length / 6), p + 1))}
+          >
+            Trang sau
+          </button>
+        </div>
+      )}
 
       {!error && !visible.length ? (
         <div className="teacher-empty-state">
