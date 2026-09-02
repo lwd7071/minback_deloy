@@ -413,7 +413,9 @@ label {
   font-size: 1.25rem;
 }
 .page-head p,
-.page-head .eyebrow {
+.page-head .eyebrow,
+.workspace-person .eyebrow,
+.teacher-dash-heading .eyebrow {
   display: none;
 }
 .student-workspace-view,
@@ -427,31 +429,31 @@ label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 12px;
+  gap: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .workspace-person {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .workspace-avatar {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   place-items: center;
   border-radius: 50%;
   background: var(--ink-deep);
   color: var(--brass-soft);
   font-family: var(--font-display), serif;
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 .workspace-person h1,
 .teacher-dash-heading h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
 }
 .workspace-user-meta {
   padding: 6px 9px;
