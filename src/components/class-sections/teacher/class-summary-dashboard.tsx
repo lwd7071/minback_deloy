@@ -126,9 +126,6 @@ export function ClassSummaryDashboard() {
             <h1>Lớp học phần</h1>
           </div>
         </div>
-        <Link className="btn btn-primary" href="/admin/classes/new">
-          + Tạo lớp mới
-        </Link>
       </header>
 
       <div className="teacher-metrics-grid" aria-label="Tổng quan lớp học">
@@ -158,11 +155,18 @@ export function ClassSummaryDashboard() {
         />
       </div>
 
-      <SearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Tìm theo mã hoặc tên lớp"
-      />
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ flex: 1, maxWidth: '400px' }}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Tìm theo mã hoặc tên lớp"
+          />
+        </div>
+        <Link className="btn btn-primary" href="/admin/classes/new">
+          + Tạo lớp mới
+        </Link>
+      </div>
 
       {error ? <p className="form-error">{error}</p> : null}
 
