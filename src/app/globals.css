@@ -2333,6 +2333,113 @@ label {
   line-height: 1.2;
 }
 
+.student-attachment-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--navy-900, #18333D);
+  background: var(--surface-raised, #FFFEFA);
+  border: 1px solid var(--border, #D9D4C8);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.student-attachment-card:hover .student-attachment-action {
+  border-color: var(--gold-500, #D29A32);
+  background: var(--navy-900, #18333D);
+  color: #FFFFFF;
+}
+
+.assignment-badge-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.assignment-attachment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 4px;
+  background: var(--gold-100, #F6E8C5);
+  color: var(--gold-700, #A96818);
+  border: 1px solid var(--gold-300, #EAD7A6);
+}
+
+/* ==========================================================================
+   Teacher Class Context Navigation (Academic Editorial)
+   ========================================================================== */
+
+.class-section-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.class-context-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border, #D9D4C8);
+}
+
+.class-context-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.class-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary, #687579);
+  transition: color 0.15s ease;
+  width: fit-content;
+}
+
+.class-back-link:hover {
+  color: var(--navy-900, #18333D);
+}
+
+.class-title-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.class-code-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--navy-900, #18333D);
+  color: var(--gold-100, #FFF3CC);
+  border-radius: 6px;
+}
+
+.class-name-heading {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  color: var(--navy-900, #18333D);
+  line-height: 1.2;
+}
+
 /* ─── Pagination Component ─── */
 .pagination-wrap {
   display: flex;
@@ -2434,4 +2541,148 @@ label {
   color: var(--text-secondary);
   font-size: 0.85rem;
   user-select: none;
+}
+
+/* ─── Class Danger Zone Styles ─── */
+.class-danger-zone {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--border);
+}
+
+.class-danger-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px 22px;
+  background: var(--surface);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  border-radius: 12px;
+}
+
+.class-danger-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  color: var(--danger, #dc3545);
+}
+
+.class-danger-info p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.btn-outline-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--danger, #dc3545);
+  background: transparent;
+  border: 1px solid var(--danger, #dc3545);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  background: var(--danger, #dc3545);
+  color: #ffffff;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--danger, #dc3545);
+  border: 1px solid var(--danger, #dc3545);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-danger:disabled,
+.btn-outline-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Assignment Status Tabs (Minimalist & Elegant) ─── */
+.assignment-status-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-subtle, #f1f4f6);
+  border: 1px solid var(--border, #e1e6e9);
+  border-radius: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+
+.assignment-status-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.assignment-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-secondary, #56666e);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.assignment-tab-btn:hover:not(.is-active) {
+  color: var(--navy-900, #16303d);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.assignment-tab-btn.is-active {
+  background: var(--surface-raised, #ffffff);
+  color: var(--navy-900, #16303d);
+  font-weight: 600;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.tab-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary, #56666e);
+  transition: all 0.15s ease;
+}
+
+.assignment-tab-btn.is-active .tab-count-badge {
+  background: var(--navy-900, #16303d);
+  color: #ffffff;
 }

@@ -259,8 +259,10 @@ export function AssignmentDetailView({
         {successMsg && <p className="form-success" role="status">{successMsg}</p>}
 
         {confirmDelete ? (
-          <div className="form-notice">
-            <p><strong>Xác nhận:</strong> Bạn có chắc chắn muốn xóa bài tập nháp này?</p>
+          <div className="form-notice" style={{ borderColor: "var(--danger)", background: "rgba(180, 40, 40, 0.05)" }}>
+            <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>
+              <strong>Xác nhận:</strong> Bạn có chắc chắn muốn xóa bài tập này? (Chỉ xóa được nếu chưa có sinh viên nộp bài).
+            </p>
             <div className="cluster" style={{ marginTop: "10px" }}>
               <button
                 type="button"
@@ -276,23 +278,21 @@ export function AssignmentDetailView({
                 disabled={busy}
                 onClick={() => void deleteAssignment()}
               >
-                {busy ? "Đang xóa…" : "Xóa vĩnh viễn"}
+                {busy ? "Đang xóa…" : "Xác nhận xóa bài tập"}
               </button>
             </div>
           </div>
         ) : (
           <div className="dialog-actions">
-            {assignment.status === "draft" && (
-              <button
-                className="button button-secondary"
-                disabled={busy}
-                onClick={() => setConfirmDelete(true)}
-                type="button"
-                style={{ marginRight: "auto" }}
-              >
-                Xóa bài tập nháp
-              </button>
-            )}
+            <button
+              className="btn btn-outline-danger"
+              disabled={busy}
+              onClick={() => setConfirmDelete(true)}
+              type="button"
+              style={{ marginRight: "auto" }}
+            >
+              Xóa bài tập này
+            </button>
             {onClose && (
               <button
                 type="button"

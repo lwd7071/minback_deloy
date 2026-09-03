@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { formatDeadlineInfo } from "@/lib/deadline-utils";
-import type { AssignmentDto } from "@/types/assignment";
+import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
 import { AssignmentDetailView } from "./assignment-detail-view";
 
 function toDatetimeLocal(d: Date = new Date()): string {
@@ -31,6 +31,8 @@ function getDefaultDueDate(
   return toDatetimeLocal(d);
 }
 
+type StatusFilter = "all" | AssignmentStatus;
+
 export function ClassAssignmentsView({
   classSectionId,
 }: {
@@ -42,6 +44,8 @@ export function ClassAssignmentsView({
   const [busy, setBusy] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
   const [draft, setDraft] = useState({
     title: "",
     description: "",
@@ -94,6 +98,10 @@ export function ClassAssignmentsView({
       const body = await response.json();
       if (!response.ok || !body.data)
         throw new Error(body.error?.message ?? "Không thể tạo bài tập");
+
+      const created = body.data as AssignmentDto;
+      // Đưa bài tập mới tạo lên vị trí đầu tiên
+      setRows((prev) => [created, ...prev.filter((r) => r.id !== created.id)]);
       setShowCreate(false);
       setDraft({
         title: "",
@@ -112,28 +120,34 @@ export function ClassAssignmentsView({
     }
   }
 
-  function setPresetTime(hours: number, minutes: number) {
-    setDraft((prev) => {
-      const baseDate = prev.dueDate ? new Date(prev.dueDate) : new Date();
-      if (Number.isNaN(baseDate.getTime())) return prev;
-      baseDate.setHours(hours, minutes, 0, 0);
-      return { ...prev, dueDate: toDatetimeLocal(baseDate) };
-    });
-  }
+  // Đếm số lượng theo trạng thái
+  const counts = useMemo(() => {
+    const published = rows.filter((r) => r.status === "published").length;
+    const draftCount = rows.filter((r) => r.status === "draft").length;
+    const closed = rows.filter((r) => r.status === "closed").length;
+    return { all: rows.length, published, draft: draftCount, closed };
+  }, [rows]);
+
+  // Lọc danh sách hiển thị
+  const filteredRows = useMemo(() => {
+    if (statusFilter === "all") return rows;
+    return rows.filter((r) => r.status === statusFilter);
+  }, [rows, statusFilter]);
 
   return (
     <div className="stack">
       {error ? <p className="form-error">{error}</p> : null}
       <div className="split">
         <div>
-          <h2>Bài tập</h2>
+          <h2>Bài tập ({rows.length})</h2>
           <p className="muted">Tạo, phát hành và chấm bài trong lớp này.</p>
         </div>
         <Button onClick={() => setShowCreate((value) => !value)}>
-          {showCreate ? "Đóng form" : "+ Tạo bài tập"}
+          {showCreate ? "Đóng form" : "+ Tạo bài tập mới"}
         </Button>
       </div>
 
+      {/* Form Tạo bài tập mới */}
       {showCreate ? (
         <Card>
           <form className="form-stack" onSubmit={(event) => void create(event)} autoComplete="off">
@@ -226,8 +240,49 @@ export function ClassAssignmentsView({
         </Card>
       ) : null}
 
+      {/* Bộ lọc Tabs: Tất cả / Đã phát hành / Bản nháp / Đã đóng */}
+      <div className="assignment-status-tabs" role="tablist" aria-label="Lọc bài tập theo trạng thái">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={statusFilter === "all"}
+          className={`assignment-tab-btn ${statusFilter === "all" ? "is-active" : ""}`}
+          onClick={() => setStatusFilter("all")}
+        >
+          Tất cả <span className="tab-count-badge">{counts.all}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={statusFilter === "published"}
+          className={`assignment-tab-btn ${statusFilter === "published" ? "is-active" : ""}`}
+          onClick={() => setStatusFilter("published")}
+        >
+          Đã phát hành <span className="tab-count-badge">{counts.published}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={statusFilter === "draft"}
+          className={`assignment-tab-btn ${statusFilter === "draft" ? "is-active" : ""}`}
+          onClick={() => setStatusFilter("draft")}
+        >
+          Bản nháp <span className="tab-count-badge">{counts.draft}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={statusFilter === "closed"}
+          className={`assignment-tab-btn ${statusFilter === "closed" ? "is-active" : ""}`}
+          onClick={() => setStatusFilter("closed")}
+        >
+          Đã đóng <span className="tab-count-badge">{counts.closed}</span>
+        </button>
+      </div>
+
+      {/* Danh sách bài tập */}
       <div className="grid">
-        {rows.map((row) => {
+        {filteredRows.map((row) => {
           const deadline = formatDeadlineInfo(row.dueDate);
           return (
             <Card hover className="stack" key={row.id}>
@@ -256,13 +311,22 @@ export function ClassAssignmentsView({
             </Card>
           );
         })}
-        {!rows.length ? (
+        {!filteredRows.length ? (
           <Card>
-            <p className="muted">Chưa có bài tập trong lớp.</p>
+            <p className="muted">
+              {statusFilter === "all"
+                ? "Chưa có bài tập nào trong lớp."
+                : statusFilter === "published"
+                ? "Không có bài tập nào đã phát hành."
+                : statusFilter === "draft"
+                ? "Không có bài tập nháp nào."
+                : "Không có bài tập nào đã đóng."}
+            </p>
           </Card>
         ) : null}
       </div>
 
+      {/* Modal Chỉnh sửa bài tập */}
       <Modal
         open={Boolean(selectedAssignmentId)}
         onClose={() => {

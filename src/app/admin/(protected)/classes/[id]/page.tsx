@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ClassOverviewView } from "@/components/class-sections/teacher/class-overview-view";
 import { getTeacherClassSection } from "@/server/services/class-sections/class-section-service";
+
 export default async function AdminClassPage({
   params,
   searchParams,
@@ -13,6 +14,13 @@ export default async function AdminClassPage({
   if (tab === "students" || tab === "assignments" || tab === "gradebook") {
     redirect(`/admin/classes/${encodeURIComponent(id)}/${tab}`);
   }
-  const section = await getTeacherClassSection(id);
+
+  let section;
+  try {
+    section = await getTeacherClassSection(id);
+  } catch {
+    redirect("/admin/classes");
+  }
+
   return <ClassOverviewView classSectionId={id} code={section.code} name={section.name} />;
 }

@@ -1,15 +1,28 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
+import { Modal } from "@/components/ui/modal";
 
 export function ClassOverviewView({
   classSectionId,
+  code,
+  name,
 }: {
   classSectionId: string;
   code?: string;
   name?: string;
 }) {
+  const router = useRouter();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const links = [
     {
       href: `/admin/classes/${classSectionId}/students`,
@@ -31,11 +44,36 @@ export function ClassOverviewView({
     },
   ];
 
+  async function handleDeleteClass() {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/teacher/class-sections/${classSectionId}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: { message?: string } };
+        throw new Error(
+          body.error?.message ?? "Không thể xóa lớp học phần",
+        );
+      }
+      setShowDeleteModal(false);
+      window.location.href = "/admin/classes";
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Đã xảy ra lỗi khi xóa lớp học phần",
+      );
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="class-overview">
       <p className="muted" style={{ marginBottom: "20px" }}>
         Chọn khu vực quản lý bạn muốn làm việc cho lớp học phần này:
       </p>
+
       <div className="class-overview-grid">
         {links.map((item) => (
           <Link
@@ -56,6 +94,103 @@ export function ClassOverviewView({
           </Link>
         ))}
       </div>
+
+      {/* Khu vực Xóa lớp học */}
+      <div className="class-danger-zone">
+        <div className="class-danger-card">
+          <div className="class-danger-info">
+            <h3>Xóa lớp học phần</h3>
+            <p className="muted">
+              Xóa hoàn toàn lớp học này. Chỉ thực hiện được khi lớp chưa có sinh viên và chưa có bài tập.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn btn-outline-danger"
+            onClick={() => {
+              setShowDeleteModal(true);
+              setDeleteError(null);
+            }}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            <span>Xóa lớp học này</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Modal xác nhận xóa */}
+      <Modal
+        open={showDeleteModal}
+        onClose={() => {
+          if (!isDeleting) {
+            setShowDeleteModal(false);
+            setDeleteError(null);
+          }
+        }}
+        title={`Xác nhận xóa lớp: ${code || ""}`}
+        size="md"
+      >
+        <div className="form-stack">
+          <p>
+            Bạn có chắc chắn muốn xóa lớp học phần{" "}
+            <strong>{name || code}</strong> ({code}) không?
+          </p>
+
+          <div
+            className="form-notice"
+            style={{
+              borderColor: "var(--danger)",
+              background: "rgba(180, 40, 40, 0.05)",
+            }}
+          >
+            <p
+              style={{
+                color: "var(--danger)",
+                margin: 0,
+                fontSize: "0.88rem",
+                fontWeight: 500,
+              }}
+            >
+              ⚠️ <strong>Lưu ý:</strong> Hành động này không thể hoàn tác. Hệ thống sẽ từ chối xóa nếu lớp học đã có sinh viên hoặc bài tập để bảo vệ dữ liệu.
+            </p>
+          </div>
+
+          {deleteError && (
+            <p className="form-error" role="alert" style={{ margin: "4px 0 0 0" }}>
+              {deleteError}
+            </p>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+              marginTop: "16px",
+            }}
+          >
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={isDeleting}
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteError(null);
+              }}
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              disabled={isDeleting}
+              onClick={() => void handleDeleteClass()}
+            >
+              {isDeleting ? "Đang xóa..." : "Xác nhận xóa lớp"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

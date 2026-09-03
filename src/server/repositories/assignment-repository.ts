@@ -45,7 +45,6 @@ export async function listAssignmentsByClassSection(
     .from("assignments")
     .select(ASSIGNMENT_COLUMNS)
     .eq("class_section_id", classSectionId)
-    .order("assigned_date", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) throw new Error("ASSIGNMENT_LIST_FAILED");
@@ -129,8 +128,7 @@ export async function deleteDraftAssignment(
   const { error } = await createAdminClient()
     .from("assignments")
     .delete()
-    .eq("id", assignmentId)
-    .eq("status", "draft");
+    .eq("id", assignmentId);
 
   if (error?.code === "23503") return false;
   if (error) throw new Error("ASSIGNMENT_DELETE_FAILED");

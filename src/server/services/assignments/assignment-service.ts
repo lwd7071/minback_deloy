@@ -50,7 +50,13 @@ function assertAllowedStatusTransition(
 }
 
 function assertValidDates(assignedDate: string, dueDate: string): void {
-  if (dueDate < assignedDate) {
+  const assignedTime = new Date(
+    assignedDate.includes("T") ? assignedDate : `${assignedDate}T00:00:00+07:00`,
+  ).getTime();
+  const dueTime = new Date(
+    dueDate.includes("T") ? dueDate : `${dueDate}T23:59:59.999+07:00`,
+  ).getTime();
+  if (dueTime < assignedTime) {
     throw new ApiError(
       400,
       API_ERROR_CODES.validation,
@@ -173,18 +179,18 @@ export async function deleteTeacherAssignment(
         "Không tìm thấy bài tập",
       );
     }
-    if (assignment.status !== "draft" || (await hasEvaluations(assignmentId))) {
+    if (await hasEvaluations(assignmentId)) {
       throw new ApiError(
         409,
         API_ERROR_CODES.conflict,
-        "Chỉ có thể xóa bài tập nháp chưa có đánh giá",
+        "Không thể xóa bài tập đã có bài nộp hoặc đánh giá",
       );
     }
     if (!(await deleteDraftAssignment(assignmentId))) {
       throw new ApiError(
         409,
         API_ERROR_CODES.conflict,
-        "Chỉ có thể xóa bài tập nháp chưa có đánh giá",
+        "Không thể xóa bài tập đã có dữ liệu sinh viên nộp bài",
       );
     }
   } catch (error) {
