@@ -5,8 +5,9 @@
 Tập trung MinBack vào luồng:
 
 ```text
-GV import lớp → SV đăng nhập → GV import Excel điểm/nhận xét
-→ GV công bố → SV nhận email → SV xem riêng kết quả
+GV import lớp → SV đăng nhập → GV tạo bài tập
+→ GV import một file Excel 4 cột → lưu điểm/feedback
+→ SV nhận kết quả qua web/email → SV xem riêng kết quả
 ```
 
 Quyết định sản phẩm:
@@ -18,7 +19,7 @@ Quyết định sản phẩm:
 - Email cá nhân chỉ có hiệu lực sau khi xác minh OTP.
 - Quên PIN dùng OTP 6 số gửi qua email.
 - Chỉ Evaluation `returned` được sinh viên xem và nhận thông báo; `graded` là nội bộ GV.
-- Submission được ẩn trước, chỉ xóa schema/storage sau khi xác nhận không còn nhu cầu dữ liệu cũ.
+- Submission không còn thuộc luồng sản phẩm: SV không nộp bài, GV không upload đề. Bảng/API cũ được giữ dormant rồi cleanup riêng.
 
 > Vì PIN mặc định dùng chung và lần đầu không OTP, người biết mã lớp và MSSV có thể kích hoạt hồ sơ trước chủ thật. Đây là rủi ro được chấp nhận theo quyết định sản phẩm; hệ thống vẫn áp dụng rate-limit, session giới hạn và reset/recovery.
 
@@ -117,18 +118,19 @@ Không viết toàn bộ test trước rồi mới implementation; không test p
 - Giữ và validate deep-link sau login/onboarding.
 - Component test cho validation, loading, resend và lỗi chung.
 
-## Epic B — Bỏ Submission khỏi trải nghiệm
+## Epic B — Luồng bài tập feedback-first
 
 ### B1 — Student
 
-- Bỏ route/navigation `/class/[code]/submissions`.
+- Bỏ route/navigation `/class/[code]/submissions` khỏi trải nghiệm.
 - Không gọi các API sign/upload/list/download submission.
 - `StudentProfileAssignment` bỏ `submission`; progress chỉ tính Evaluation `returned`.
 - Test profile không trả submission metadata/file và UI không còn nút upload.
 
 ### B2 — Teacher
 
-- Bỏ submission loaders, bảng bài nộp, download file và filter `unsubmitted`.
+- Bỏ submission loaders, bảng bài nộp, download file, upload attachment và filter `unsubmitted`.
+- Khi tạo bài, GV chỉ nhập tên bài và điểm tối đa; LMS giữ đề/nội dung chi tiết.
 - Dashboard đổi sang chưa chấm/đã chấm/đã công bố.
 - `BulkGradeView` chỉ còn filter all/pending/graded/returned.
 - Giai đoạn đầu giữ bảng/API cũ dormant; chưa xóa migration.
@@ -136,29 +138,34 @@ Không viết toàn bộ test trước rồi mới implementation; không test p
 ### B3 — Assignment tối giản
 
 - UI chỉ nhập title, maxScore, status.
-- Ẩn description, deadline, attachment khỏi Teacher và Student UI.
+- Loại description, deadline và attachment khỏi luồng Teacher/Student UI.
 - Database field cũ giữ tương thích trong giai đoạn đầu.
+- Một Assignment chỉ là khóa để nhóm một lần import điểm/feedback; không đại diện cho file đề hay bài nộp.
 - Draft không xuất hiện với Student; published/closed chỉ hiển thị tên và trạng thái kết quả.
 
-## Epic C — Import Excel điểm/feedback
+## Epic C — Import một file Excel 4 cột và công bố kết quả
 
-### C1 — File mẫu
+### C1 — Contract file Excel
 
-**Endpoint:** `GET /api/v1/teacher/assignments/:assignmentId/evaluations/import-template`
+Mỗi Assignment nhận một file CSV/XLSX cho mỗi lần import, gồm đúng bốn cột:
 
-- Trả XLSX theo lớp/bài, gồm `MSSV | Họ tên | Điểm | Nhận xét`.
+- `MSSV | Họ tên | Điểm | Feedback`
+- Bốn header là bắt buộc, không phân biệt hoa thường.
+- Họ tên dùng để đối chiếu/cảnh báo; MSSV là khóa ghép Student.
+- Không có cột file nộp, link đề, PIN, email hoặc Student ID.
+- Không cần endpoint tải template; UI hiển thị format bốn cột để GV dùng file đã chấm từ LMS.
 - Không chứa PIN, email hoặc Student ngoài lớp.
-- Test authorization, nội dung worksheet và công thức nguy hiểm.
+- Formula và giá trị bắt đầu bằng ký tự nguy hiểm phải được xử lý như text.
 
-### C2 — Preview
+### C2 — Preview file 4 cột
 
 **Endpoint:** `POST /api/v1/teacher/assignments/:assignmentId/evaluations/import-preview`
 
-- Multipart CSV/XLSX, giới hạn 5 MB/2.000 dòng.
+- Multipart CSV/XLSX, giới hạn 5 MB/2.000 dòng, đúng bốn cột MSSV/Họ tên/Điểm/Feedback.
 - Phân loại create/update/unchanged/invalid.
-- Validate MSSV cùng lớp, score 0..maxScore, một chữ số thập phân, feedback tối đa 5.000 ký tự, duplicate MSSV.
+- Validate MSSV cùng lớp, cảnh báo họ tên lệch, score 0..maxScore, một chữ số thập phân, feedback tối đa 5.000 ký tự, duplicate MSSV.
 - Preview không mutation.
-- TDD từng hành vi: hợp lệ, không tồn tại, duplicate, score boundary, feedback dài, no-op và cross-teacher.
+- TDD từng hành vi: hợp lệ, thiếu/thừa header, không tồn tại, họ tên lệch, duplicate, score boundary, feedback dài, no-op và cross-teacher.
 
 ### C3 — Lưu bản chấm
 
@@ -181,7 +188,7 @@ Cùng endpoint với `mode=publish`:
 
 ### C5 — UI grade import
 
-- Nút tải template, import file, preview, tải dòng lỗi.
+- Nút hiển thị format 4 cột, import file, preview, tải dòng lỗi.
 - Hai action “Lưu bản chấm” và “Công bố kết quả”.
 - Publish bắt buộc confirmation và hiển thị số SV sẽ nhận kết quả.
 - Test thay file xóa preview, chống double-submit, refresh gradebook và báo cáo email failure.
@@ -221,7 +228,7 @@ Email dùng `/class/{code}/grades?assignment={assignmentId}`.
 4. `A3` — forgot PIN OTP.
 5. `A4` → `A5` — đổi email và UI credential.
 6. `B1` → `B3` — ẩn Submission và đơn giản Assignment.
-7. `C1` → `C5` — Excel preview/save/publish/UI.
+7. `C1` → `C4` — Excel 4 cột preview/save/publish/UI.
 8. `D1` → `D3` — deep-link, Student results, typography.
 9. Cleanup migration Submission/Cloudinary sau release xác nhận.
 
@@ -245,7 +252,8 @@ Core acceptance flow:
 
 ```text
 tạo lớp → import MSSV/Họ tên → login MSSV + 111111 → đổi credential
-→ tạo bài → tải template → import graded → SV chưa thấy điểm
+→ tạo bài → import một file Excel (MSSV/Họ tên/Điểm/Feedback)
+→ lưu graded → SV chưa thấy điểm
 → publish returned → email/notification → mở deep-link → xem feedback
 → Student khác không truy cập được
 ```
