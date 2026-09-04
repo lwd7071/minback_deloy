@@ -26,7 +26,7 @@ describe("calculateProfileProgress", () => {
     {
       name: "rounds a mixed visible profile to the nearest integer",
       assignments: [
-        { evaluation: { status: "graded" as const } },
+        { evaluation: { status: "returned" as const } },
         { evaluation: { status: "returned" as const } },
         { evaluation: { status: "pending" as const } },
       ],

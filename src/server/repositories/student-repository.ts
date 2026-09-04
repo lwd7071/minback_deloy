@@ -65,6 +65,60 @@ export async function findStudentByNicknameAndClass(
 }
 
 /**
+ * Tìm Student theo identifier (nickname HOẶC mssv) + classSectionId.
+ */
+export async function findStudentByIdentifierAndClass(
+  identifier: string,
+  classSectionId: string,
+): Promise<StudentRow | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .eq("class_section_id", classSectionId)
+    .or(`nickname.eq.${identifier},mssv.eq.${identifier}`)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[StudentRepo] Lỗi findStudentByIdentifierAndClass:",
+      error.message,
+    );
+    return null;
+  }
+
+  return data as StudentRow | null;
+}
+
+/**
+ * Tìm Student theo MSSV + classSectionId.
+ */
+export async function findStudentByMssvAndClass(
+  mssv: string,
+  classSectionId: string,
+): Promise<StudentRow | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .eq("mssv", mssv)
+    .eq("class_section_id", classSectionId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[StudentRepo] Lỗi findStudentByMssvAndClass:",
+      error.message,
+    );
+    return null;
+  }
+
+  return data as StudentRow | null;
+}
+
+/**
  * Tìm classSectionId từ class code.
  * Dùng cho login: user nhập class code → cần resolve ra classSectionId.
  */

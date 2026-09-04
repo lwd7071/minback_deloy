@@ -82,7 +82,7 @@ describe("ClassCreateFlow", () => {
     expect(screen.getByRole("button", { name: "Đi tới lớp" })).toBeEnabled();
   });
 
-  it("requires a PIN download before opening a class with new students", async () => {
+  it("allows navigating to class immediately with default credentials info", async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         jsonResponse({
@@ -117,7 +117,6 @@ describe("ClassCreateFlow", () => {
                     status: "created",
                     studentId: "student-1",
                     initialNickname: "SV01",
-                    initialPin: "123456",
                   },
                 ],
               },
@@ -141,9 +140,18 @@ describe("ClassCreateFlow", () => {
     );
 
     await screen.findByText("Đã tạo lớp CS101");
+    expect(
+      screen.getByText(
+        (_content, element) =>
+          element?.tagName.toLowerCase() === "p" &&
+          Boolean(
+            element.textContent?.includes("mã PIN mặc định 111111 trong lần đầu tiên"),
+          ),
+      ),
+    ).toBeInTheDocument();
     const goToClass = screen.getByRole("button", { name: "Đi tới lớp" });
-    expect(goToClass).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Tải danh sách PIN" }));
-    await waitFor(() => expect(goToClass).toBeEnabled());
+    expect(goToClass).toBeEnabled();
+    fireEvent.click(goToClass);
+    expect(push).toHaveBeenCalledWith("/admin/classes/class-1");
   });
 });

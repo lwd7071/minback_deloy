@@ -100,19 +100,10 @@ function formatRelativeDate(value: string, now: number) {
 }
 
 function getAssignmentStatus(assignment: StudentProfileAssignment) {
-  if (assignment.evaluation?.status === "returned") {
-    return { className: "pill returned", label: "Đã trả kết quả" };
+  if (assignment.evaluation && assignment.evaluation.status === "returned") {
+    return { className: "pill graded", label: "Đã công bố" };
   }
-  if (assignment.evaluation?.status === "graded") {
-    return { className: "pill graded", label: "Đã chấm" };
-  }
-  if (assignment.submission.latestAttempt) {
-    return { className: "pill submitted", label: "Đã nộp" };
-  }
-  if (assignment.status === "closed") {
-    return { className: "pill closed", label: "Đã đóng" };
-  }
-  return { className: "pill overdue", label: "Chưa nộp" };
+  return { className: "pill closed", label: "Chưa công bố" };
 }
 
 function ProgressRing({ percentage }: { percentage: number }) {
@@ -530,25 +521,12 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
                     {assignments.map((assignment) => {
                       const status = getAssignmentStatus(assignment);
                       const score = assignment.evaluation?.score;
-                      const shouldSubmit =
-                        !assignment.submission.latestAttempt &&
-                        assignment.status === "published";
                       return (
                         <tr key={assignment.id}>
                           <td>
-                            <span
-                              className={`assignment-leading-icon ${
-                                assignment.submission.latestAttempt
-                                  ? "complete"
-                                  : "waiting"
-                              }`}
-                            >
+                            <span className="assignment-leading-icon complete">
                               <AppIcon
-                                name={
-                                  assignment.submission.latestAttempt
-                                    ? "check"
-                                    : "clock"
-                                }
+                                name={score !== null && score !== undefined ? "check" : "clock"}
                                 size={18}
                               />
                             </span>
@@ -578,21 +556,13 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
                           </td>
                           <td>
                             <button
-                              className={
-                                shouldSubmit
-                                  ? "btn btn-primary btn-sm"
-                                  : "student-row-action"
-                              }
-                              aria-label={`${shouldSubmit ? "Nộp" : "Xem"} bài ${assignment.title}`}
+                              className="student-row-action"
+                              aria-label={`Xem chi tiết bài ${assignment.title}`}
                               onClick={() =>
                                 setSelectedAssignmentId(assignment.id)
                               }
                             >
-                              {shouldSubmit ? (
-                                "Nộp bài"
-                              ) : (
-                                <AppIcon name="eye" size={18} />
-                              )}
+                              <AppIcon name="eye" size={18} />
                             </button>
                           </td>
                         </tr>

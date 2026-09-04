@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { GradeImportModal } from "@/components/evaluations/teacher/grade-import-modal";
 import type { AssignmentDto } from "@/types/assignment";
 import type {
   EvaluationStatus,
   EvaluationWithStudentDto,
 } from "@/types/evaluation";
+import type { EvaluationImportResultDto } from "@/types/evaluation-import";
 import type { StudentAdminDto } from "@/types/student";
 import type { SubmissionListItemDto } from "@/types/submission";
 
@@ -71,6 +73,7 @@ export function BulkGradeView({
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [hasChanges, setHasChanges] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const pages = Math.max(
     1,
     Math.ceil(studentMeta.total / studentMeta.pageSize),
@@ -158,6 +161,29 @@ export function BulkGradeView({
     }
   }
 
+  function handleImportSuccess(result: EvaluationImportResultDto) {
+    setDrafts((current) => {
+      const next = { ...current };
+      for (const updated of result.updatedEvaluations) {
+        if (next[updated.studentId]) {
+          next[updated.studentId] = {
+            studentId: updated.studentId,
+            score: updated.score === null ? "" : String(updated.score),
+            feedback: updated.feedback ?? "",
+            status: updated.status,
+          };
+        }
+      }
+      return next;
+    });
+    setHasChanges(false);
+    setMessage(
+      result.mode === "publish"
+        ? `Đã công bố kết quả cho ${result.count} sinh viên và gửi email thông báo.`
+        : `Đã lưu bản chấm nháp cho ${result.count} sinh viên từ tệp Excel.`,
+    );
+  }
+
   // Thống kê số liệu bài nộp & chấm điểm
   const metrics = useMemo(() => {
     let submitted = 0;
@@ -219,8 +245,8 @@ export function BulkGradeView({
 
   return (
     <div className="teacher-dash grade-workspace">
-      {/* Top Breadcrumb & Header */}
-      <div className="split" style={{ alignItems: "center" }}>
+      {/* Top Breadcrumb & Header Actions */}
+      <div className="split" style={{ alignItems: "center", marginBottom: "12px", gap: "12px", flexWrap: "wrap" }}>
         <Link
           href={`/admin/classes/${classSectionId}/assignments`}
           className="btn btn-ghost btn-sm"
@@ -228,6 +254,27 @@ export function BulkGradeView({
         >
           ← Quay lại danh sách bài tập
         </Link>
+        <div className="cluster" style={{ gap: "8px" }}>
+          <a
+            href={`/api/v1/teacher/assignments/${assignment.id}/evaluations/import-template`}
+            className="btn btn-secondary btn-sm"
+            download
+            style={{ gap: "6px" }}
+          >
+            <AppIcon name="download" size={14} />
+            Tải file mẫu Excel
+          </a>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setImportModalOpen(true)}
+            style={{ gap: "6px" }}
+          >
+            <AppIcon name="upload" size={14} />
+            Nhập điểm từ Excel
+          </Button>
+        </div>
       </div>
 
       <header className="grade-header-card">
@@ -563,6 +610,15 @@ export function BulkGradeView({
           </div>
         </div>
       </aside>
+
+      <GradeImportModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        assignmentId={assignment.id}
+        classSectionId={classSectionId}
+        maxScore={assignment.maxScore}
+        onSuccess={handleImportSuccess}
+      />
     </div>
   );
 }

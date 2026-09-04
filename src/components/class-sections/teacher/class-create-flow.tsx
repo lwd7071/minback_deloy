@@ -23,10 +23,7 @@ function stepIndex(step: CreateClassStep): number {
   return STEPS.findIndex((item) => item.id === step);
 }
 
-function csvCell(value: string): string {
-  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
-  return `"${safe.replaceAll('"', '""')}"`;
-}
+
 
 export function ClassCreateFlow() {
   const router = useRouter();
@@ -41,27 +38,13 @@ export function ClassCreateFlow() {
   const [preview, setPreview] = useState<ImportPreviewDto | null>(null);
   const [skipRoster, setSkipRoster] = useState(false);
   const [result, setResult] = useState<ClassSectionSetupDto | null>(null);
-  const [pinsDownloaded, setPinsDownloaded] = useState(false);
   const [previewBusy, setPreviewBusy] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createdStudents = result?.import?.summary.created ?? 0;
-  const mustDownloadPins = createdStudents > 0 && !pinsDownloaded;
-
   useEffect(() => {
     return () => previewControllerRef.current?.abort();
   }, []);
-
-  useEffect(() => {
-    if (!mustDownloadPins) return;
-    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warnBeforeLeaving);
-    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
-  }, [mustDownloadPins]);
 
   function continueDetails(event: React.FormEvent) {
     event.preventDefault();
@@ -166,35 +149,12 @@ export function ClassCreateFlow() {
         );
       }
       setResult(body.data);
-      setPinsDownloaded((body.data.import?.summary.created ?? 0) === 0);
       setStep("complete");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể tạo lớp");
     } finally {
       setSubmitBusy(false);
     }
-  }
-
-  function downloadPins() {
-    if (!result?.import) return;
-    const rows = result.import.rows
-      .filter(
-        (row) =>
-          row.status === "created" && row.initialNickname && row.initialPin,
-      )
-      .map(
-        (row) => `${csvCell(row.initialNickname!)},${csvCell(row.initialPin!)}`,
-      );
-    const blob = new Blob([`Nickname,PIN\n${rows.join("\n")}\n`], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${result.classSection.code}-pins.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setPinsDownloaded(true);
   }
 
   return (
@@ -468,34 +428,16 @@ export function ClassCreateFlow() {
               Bạn có thể thêm sinh viên từ trang quản lý lớp.
             </p>
           )}
-          {createdStudents > 0 ? (
-            <div
-              className={`pin-download-gate ${pinsDownloaded ? "is-done" : ""}`}
-            >
-              <strong>
-                {pinsDownloaded
-                  ? "Đã tải danh sách PIN"
-                  : "Tải PIN trước khi rời trang"}
-              </strong>
+          {(result.import?.summary.created ?? 0) > 0 ? (
+            <div className="form-notice">
               <p>
-                PIN chỉ xuất hiện trong kết quả này và không thể tải lại từ hệ
-                thống.
+                Sinh viên có thể đăng nhập bằng <strong>MSSV</strong> và mã PIN mặc định <strong>111111</strong> trong lần đầu tiên.
               </p>
-              <Button
-                type="button"
-                variant={pinsDownloaded ? "secondary" : "primary"}
-                onClick={downloadPins}
-              >
-                {pinsDownloaded
-                  ? "Tải lại trong phiên này"
-                  : "Tải danh sách PIN"}
-              </Button>
             </div>
           ) : null}
           <div className="class-create-actions">
             <Button
               type="button"
-              disabled={mustDownloadPins}
               onClick={() =>
                 router.push(`/admin/classes/${result.classSection.id}`)
               }

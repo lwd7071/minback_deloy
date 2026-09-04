@@ -73,15 +73,47 @@ export const studentEmailSchema = z
 
 /**
  * POST /api/v1/student/auth/login
- * Body: { classCode, nickname, pin }
+ * Body: { classCode, nickname/identifier, pin }
  */
 export const studentLoginSchema = z.object({
   classCode: classSectionCodeSchema,
-  nickname: nicknameSchema,
+  nickname: nicknameSchema.optional(),
+  identifier: nicknameSchema.optional(),
   pin: pinSchema,
+}).refine((data) => data.nickname !== undefined || data.identifier !== undefined, {
+  message: "Phải cung cấp nickname hoặc MSSV",
 });
 
-export type StudentLoginInput = z.infer<typeof studentLoginSchema>;
+export type StudentLoginInput = {
+  classCode: string;
+  nickname?: string;
+  identifier?: string;
+  pin: string;
+};
+
+/**
+ * POST /api/v1/student/auth/forgot-pin/request
+ * Body: { classCode, mssv }
+ */
+export const forgotPinRequestSchema = z.object({
+  classCode: classSectionCodeSchema,
+  mssv: z.string().trim().min(3, "MSSV không hợp lệ").max(50, "MSSV không hợp lệ"),
+});
+
+export type ForgotPinRequestInput = z.infer<typeof forgotPinRequestSchema>;
+
+/**
+ * POST /api/v1/student/auth/forgot-pin/confirm
+ * Body: { classCode, mssv, otp, newPin }
+ */
+export const forgotPinConfirmSchema = z.object({
+  classCode: classSectionCodeSchema,
+  mssv: z.string().trim().min(3, "MSSV không hợp lệ").max(50, "MSSV không hợp lệ"),
+  otp: z.string().trim().regex(/^\d{6}$/, "Mã OTP phải là đúng 6 chữ số"),
+  newPin: pinSchema,
+});
+
+export type ForgotPinConfirmInput = z.infer<typeof forgotPinConfirmSchema>;
 
 /**
  * PATCH /api/v1/student/auth/credentials

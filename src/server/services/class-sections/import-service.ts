@@ -159,6 +159,34 @@ export function parseStudentCsv(text: string): ParsedCsvRow[] {
   );
 }
 
+function getCellString(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  if (typeof value === "object") {
+    if ("result" in value && value.result !== undefined && value.result !== null) {
+      return String(value.result).trim();
+    }
+    if (
+      "richText" in value &&
+      Array.isArray((value as { richText: Array<{ text?: string }> }).richText)
+    ) {
+      return (value as { richText: Array<{ text?: string }> }).richText
+        .map((item) => item.text ?? "")
+        .join("")
+        .trim();
+    }
+    if ("text" in value && typeof (value as { text: unknown }).text === "string") {
+      return (value as { text: string }).text.trim();
+    }
+  }
+  return String(value).trim();
+}
+
 export async function parseStudentXlsx(
   buffer: ArrayBuffer,
 ): Promise<ParsedCsvRow[]> {
@@ -175,7 +203,8 @@ export async function parseStudentXlsx(
   worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
     const cells: string[] = [];
     row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
-      cells[columnNumber - 1] = cell.text;
+      const valStr = getCellString(cell.value);
+      cells[columnNumber - 1] = valStr !== "" ? valStr : (cell.text ?? "");
     });
     records.push({ row: rowNumber, cells });
   });
@@ -226,8 +255,10 @@ export async function previewStudentXlsx(
   return buildImportPreview(await parseStudentXlsx(buffer));
 }
 
+export const DEFAULT_INITIAL_PIN = "111111";
+
 export function generateInitialPin(): string {
-  return String(randomInt(0, 1_000_000)).padStart(6, "0");
+  return DEFAULT_INITIAL_PIN;
 }
 
 export async function importTeacherClassSectionCsv(
