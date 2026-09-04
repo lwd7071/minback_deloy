@@ -228,7 +228,7 @@ Email dùng `/class/{code}/grades?assignment={assignmentId}`.
 4. `A3` — forgot PIN OTP.
 5. `A4` → `A5` — đổi email và UI credential.
 6. `B1` → `B3` — ẩn Submission và đơn giản Assignment.
-7. `C1` → `C4` — Excel 4 cột preview/save/publish/UI.
+7. `C1` → `C5` — Excel 4 cột preview/save/publish/UI.
 8. `D1` → `D3` — deep-link, Student results, typography.
 9. Cleanup migration Submission/Cloudinary sau release xác nhận.
 
