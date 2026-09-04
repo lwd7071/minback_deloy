@@ -12,6 +12,7 @@ import { useNotificationPolling } from "@/components/notifications/student/use-n
 
 export type StudentProfileAssignment = {
   id: string;
+  classSectionId: string;
   title: string;
   description: string;
   assignedDate: string;
@@ -25,6 +26,7 @@ export type StudentProfileAssignment = {
     originalName: string;
     bytes: number;
     format: string;
+    uploadedAt: string;
     downloadUrl: string;
   }>;
   submission: {
@@ -46,6 +48,8 @@ export type StudentProfileAssignment = {
   };
   evaluation: {
     id: string;
+    studentId: string;
+    assignmentId: string;
     score: number | null;
     feedback: string;
     status: "pending" | "graded" | "returned";

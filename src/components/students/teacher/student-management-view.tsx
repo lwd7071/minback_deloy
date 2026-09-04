@@ -23,6 +23,7 @@ export function StudentManagementView({
   initialMeta: { page: number; pageSize: number; total: number };
   initialSearch: string;
 }) {
+  const router = useRouter();
   const [students, setStudents] = useState<StudentAdminDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
