@@ -98,8 +98,9 @@ export function PinLoginForm({
       >
         Đăng nhập
       </Button>
-      <div className="split" style={{ justifyContent: "center" }}>
+      <div className="split" style={{ justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
         <a className="btn btn-ghost button-sm" href={backUrl || `/class/${encodeURIComponent(classCode)}`}>Trở lại</a>
+        <a className="muted" style={{ fontSize: "0.85rem", textDecoration: "underline" }} href={`/class/${encodeURIComponent(classCode)}/forgot-pin`}>Quên mã PIN?</a>
       </div>
     </form>
   );

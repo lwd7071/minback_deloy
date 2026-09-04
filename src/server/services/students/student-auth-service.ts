@@ -26,6 +26,8 @@ import {
 } from "@/server/repositories/login-rate-limit-repository";
 import {
   findClassSectionIdByCode,
+  findStudentByIdentifierAndClass,
+  findStudentByMssvAndClass,
   findStudentByNicknameAndClass,
   findStudentRowById,
   resetStudentFailedLogin,
@@ -33,6 +35,13 @@ import {
   updateStudentPin,
   updateStudentPinHash,
 } from "@/server/repositories/student-repository";
+import {
+  createForgotPinChallenge,
+  verifyForgotPinOtp,
+  revokeForgotPinChallenge,
+} from "@/server/repositories/password-reset-challenge-repository";
+import { sendForgotPinOtpEmail } from "@/server/services/notifications/email/brevo-email-service";
+import { deliverEmailSafely } from "@/server/services/notifications/email/safe-email-delivery";
 import {
   createStudentSession,
   revokeAllSessionsByStudentId,
@@ -52,10 +61,13 @@ import type { StudentSessionDto } from "@/types/student";
 import type {
   StudentLoginInput,
   CredentialsUpdateInput,
+  ForgotPinRequestInput,
+  ForgotPinConfirmInput,
 } from "@/schemas/student-auth";
 
 // BCrypt cost factor — 10 là mức chuẩn (balance giữa bảo mật và performance)
 const BCRYPT_ROUNDS = 10;
+export const DEFAULT_INITIAL_PIN = "111111";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -106,13 +118,13 @@ export async function loginStudent(
   dto: StudentSessionDto;
 }> {
   // classCode đã được normalize (uppercase + trim) bởi Zod schema
-  // nickname đã được trim bởi Zod schema
-  const { classCode, nickname, pin } = input;
+  const { classCode, pin } = input;
+  const identifier = (input.identifier || input.nickname || "").trim();
 
   // Bước 2: Kiểm tra rate-limit TRƯỚC khi query DB
   const normalizedIp = normalizeIp(rawIp);
   const ipHash = buildIpHash(normalizedIp);
-  const identifierHash = buildIdentifierHash(classCode, nickname);
+  const identifierHash = buildIdentifierHash(classCode, identifier);
 
   const { ipBlocked, identifierBlocked } = await checkBothBuckets(
     ipHash,
@@ -140,7 +152,7 @@ export async function loginStudent(
     );
   }
 
-  const student = await findStudentByNicknameAndClass(nickname, classSectionId);
+  const student = await findStudentByIdentifierAndClass(identifier, classSectionId);
 
   if (!student) {
     await incrementBothBuckets(ipHash, identifierHash);
@@ -316,15 +328,23 @@ export async function logoutStudent(sessionId: string): Promise<void> {
 // ─── Reset PIN (by Teacher) ────────────────────────────────────────────────────
 
 /**
- * Teacher reset PIN của một Student.
- * Luồng:
- * 1. Sinh PIN 6 số CSPRNG
- * 2. Hash BCrypt
- * 3. Revoke TẤT CẢ session cũ của Student
- * 4. Update pin_hash + set must_change_pin=true trong DB
- * 5. Trả initialPin (plain text) — chỉ hiển thị một lần duy nhất
- *
- * @returns { initialPin: string } — raw PIN để Teacher phân phối
+ * Teacher reset PIN của một Student về mã PIN mặc định 111111.
+ * Bật cờ must_change_pin = true và revoke mọi session cũ.
+ */
+export async function resetStudentPinToDefault(
+  studentId: string,
+): Promise<{ studentId: string; mustChangePin: boolean }> {
+  const newPinHash = await hash(DEFAULT_INITIAL_PIN, BCRYPT_ROUNDS);
+
+  await revokeAllSessionsByStudentId(studentId);
+  await updateStudentPinHash(studentId, newPinHash);
+  revokeForgotPinChallenge(studentId);
+
+  return { studentId, mustChangePin: true };
+}
+
+/**
+ * Teacher reset PIN ngẫu nhiên (legacy compat).
  */
 export async function resetStudentPin(studentId: string): Promise<{
   initialPin: string;
@@ -332,12 +352,121 @@ export async function resetStudentPin(studentId: string): Promise<{
   const initialPin = generateRandomPin();
   const newPinHash = await hash(initialPin, BCRYPT_ROUNDS);
 
-  // Thu hồi trước. Nếu bước này thất bại, không đổi PIN hoặc tiết lộ PIN mới;
-  // session cũ vì vậy không thể tiếp tục truy cập sau một reset báo thành công.
   await revokeAllSessionsByStudentId(studentId);
-
-  // Chỉ phát hành PIN mới sau khi mọi session trước đó đã bị thu hồi.
   await updateStudentPinHash(studentId, newPinHash);
 
   return { initialPin };
+}
+
+// ─── Forgot PIN (OTP via Email) ────────────────────────────────────────────────
+
+/**
+ * Yêu cầu gửi OTP khôi phục mã PIN qua email.
+ */
+export async function requestForgotPinOtp(
+  input: ForgotPinRequestInput,
+  rawIp: string | null,
+): Promise<{ message: string }> {
+  const { classCode, mssv } = input;
+  const normalizedIp = normalizeIp(rawIp);
+  const ipHash = buildIpHash(normalizedIp);
+  const identifierHash = buildIdentifierHash(classCode, mssv);
+
+  const { ipBlocked, identifierBlocked } = await checkBothBuckets(
+    ipHash,
+    identifierHash,
+  );
+
+  if (ipBlocked || identifierBlocked) {
+    throw new ApiError(
+      429,
+      API_ERROR_CODES.loginRateLimited,
+      "Quá nhiều yêu cầu. Vui lòng thử lại sau 15 phút.",
+    );
+  }
+
+  const classSectionId = await findClassSectionIdByCode(classCode);
+  if (!classSectionId) {
+    // Không tiết lộ thông tin sự tồn tại của lớp/MSSV
+    return { message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn." };
+  }
+
+  const student = await findStudentByMssvAndClass(mssv, classSectionId);
+  if (!student) {
+    return { message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn." };
+  }
+
+  // Tạo OTP và gửi email
+  const { otp } = await createForgotPinChallenge(student.id);
+
+  const recipientEmail =
+    student.email && student.email.trim()
+      ? student.email.trim()
+      : `${student.mssv.toLowerCase()}@student.hcmute.edu.vn`;
+
+  void deliverEmailSafely(() =>
+    sendForgotPinOtpEmail(recipientEmail, student.full_name, otp),
+  );
+
+  return { message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn." };
+}
+
+/**
+ * Xác nhận OTP và đặt mã PIN mới cho sinh viên.
+ */
+export async function confirmForgotPinOtp(
+  input: ForgotPinConfirmInput,
+  rawIp: string | null,
+): Promise<{ message: string }> {
+  const { classCode, mssv, otp, newPin } = input;
+  const normalizedIp = normalizeIp(rawIp);
+  const ipHash = buildIpHash(normalizedIp);
+  const identifierHash = buildIdentifierHash(classCode, mssv);
+
+  const { ipBlocked, identifierBlocked } = await checkBothBuckets(
+    ipHash,
+    identifierHash,
+  );
+
+  if (ipBlocked || identifierBlocked) {
+    throw new ApiError(
+      429,
+      API_ERROR_CODES.loginRateLimited,
+      "Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.",
+    );
+  }
+
+  const classSectionId = await findClassSectionIdByCode(classCode);
+  if (!classSectionId) {
+    throw new ApiError(400, API_ERROR_CODES.validation, "Mã OTP không hợp lệ hoặc đã hết hạn");
+  }
+
+  const student = await findStudentByMssvAndClass(mssv, classSectionId);
+  if (!student) {
+    throw new ApiError(400, API_ERROR_CODES.validation, "Mã OTP không hợp lệ hoặc đã hết hạn");
+  }
+
+  const verifyResult = await verifyForgotPinOtp(student.id, otp);
+  if (!verifyResult.valid) {
+    await incrementBothBuckets(ipHash, identifierHash);
+    throw new ApiError(
+      400,
+      API_ERROR_CODES.validation,
+      verifyResult.reason === "EXPIRED"
+        ? "Mã OTP đã hết hạn (chỉ có hiệu lực trong 10 phút)"
+        : verifyResult.reason === "TOO_MANY_ATTEMPTS"
+        ? "Bạn đã nhập sai OTP quá 5 lần. Vui lòng yêu cầu mã mới."
+        : "Mã OTP không chính xác",
+    );
+  }
+
+  // Cập nhật PIN mới và revoke mọi session cũ
+  const newPinHash = await hash(newPin, BCRYPT_ROUNDS);
+  await revokeAllSessionsByStudentId(student.id);
+  await updateStudentPin(student.id, newPinHash);
+
+  // Reset rate limit identifier bucket
+  await resetIdentifierBucket(identifierHash);
+
+  return { message: "Đặt lại mã PIN thành công. Bạn có thể đăng nhập bằng mã PIN mới." };
 }

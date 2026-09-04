@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Calendar,
   Clock,
@@ -11,16 +10,12 @@ import {
   File as GenericFile,
   Sparkles,
   Award,
-  CheckCircle2,
   Paperclip,
 } from "lucide-react";
 
 import { Modal } from "@/components/ui/modal";
 import { formatDeadlineInfo } from "@/lib/deadline-utils";
 import type { StudentProfileAssignmentDto } from "@/types/student-profile";
-import type { SubmissionHistoryDto } from "@/types/submission";
-
-import { SubmissionUploadPanel } from "./submission-upload-panel";
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0 || Number.isNaN(bytes)) return "0 B";
@@ -64,45 +59,12 @@ export function StudentAssignmentModal({
   assignment,
   open,
   onClose,
-  onSubmitted,
 }: {
   assignment: StudentProfileAssignmentDto;
   open: boolean;
   onClose: () => void;
-  onSubmitted: () => void;
+  onSubmitted?: () => void;
 }) {
-  const [history, setHistory] = useState<SubmissionHistoryDto | null>(null);
-  const [historyError, setHistoryError] = useState("");
-
-  useEffect(() => {
-    if (!open) return;
-    let active = true;
-    void fetch(`/api/v1/student/assignments/${assignment.id}/submissions`, {
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        const body = (await response.json()) as {
-          data?: SubmissionHistoryDto;
-          error?: { message?: string };
-        };
-        if (!response.ok || !body.data) {
-          throw new Error(
-            body.error?.message ?? "Không thể tải lịch sử nộp bài",
-          );
-        }
-        if (active) setHistory(body.data);
-      })
-      .catch((error: unknown) => {
-        if (active)
-          setHistoryError(
-            error instanceof Error ? error.message : "Không thể tải lịch sử",
-          );
-      });
-    return () => {
-      active = false;
-    };
-  }, [assignment.id, open]);
-
   const attachments = assignment.attachments ?? [];
   const deadline = formatDeadlineInfo(assignment.dueDate);
 
@@ -222,123 +184,45 @@ export function StudentAssignmentModal({
                 <Sparkles size={18} aria-hidden="true" />
                 Kết quả đánh giá của Giảng viên
               </h3>
-              <span
-                className={`badge ${
-                  assignment.evaluation.status === "graded" ||
-                  assignment.evaluation.status === "returned"
-                    ? "badge-success"
-                    : "badge-warning"
-                }`}
-              >
-                {assignment.evaluation.status === "graded"
-                  ? "Đã chấm điểm"
-                  : assignment.evaluation.status === "returned"
-                  ? "Đã trả bài"
-                  : "Đang chấm"}
+              <span className="badge badge-success">
+                Đã công bố điểm
               </span>
             </div>
             <div className="form-notice" style={{ margin: 0 }}>
               <div style={{ fontSize: "1.05rem", marginBottom: "4px" }}>
                 <strong>Điểm số đạt được: </strong>
-                <strong style={{ fontSize: "1.2rem", color: "var(--navy-900)" }}>
+                <strong style={{ fontSize: "1.25rem", color: "var(--navy-900)" }}>
                   {assignment.evaluation.score !== null
-                    ? `${assignment.evaluation.score}/${assignment.maxScore}`
+                    ? `${assignment.evaluation.score} / ${assignment.maxScore}`
                     : "—"}
                 </strong>
               </div>
               {assignment.evaluation.feedback ? (
-                <div style={{ marginTop: "6px" }}>
-                  <span style={{ fontWeight: 600 }}>Nhận xét: </span>
-                  <span>{assignment.evaluation.feedback}</span>
+                <div style={{ marginTop: "8px" }}>
+                  <strong style={{ display: "block", marginBottom: "2px" }}>Nhận xét từ Giảng viên:</strong>
+                  <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "6px", border: "1px solid var(--border)", whiteSpace: "pre-wrap" }}>
+                    {assignment.evaluation.feedback}
+                  </div>
                 </div>
               ) : null}
             </div>
           </section>
-        ) : null}
-
-        {/* Phần 4: Lịch sử các lần nộp bài */}
-        <section className="student-section-card" aria-labelledby="history-heading">
-          <div className="student-section-header">
-            <h3 id="history-heading" className="student-section-title">
-              <CheckCircle2 size={18} aria-hidden="true" />
-              Lịch sử nộp bài (
-              {history?.attemptCount ?? assignment.submission.attemptCount}/10 lần)
-            </h3>
-          </div>
-          {historyError ? <p className="form-error">{historyError}</p> : null}
-          {history?.attempts && history.attempts.length > 0 ? (
-            <div className="stack" style={{ gap: "10px" }}>
-              {history.attempts.map((attempt) => (
-                <div
-                  className="card"
-                  key={attempt.id}
-                  style={{
-                    padding: "12px 14px",
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <div className="split" style={{ marginBottom: "6px" }}>
-                    <strong>Lần nộp #{attempt.attemptNumber}</strong>
-                    {attempt.isLate ? (
-                      <span className="badge badge-warning">Nộp trễ</span>
-                    ) : (
-                      <span className="badge badge-success">Đúng hạn</span>
-                    )}
-                  </div>
-                  <p className="muted" style={{ fontSize: "0.82rem", margin: "0 0 8px 0" }}>
-                    Thời gian nộp: {formatFullDateTime(attempt.submittedAt)}
-                  </p>
-                  <div className="student-attachment-list">
-                    {attempt.files.map((file) => (
-                      <a
-                        key={file.id}
-                        href={file.downloadUrl}
-                        className="student-attachment-card"
-                        download={file.originalName}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <div className="student-attachment-info">
-                          <span className="student-attachment-icon">
-                            {getFileIcon(file.format, file.originalName)}
-                          </span>
-                          <div className="student-attachment-meta">
-                            <span
-                              className="student-attachment-name"
-                              title={file.originalName}
-                            >
-                              {file.originalName}
-                            </span>
-                            <span className="student-attachment-size">
-                              {formatBytes(file.bytes)}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="student-attachment-action">
-                          <Download size={14} aria-hidden="true" />
-                          <span>Tải</span>
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        ) : (
+          <section className="student-section-card" aria-labelledby="evaluation-heading">
+            <div className="student-section-header">
+              <h3 id="evaluation-heading" className="student-section-title">
+                <Sparkles size={18} aria-hidden="true" />
+                Kết quả đánh giá của Giảng viên
+              </h3>
+              <span className="badge badge-neutral">
+                Đang xử lý / Chưa công bố
+              </span>
             </div>
-          ) : (
-            <p className="muted" style={{ fontStyle: "italic", margin: 0 }}>
-              Bạn chưa nộp bài lần nào cho bài tập này.
+            <p className="muted" style={{ margin: 0, fontStyle: "italic" }}>
+              Giảng viên đang chấm điểm trên LMS/Excel. Khi có kết quả chính thức, bạn sẽ nhận được thông báo qua email và xem chi tiết tại đây.
             </p>
-          )}
-        </section>
-
-        {/* Phần 5: Nộp bài mới */}
-        <SubmissionUploadPanel
-          assignmentId={assignment.id}
-          status={assignment.status}
-          submission={history ?? assignment.submission}
-          onSubmitted={onSubmitted}
-        />
+          </section>
+        )}
       </div>
     </Modal>
   );

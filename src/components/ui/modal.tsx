@@ -18,14 +18,20 @@ export function Modal({
   size?: "sm" | "md" | "lg";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
-    returnFocusRef.current = document.activeElement as HTMLElement;
-    const timer = window.setTimeout(() => panelRef.current?.focus(), 0);
+    const returnFocusTo = document.activeElement as HTMLElement | null;
+    const timer = window.setTimeout(() => {
+      if (!panelRef.current?.contains(document.activeElement)) {
+        panelRef.current?.focus();
+      }
+    }, 0);
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
       if (event.key !== "Tab" || !panelRef.current) return;
       const focusable = panelRef.current.querySelectorAll<HTMLElement>(
         "button,a,input,select,textarea,[tabindex]:not([tabindex='-1'])",
@@ -46,9 +52,9 @@ export function Modal({
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener("keydown", onKeyDown);
-      returnFocusRef.current?.focus();
+      returnFocusTo?.focus();
     };
-  }, [onClose, open]);
+  }, [open]);
   if (!open || typeof document === "undefined") return null;
   return createPortal(
     <div

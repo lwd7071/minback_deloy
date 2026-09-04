@@ -21,11 +21,17 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-export function StudentWorkspaceView({ section }: { section: Section }) {
+export function StudentWorkspaceView({
+  section,
+  initialAssignmentId,
+}: {
+  section: Section;
+  initialAssignmentId?: string;
+}) {
   const { profile, loading, error, refresh } = useStudentWorkspace();
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<
     string | null
-  >(null);
+  >(initialAssignmentId ?? null);
   const notifications = useNotificationPolling();
 
   const selected = profile?.assignments.find(
@@ -150,13 +156,13 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
                     ⏳ {formatDeadlineInfo(summary.upcoming.dueDate).timeRemainingNotice}
                   </span>
                   <div>
-                    <button className="btn btn-primary" onClick={() => setSelectedAssignmentId(summary.upcoming.id)}>
-                      Nộp bài ngay
+                    <button className="btn btn-secondary" onClick={() => setSelectedAssignmentId(summary.upcoming.id)}>
+                      Xem chi tiết
                     </button>
                   </div>
                 </>
               ) : (
-                <p className="muted">Bạn không có bài đang chờ nộp.</p>
+                <p className="muted">Không có bài tập nào đang diễn ra.</p>
               )}
             </Card>
           </div>
@@ -181,21 +187,17 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
             icon={
               section === "assignments"
                 ? "book"
-                : section === "submissions"
-                  ? "upload"
-                  : section === "grades"
-                    ? "gradebook"
-                    : "bell"
+                : section === "grades"
+                  ? "gradebook"
+                  : "bell"
             }
             title={navigationTitle(section)}
           />
           <AssignmentRows
             assignments={
-              section === "submissions"
-                ? assignments.filter((a) => a.submission.latestAttempt !== null)
-                : section === "grades"
-                  ? assignments.filter((a) => a.evaluation !== null)
-                  : assignments
+              section === "grades"
+                ? assignments.filter((a) => a.evaluation !== null)
+                : assignments
             }
             onSelect={setSelectedAssignmentId}
           />
@@ -206,10 +208,6 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
           assignment={selected}
           open
           onClose={() => setSelectedAssignmentId(null)}
-          onSubmitted={() => {
-            setSelectedAssignmentId(null);
-            void refresh();
-          }}
         />
       ) : null}
     </div>
@@ -219,7 +217,7 @@ export function StudentWorkspaceView({ section }: { section: Section }) {
 function navigationTitle(section: Exclude<Section, "overview">) {
   const titles: Record<Exclude<Section, "overview">, string> = {
     assignments: "Bài tập",
-    submissions: "Bài đã nộp",
+    submissions: "Bài đã chấm",
     grades: "Bảng điểm",
     notifications: "Thông báo",
   };
@@ -260,11 +258,12 @@ function AssignmentRows({
   onSelect: (id: string) => void;
 }) {
   if (!assignments.length)
-    return <p className="muted">Chưa có dữ liệu để hiển thị.</p>;
+    return <p className="muted">Chưa có bài tập nào được giao.</p>;
   return (
     <div className="workspace-assignment-list">
       {assignments.map((assignment) => {
         const deadline = formatDeadlineInfo(assignment.dueDate);
+        const hasScore = assignment.evaluation && assignment.evaluation.score !== null;
         return (
           <button
             key={assignment.id}
@@ -290,7 +289,7 @@ function AssignmentRows({
                 >
                   Thang {assignment.maxScore}đ
                 </span>
-                {!assignment.submission.latestAttempt && !deadline.isExpired ? (
+                {!hasScore && !deadline.isExpired ? (
                   <span
                     className={`badge ${
                       deadline.urgency === "urgent"
@@ -307,15 +306,11 @@ function AssignmentRows({
               </div>
             </div>
             <span
-              className={`workspace-status ${assignment.submission.latestAttempt ? "is-complete" : "is-pending"}`}
+              className={`workspace-status ${hasScore ? "is-complete" : "is-pending"}`}
             >
-              {assignment.evaluation
-                ? assignment.evaluation.score !== null
-                  ? `${assignment.evaluation.score} điểm`
-                  : "Đang chấm"
-                : assignment.submission.latestAttempt
-                ? "Đã nộp"
-                : "Chưa nộp"}
+              {hasScore
+                ? `${assignment.evaluation!.score} / ${assignment.maxScore} điểm`
+                : "Chưa công bố"}
             </span>
           </button>
         );
