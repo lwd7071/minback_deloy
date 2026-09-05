@@ -14,7 +14,7 @@ declare
   next_attempt_count integer;
   next_window_started_at timestamptz;
   next_blocked_until timestamptz;
-  current_time timestamptz := clock_timestamp();
+  v_now timestamptz := clock_timestamp();
 begin
   if p_scope not in ('identifier', 'ip') then
     raise exception using
@@ -32,7 +32,7 @@ begin
     p_scope,
     p_key_hash,
     0,
-    current_time,
+    v_now,
     null
   ) on conflict (scope, key_hash) do nothing;
 
@@ -42,9 +42,9 @@ begin
   for update;
 
   if p_scope = 'ip'
-    and current_row.window_started_at <= current_time - interval '15 minutes' then
+    and current_row.window_started_at <= v_now - interval '15 minutes' then
     next_attempt_count := 1;
-    next_window_started_at := current_time;
+    next_window_started_at := v_now;
   else
     next_attempt_count := current_row.attempt_count + 1;
     next_window_started_at := current_row.window_started_at;
@@ -52,7 +52,7 @@ begin
 
   if (p_scope = 'identifier' and next_attempt_count >= 5)
     or (p_scope = 'ip' and next_attempt_count >= 30) then
-    next_blocked_until := current_time + interval '15 minutes';
+    next_blocked_until := v_now + interval '15 minutes';
   else
     next_blocked_until := null;
   end if;

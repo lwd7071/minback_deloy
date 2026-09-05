@@ -11,6 +11,11 @@ select tables_are(
     'evaluations',
     'login_rate_limits',
     'notifications',
+    'assignment_attachments',
+    'submissions',
+    'submission_attempts',
+    'submission_files',
+    'public_lookup_rate_limits',
     'student_sessions',
     'students',
     'teachers'

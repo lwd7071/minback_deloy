@@ -18,7 +18,7 @@ select is(
         and grantee in ('anon', 'PUBLIC')
     )
   ),
-  jsonb_build_object('rls_tables', 9, 'anon_privileges', 0),
+    jsonb_build_object('rls_tables', 14, 'anon_privileges', 0),
   'all MVP tables enable RLS and expose no table privileges to anon'
 );
 
