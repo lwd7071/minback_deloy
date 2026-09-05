@@ -2,11 +2,10 @@
 /**
  * POST /api/v1/teacher/class-sections/[classSectionId]/students/[studentId]/reset-pin
  *
- * Teacher reset PIN của Student: sinh PIN mới CSPRNG, revoke toàn bộ session cũ.
- * Trả initialPin một lần duy nhất — Teacher phân phối riêng cho Student.
+ * Teacher reset PIN của Student về mã mặc định, revoke toàn bộ session cũ.
  *
  * Response:
- * - 200: { data: { initialPin: string } }
+ * - 200: { data: { studentId: string, mustChangePin: true } }
  * - 401: UNAUTHENTICATED
  * - 403: FORBIDDEN
  * - 404: NOT_FOUND
@@ -32,7 +31,6 @@ export async function POST(
 
     const { classSectionId, studentId } = await params;
     const result = await resetStudentPinByTeacher(classSectionId, studentId);
-    // initialPin được trả về một lần duy nhất — không log, không lưu thêm
     return successResponse(result);
   } catch (error) {
     return errorResponse(error);

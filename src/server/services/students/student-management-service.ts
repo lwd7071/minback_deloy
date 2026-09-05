@@ -14,11 +14,7 @@ import {
   listStudentsByClassSection,
   updateStudentByTeacher,
 } from "@/server/repositories/student-repository";
-import {
-  DEFAULT_INITIAL_PIN,
-  resetStudentPin,
-  resetStudentPinToDefault,
-} from "@/server/services/students/student-auth-service";
+import { resetStudentPin, resetStudentPinToDefault } from "@/server/services/students/student-auth-service";
 import type { StudentAdminDto } from "@/types/student";
 import type {
   StudentAdminUpdateInput,
@@ -162,13 +158,12 @@ export async function updateStudentInClass(
 
 /**
  * POST /api/v1/teacher/class-sections/:classSectionId/students/:studentId/reset-pin
- * Reset PIN của Student: sinh PIN mới, revoke toàn bộ session cũ.
- * Trả initialPin một lần duy nhất — Teacher phân phối riêng.
+ * Reset PIN của Student về PIN mặc định, revoke toàn bộ session cũ.
  */
 export async function resetStudentPinByTeacher(
   classSectionId: string,
   studentId: string,
-): Promise<{ studentId: string; mustChangePin: boolean; initialPin: string }> {
+): Promise<{ studentId: string; mustChangePin: boolean }> {
   await requireTeacherClassAccess(classSectionId);
 
   // Kiểm tra Student tồn tại trong lớp này
@@ -182,5 +177,5 @@ export async function resetStudentPinByTeacher(
   }
 
   const result = await resetStudentPinToDefault(studentId);
-  return { ...result, initialPin: DEFAULT_INITIAL_PIN };
+  return { studentId: result.studentId, mustChangePin: result.mustChangePin };
 }

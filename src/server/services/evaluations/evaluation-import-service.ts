@@ -179,7 +179,7 @@ export async function previewEvaluationFile(
 
   const headerKeys = headerRow.cells.map(normalizeHeaderKey);
 
-  // Flexible alias matching
+  // Semantic columns are required. Aliases are accepted for exported/localized files.
   const mssvIndex = matchColumnIndex(headerKeys, [
     "mssv",
     "masv",
@@ -218,9 +218,9 @@ export async function previewEvaluationFile(
     );
   }
 
-  if (scoreIndex === undefined && feedbackIndex === undefined) {
+  if (nameIndex === undefined || scoreIndex === undefined || feedbackIndex === undefined) {
     validationError(
-      "Tệp phải có ít nhất một trong hai cột: Điểm (Score) hoặc Nhận xét (Feedback).",
+      "Tệp phải có đủ 4 cột bắt buộc: MSSV, Họ tên, Điểm và Feedback/Nhận xét.",
     );
   }
 
@@ -264,7 +264,7 @@ export async function previewEvaluationFile(
         fullName: rawName,
         score: null,
         feedback: null,
-        status: "skipped",
+        status: "invalid",
         errors: [{ field: "mssv", message: "MSSV bị trống" }],
       });
       continue;
@@ -278,7 +278,7 @@ export async function previewEvaluationFile(
         fullName: rawName,
         score: null,
         feedback: null,
-        status: "skipped",
+        status: "invalid",
         errors: [{ field: "mssv", message: "MSSV bị trùng lặp trong tệp" }],
       });
       continue;
@@ -330,7 +330,7 @@ export async function previewEvaluationFile(
         studentId: student?.id,
         score: parsedScore,
         feedback: parsedFeedback,
-        status: "skipped",
+        status: "invalid",
         errors,
       });
     } else {
@@ -342,18 +342,20 @@ export async function previewEvaluationFile(
         score: parsedScore,
         feedback: parsedFeedback,
         status: "valid",
+        action: "create",
       });
     }
   }
 
   const validCount = parsedRows.filter((r) => r.status === "valid").length;
-  const skippedCount = parsedRows.filter((r) => r.status === "skipped").length;
+  const skippedCount = parsedRows.filter((r) => r.status === "invalid").length;
 
   return {
     summary: {
       total: parsedRows.length,
       valid: validCount,
       skipped: skippedCount,
+      invalid: skippedCount,
     },
     rows: parsedRows,
   };
@@ -394,11 +396,12 @@ export async function executeEvaluationImport(
     change_type: "created" | "updated";
   }>;
 
-  // If publishing, send notification/email to students asynchronously
+  let notificationSent = 0;
+  let notificationFailed = 0;
   if (input.mode === "publish") {
-    void Promise.all(
-      changed.map((row) =>
-        createEvaluationNotification({
+    const deliveries = await Promise.allSettled(
+      changed.map(async (row) => {
+        await createEvaluationNotification({
           studentId: row.student_id,
           evaluationId: row.id,
           type:
@@ -406,14 +409,11 @@ export async function executeEvaluationImport(
               ? "evaluation_created"
               : "evaluation_updated",
           assignmentTitle: assignment.title,
-        }).catch((err) => {
-          console.error(
-            `[EvaluationImport] Lỗi gửi thông báo cho sinh viên ${row.student_id}:`,
-            err,
-          );
-        }),
-      ),
+        });
+      }),
     );
+    notificationSent = deliveries.filter((item) => item.status === "fulfilled").length;
+    notificationFailed = deliveries.length - notificationSent;
   }
 
   return {
@@ -425,6 +425,14 @@ export async function executeEvaluationImport(
       feedback: r.feedback,
       status: targetStatus as "graded" | "returned",
     })),
+    summary: {
+      rows: rowsToUpsert.length,
+      created: changed.filter((row) => row.change_type === "created").length,
+      updated: changed.filter((row) => row.change_type === "updated").length,
+      unchanged: Math.max(0, rowsToUpsert.length - changed.length),
+      notifications: { sent: notificationSent, failed: notificationFailed },
+      emails: { sent: 0, failed: 0 },
+    },
   };
 }
 
@@ -449,9 +457,9 @@ export async function generateEvaluationTemplate(
 
   worksheet.columns = [
     { header: "MSSV", key: "mssv", width: 16 },
-    { header: "Họ Tên", key: "fullName", width: 30 },
-    { header: `Điểm (Tối đa ${assignment.maxScore})`, key: "score", width: 22 },
-    { header: "Nhận xét", key: "feedback", width: 60 },
+    { header: "Họ tên", key: "fullName", width: 30 },
+    { header: "Điểm", key: "score", width: 22 },
+    { header: "Feedback", key: "feedback", width: 60 },
   ];
 
   // Header Styling

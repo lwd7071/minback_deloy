@@ -257,6 +257,10 @@ export async function previewStudentXlsx(
 
 export const DEFAULT_INITIAL_PIN = "111111";
 
+export function deriveInstitutionalEmail(mssv: string): string {
+  return `${mssv.trim().toLowerCase()}@student.hcmute.edu.vn`;
+}
+
 export function generateInitialPin(): string {
   return DEFAULT_INITIAL_PIN;
 }
@@ -339,7 +343,7 @@ async function importTeacherClassSection(
       classSectionId,
       mssv: row.mssv,
       fullName: row.fullName,
-      email: row.email ?? null,
+      email: row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
       nickname: row.mssv,
       pinHash,
     })),
@@ -350,13 +354,12 @@ async function importTeacherClassSection(
   const idsByMssv = new Map(
     created.map((student) => [student.mssv, student.id]),
   );
-  for (const { row, initialPin } of credentials) {
+  for (const { row } of credentials) {
     outcomes.set(row.row, {
       row: row.row,
       status: "created",
       studentId: idsByMssv.get(row.mssv),
       initialNickname: row.mssv,
-      initialPin,
     });
   }
 
@@ -367,7 +370,7 @@ async function importTeacherClassSection(
         const studentId = existingByMssv.get(row.mssv)!;
         await updateImportedStudent(studentId, classSectionId, {
           fullName: row.fullName,
-          email: row.email ?? null,
+          email: row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
         });
         outcomes.set(row.row, { row: row.row, status: "updated", studentId });
       }),
