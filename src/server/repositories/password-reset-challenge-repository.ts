@@ -10,9 +10,11 @@ type ChallengeRecord = {
   failedAttempts: number;
   createdAt: number;
 };
+type ChallengePurpose = "forgot_pin" | "change_email";
 
 // Map lưu trữ OTP challenge trong bộ nhớ có TTL và giới hạn thử sai
 const challengeStore = new Map<string, ChallengeRecord>();
+const challengeKey = (studentId: string, purpose: ChallengePurpose) => `${purpose}:${studentId}`;
 
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 phút
 const MAX_FAILED_ATTEMPTS = 5;
@@ -39,14 +41,14 @@ export function generateOtp(): string {
 /**
  * Tạo challenge mới cho sinh viên (mã mới vô hiệu hóa mã cũ)
  */
-export async function createForgotPinChallenge(studentId: string): Promise<{ otp: string; expiresAt: Date }> {
+export async function createChallenge(studentId: string, purpose: ChallengePurpose): Promise<{ otp: string; expiresAt: Date }> {
   cleanupExpired();
   const otp = generateOtp();
   const otpHash = await hash(otp, 10);
   const now = Date.now();
   const expiresAt = now + OTP_TTL_MS;
 
-  challengeStore.set(studentId, {
+  challengeStore.set(challengeKey(studentId, purpose), {
     studentId,
     otpHash,
     expiresAt,
@@ -60,26 +62,31 @@ export async function createForgotPinChallenge(studentId: string): Promise<{ otp
   };
 }
 
+export const createForgotPinChallenge = (studentId: string) => createChallenge(studentId, "forgot_pin");
+export const createEmailChangeChallenge = (studentId: string) => createChallenge(studentId, "change_email");
+
 /**
  * Xác thực OTP của sinh viên
  */
-export async function verifyForgotPinOtp(
+export async function verifyChallenge(
   studentId: string,
   inputOtp: string,
+  purpose: ChallengePurpose,
 ): Promise<{ valid: boolean; reason?: "EXPIRED" | "TOO_MANY_ATTEMPTS" | "INVALID_OTP" | "NOT_FOUND" }> {
   cleanupExpired();
-  const record = challengeStore.get(studentId);
+  const key = challengeKey(studentId, purpose);
+  const record = challengeStore.get(key);
   if (!record) {
     return { valid: false, reason: "NOT_FOUND" };
   }
 
   if (record.expiresAt < Date.now()) {
-    challengeStore.delete(studentId);
+    challengeStore.delete(key);
     return { valid: false, reason: "EXPIRED" };
   }
 
   if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
-    challengeStore.delete(studentId);
+    challengeStore.delete(key);
     return { valid: false, reason: "TOO_MANY_ATTEMPTS" };
   }
 
@@ -87,20 +94,27 @@ export async function verifyForgotPinOtp(
   if (!isMatch) {
     record.failedAttempts += 1;
     if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
-      challengeStore.delete(studentId);
+      challengeStore.delete(key);
       return { valid: false, reason: "TOO_MANY_ATTEMPTS" };
     }
     return { valid: false, reason: "INVALID_OTP" };
   }
 
   // OTP hợp lệ -> xóa challenge sau khi dùng (consumed)
-  challengeStore.delete(studentId);
+  challengeStore.delete(key);
   return { valid: true };
 }
+
+export const verifyForgotPinOtp = (studentId: string, inputOtp: string) => verifyChallenge(studentId, inputOtp, "forgot_pin");
+export const verifyEmailChangeOtp = (studentId: string, inputOtp: string) => verifyChallenge(studentId, inputOtp, "change_email");
 
 /**
  * Hủy bỏ challenge của sinh viên
  */
 export function revokeForgotPinChallenge(studentId: string): void {
-  challengeStore.delete(studentId);
+  challengeStore.delete(challengeKey(studentId, "forgot_pin"));
+}
+
+export function revokeEmailChangeChallenge(studentId: string): void {
+  challengeStore.delete(challengeKey(studentId, "change_email"));
 }

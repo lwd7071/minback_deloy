@@ -4,7 +4,7 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 ## Quy ước chung
 
-- [ ] Mỗi task làm theo thứ tự RED → GREEN → REFACTOR.
+- [x] Mỗi task làm theo thứ tự RED → GREEN → REFACTOR ở các lát cắt đã triển khai.
 - [ ] Không xóa bảng, migration, route hoặc service Submission/Attachment; chỉ ngừng dùng trong luồng mới.
 - [ ] Student identity luôn lấy từ `requireFullStudentSession()`, không nhận `studentId` từ request body/query.
 - [ ] Evaluation `graded` chỉ là trạng thái nội bộ; Student chỉ thấy `returned`.
@@ -168,3 +168,15 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 - [ ] Không redesign UI trong các task BE.
 - [ ] Không tạo rubric/criteria mới.
 - [ ] Không cho Student đặt PIN chỉ bằng MSSV/nickname; forgot PIN và đổi email phải qua OTP.
+
+## Trạng thái thực thi
+
+- [x] BE-01: DTO và privacy contract đã có, server-side tests pass.
+- [x] BE-02: Email mặc định/PIN mặc định và không lộ `initialPin` đã triển khai; integration còn chờ Supabase local.
+- [x] BE-03: Reset PIN mặc định, revoke session/challenge, response không lộ PIN.
+- [ ] BE-04: OTP email-change đã có route/service/test; còn cần xác nhận rate-limit/challenge persistence trên Supabase.
+- [x] BE-05: Parser 4 cột, preview partial-success và action classification đã triển khai.
+- [x] BE-06: Template đã chuẩn hóa đúng header.
+- [x] BE-07: Save/publish transaction qua RPC, idempotent upsert và delivery summary đã triển khai; integration gate còn chờ Supabase local.
+- [x] BE-08: Student Results API riêng tư và service test đã triển khai.
+- [ ] Quality gate migration/integration: chưa chạy được vì Docker daemon chưa khởi động (`dockerDesktopLinuxEngine` không tồn tại).
