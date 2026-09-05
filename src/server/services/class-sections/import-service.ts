@@ -344,7 +344,6 @@ async function importTeacherClassSection(
       mssv: row.mssv,
       fullName: row.fullName,
       email: row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
-      emailSource: row.email ? "student_verified" : "institutional_derived",
       nickname: row.mssv,
       pinHash,
     })),
