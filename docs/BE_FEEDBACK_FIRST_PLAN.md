@@ -5,11 +5,11 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 ## Quy ước chung
 
 - [x] Mỗi task làm theo thứ tự RED → GREEN → REFACTOR ở các lát cắt đã triển khai.
-- [ ] Không xóa bảng, migration, route hoặc service Submission/Attachment; chỉ ngừng dùng trong luồng mới.
-- [ ] Student identity luôn lấy từ `requireFullStudentSession()`, không nhận `studentId` từ request body/query.
-- [ ] Evaluation `graded` chỉ là trạng thái nội bộ; Student chỉ thấy `returned`.
-- [ ] Email lỗi không rollback Evaluation/Notification web.
-- [ ] Không trả `initialPin` sau khi import/reset; PIN chỉ tồn tại dạng hash.
+- [x] Không xóa bảng, migration, route hoặc service Submission/Attachment; chỉ ngừng dùng trong luồng mới.
+- [x] Student identity luôn lấy từ `requireFullStudentSession()`, không nhận `studentId` từ request body/query.
+- [x] Evaluation `graded` chỉ là trạng thái nội bộ; Student chỉ thấy `returned`.
+- [x] Email lỗi không rollback Evaluation/Notification web.
+- [x] Không trả `initialPin` sau khi import/reset; PIN chỉ tồn tại dạng hash.
 
 ## BE-01 — Khóa contract backend và DTO mới
 
@@ -19,10 +19,10 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Việc cần làm:**
 
-- [ ] Định nghĩa `StudentResultDto`: assignment id/title, score/max score, feedback, status `returned`, graded/returned timestamps.
-- [ ] Preview row có `rowNumber`, MSSV, họ tên, score, feedback, `valid|invalid`, `create|update|unchanged`, errors/warnings.
-- [ ] Import result có số dòng đọc hợp lệ/lỗi, số Evaluation tạo/cập nhật/không đổi, notification/email delivery summary.
-- [ ] Xác nhận không có field submission/attachment trong DTO Student mới.
+- [x] Định nghĩa `StudentResultDto`: assignment id/title, score/max score, feedback, status `returned`, graded/returned timestamps.
+- [x] Preview row có `rowNumber`, MSSV, họ tên, score, feedback, `valid|invalid`, `create|update|unchanged`, errors/warnings.
+- [x] Import result có số dòng đọc hợp lệ/lỗi, số Evaluation tạo/cập nhật/không đổi, notification/email delivery summary.
+- [x] Xác nhận không có field submission/attachment trong DTO Student mới.
 
 **Tests:** type-level/fixture tests cho DTO và privacy contract.
 
@@ -39,11 +39,11 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Quy tắc:**
 
-- [ ] Input tối thiểu `MSSV`, `Họ tên`; Email trong file là tùy chọn.
-- [ ] Nếu thiếu Email, derive `${normalizedMssv.toLowerCase()}@student.hcmute.edu.vn`.
-- [ ] Student mới có nickname mặc định = MSSV, PIN mặc định = `111111`, lưu hash, bật `mustChangePin`/`mustChangeNickname`.
-- [ ] Re-import cùng MSSV chỉ cập nhật họ tên (và email explicit nếu contract cho phép); không reset PIN, nickname, session.
-- [ ] Preview không trả PIN plain text. Import response không có `initialPin`.
+- [x] Input tối thiểu `MSSV`, `Họ tên`; Email trong file là tùy chọn.
+- [x] Nếu thiếu Email, derive `${normalizedMssv.toLowerCase()}@student.hcmute.edu.vn`.
+- [x] Student mới có nickname mặc định = MSSV, PIN mặc định = `111111`, lưu hash, bật `mustChangePin`/`mustChangeNickname`.
+- [x] Re-import cùng MSSV chỉ cập nhật họ tên (và email explicit nếu contract cho phép); không reset PIN, nickname, session.
+- [x] Preview không trả PIN plain text. Import response không có `initialPin`.
 
 **TDD cases:** derive email; normalize MSSV; create default credentials; re-import không reset credential; duplicate/invalid row; no raw PIN in response/log.
 
@@ -57,11 +57,11 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Quy tắc:**
 
-- [ ] Teacher chỉ reset Student thuộc ClassSection của mình.
-- [ ] Hash `111111` server-side; set `mustChangePin=true`.
-- [ ] Revoke Student sessions và challenge đang hoạt động trong cùng transaction.
-- [ ] Response chỉ `{ studentId, mustChangePin: true }`; tuyệt đối không trả `initialPin`.
-- [ ] Giữ compatibility route cũ nếu đang được UI dùng, nhưng sửa response/schema.
+- [x] Teacher chỉ reset Student thuộc ClassSection của mình.
+- [x] Hash `111111` server-side; set `mustChangePin=true`.
+- [x] Revoke Student sessions và challenge đang hoạt động trong cùng transaction.
+- [x] Response chỉ `{ studentId, mustChangePin: true }`; tuyệt đối không trả `initialPin`.
+- [x] Giữ compatibility route cũ nếu đang được UI dùng, nhưng sửa response/schema.
 
 **TDD cases:** scope 404; hash không phải plain text; session revoke; idempotent reset; unauthorized teacher.
 
@@ -76,11 +76,11 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Quy tắc:**
 
-- [ ] Thêm `email_source` (`institutional_derived|student_verified`) và `email_verified_at`.
-- [ ] Dùng challenge purpose riêng `change_email`, TTL/attempt/rate-limit giống forgot PIN.
-- [ ] Request nhận email mới, validate domain/format, tạo challenge và gửi OTP qua email.
-- [ ] Confirm OTP rồi update email atomically; invalidate challenge cũ; không đổi nếu OTP sai/hết hạn.
-- [ ] Email mới trở thành nơi nhận thông báo sau khi verify.
+- [x] Thêm `email_source` (`institutional_derived|student_verified`) và `email_verified_at`.
+- [x] Dùng challenge purpose riêng `change_email`, TTL/attempt/rate-limit giống forgot PIN.
+- [x] Request nhận email mới, validate domain/format, tạo challenge và gửi OTP qua email.
+- [x] Confirm OTP rồi update email atomically; invalidate challenge cũ; không đổi nếu OTP sai/hết hạn.
+- [x] Email mới trở thành nơi nhận thông báo sau khi verify.
 
 **TDD cases:** request/confirm success; wrong/expired/replayed OTP; rate limit; duplicate email policy; no partial update.
 
@@ -92,12 +92,12 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Contract file:** `MSSV | Họ tên | Điểm | Feedback`.
 
-- [ ] Bốn semantic columns là bắt buộc; hỗ trợ alias/case/whitespace tiếng Việt đã thống nhất.
-- [ ] Cột thừa chỉ cảnh báo và bỏ qua; thiếu/duplicate semantic header là lỗi toàn file.
-- [ ] MSSV phải thuộc ClassSection của Assignment; score nằm trong `0..maxScore`; feedback được trim nhưng giữ Unicode.
-- [ ] Preview toàn bộ file; dòng lỗi không làm mất dòng hợp lệ.
-- [ ] Phân loại `create`, `update`, `unchanged`, `invalid`; không ghi DB ở preview.
-- [ ] Giới hạn file/row hiện có vẫn được giữ.
+- [x] Bốn semantic columns là bắt buộc; hỗ trợ alias/case/whitespace tiếng Việt đã thống nhất.
+- [x] Cột thừa chỉ cảnh báo và bỏ qua; thiếu/duplicate semantic header là lỗi toàn file.
+- [x] MSSV phải thuộc ClassSection của Assignment; score nằm trong `0..maxScore`; feedback được trim nhưng giữ Unicode.
+- [x] Preview toàn bộ file; dòng lỗi không làm mất dòng hợp lệ.
+- [x] Phân loại `create`, `update`, `unchanged`, `invalid`; không ghi DB ở preview.
+- [x] Giới hạn file/row hiện có vẫn được giữ.
 
 **TDD cases:** exact headers; alias headers; missing/duplicate headers; empty feedback; invalid score/MSSV; duplicate MSSV rows; partial valid preview; XLSX và CSV.
 
@@ -105,10 +105,10 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Endpoint:** `GET /api/v1/teacher/assignments/:assignmentId/evaluations/import-template`
 
-- [ ] Header đúng `MSSV`, `Họ tên`, `Điểm`, `Feedback`.
-- [ ] Không nhúng max score vào tên cột.
-- [ ] Có một sample row tùy chọn, không chứa PII thật.
-- [ ] Template dùng chung cho preview/import và không chứa trường submission.
+- [x] Header đúng `MSSV`, `Họ tên`, `Điểm`, `Feedback`.
+- [x] Không nhúng max score vào tên cột.
+- [x] Có một sample row tùy chọn, không chứa PII thật.
+- [x] Template dùng chung cho preview/import và không chứa trường submission.
 
 **Tests:** workbook header/order/content và download response headers.
 
@@ -118,13 +118,13 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Body:** file + `mode: save_draft | publish`.
 
-- [ ] Revalidate toàn bộ payload ở server dù đã preview.
-- [ ] `save_draft` ghi Evaluation `graded`; `publish` ghi `returned`.
-- [ ] Evaluation + EvaluationHistory nằm cùng transaction/RPC.
-- [ ] Chỉ tạo web Notification và gửi email sau commit cho dòng thay đổi sang `returned`.
-- [ ] Không dùng `void Promise.all` không quan sát kết quả; collect success/failed delivery counts.
-- [ ] Response báo `rows`, `created`, `updated`, `unchanged`, `notifications`, `emails`, `errors`.
-- [ ] Import idempotent: chạy lại cùng file không tạo duplicate Evaluation/Notification.
+- [x] Revalidate toàn bộ payload ở server dù đã preview.
+- [x] `save_draft` ghi Evaluation `graded`; `publish` ghi `returned`.
+- [x] Evaluation + EvaluationHistory nằm cùng transaction/RPC.
+- [x] Chỉ tạo web Notification và gửi email sau commit cho dòng thay đổi sang `returned`.
+- [x] Không dùng `void Promise.all` không quan sát kết quả; collect success/failed delivery counts.
+- [x] Response báo `rows`, `created`, `updated`, `unchanged`, `notifications`, `emails`, `errors`.
+- [x] Import idempotent: chạy lại cùng file không tạo duplicate Evaluation/Notification.
 
 **TDD cases:** draft visibility; publish visibility; atomic rollback; notification only after commit; email failure không rollback; idempotency; cross-class/assignment rejection.
 
@@ -134,25 +134,25 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 
 **Files mới:** `src/server/repositories/student-results-repository.ts`, `src/server/services/students/student-results-service.ts`, route; tests.
 
-- [ ] Scope theo session Student + ClassSection.
-- [ ] Chỉ lấy Assignment `published|closed` và Evaluation hiện hành.
-- [ ] Chỉ trả Evaluation `returned`; `graded`/chưa chấm không xuất hiện.
-- [ ] Response chỉ gồm assignment/result/feedback/timestamps; không có submission, attachment, internal IDs không cần thiết.
-- [ ] `Cache-Control: no-store`; assignmentId ngoài scope trả 404/empty theo convention hiện tại.
-- [ ] Không tin `studentId` từ query/body.
+- [x] Scope theo session Student + ClassSection.
+- [x] Chỉ lấy Assignment `published|closed` và Evaluation hiện hành.
+- [x] Chỉ trả Evaluation `returned`; `graded`/chưa chấm không xuất hiện.
+- [x] Response chỉ gồm assignment/result/feedback/timestamps; không có submission, attachment, internal IDs không cần thiết.
+- [x] `Cache-Control: no-store`; assignmentId ngoài scope trả 404/empty theo convention hiện tại.
+- [x] Không tin `studentId` từ query/body.
 
 **TDD/integration cases:** private result; cross-student denial; graded hidden; returned visible; no submission fields; no-store; assignment filter.
 
 ## Thứ tự thực hiện và commit đề xuất
 
-1. [ ] BE-01 — `docs: lock feedback-first backend contracts`
-2. [ ] BE-02 — `feat: derive student institutional email on import`
-3. [ ] BE-03 — `feat: reset student PIN to default safely`
-4. [ ] BE-04 — `feat: verify student email changes with OTP`
-5. [ ] BE-05 — `feat: enforce four-column evaluation imports`
-6. [ ] BE-06 — `feat: align evaluation import template`
-7. [ ] BE-07 — `feat: report bulk publication delivery outcomes`
-8. [ ] BE-08 — `feat: add private student results API`
+1. [x] BE-01 — `docs: lock feedback-first backend contracts`
+2. [x] BE-02 — `feat: derive student institutional email on import`
+3. [x] BE-03 — `feat: reset student PIN to default safely`
+4. [x] BE-04 — `feat: verify student email changes with OTP`
+5. [x] BE-05 — `feat: enforce four-column evaluation imports`
+6. [x] BE-06 — `feat: align evaluation import template`
+7. [x] BE-07 — `feat: report bulk publication delivery outcomes`
+8. [x] BE-08 — `feat: add private student results API`
 
 ## Quality gate cuối phase backend
 
@@ -174,9 +174,10 @@ Mục tiêu: giữ nguyên dữ liệu Submission/Attachment để tương thíc
 - [x] BE-01: DTO và privacy contract đã có, server-side tests pass.
 - [x] BE-02: Email mặc định/PIN mặc định và không lộ `initialPin` đã triển khai; integration còn chờ Supabase local.
 - [x] BE-03: Reset PIN mặc định, revoke session/challenge, response không lộ PIN.
-- [ ] BE-04: OTP email-change đã có route/service/test; còn cần xác nhận rate-limit/challenge persistence trên Supabase.
+- [x] BE-04: OTP email-change đã có route/service/test và challenge purpose riêng.
 - [x] BE-05: Parser 4 cột, preview partial-success và action classification đã triển khai.
 - [x] BE-06: Template đã chuẩn hóa đúng header.
 - [x] BE-07: Save/publish transaction qua RPC, idempotent upsert và delivery summary đã triển khai; integration gate còn chờ Supabase local.
 - [x] BE-08: Student Results API riêng tư và service test đã triển khai.
-- [ ] Quality gate migration/integration: chưa chạy được vì Docker daemon chưa khởi động (`dockerDesktopLinuxEngine` không tồn tại).
+- [x] Quality gate migration/database: `db:lint`, `db:test` (11 files/38 tests), `test:health` pass sau khi Docker khởi động.
+- [ ] Integration harness: `test:integration` chưa có test file trong `test/integration/**/*.test.ts`, nên chưa thể báo pass.
