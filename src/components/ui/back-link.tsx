@@ -1,18 +1,45 @@
-import Link from "next/link";
+"use client";
+
 import { ChevronLeft } from "lucide-react";
-import type { ReactNode } from "react";
 
 export function BackLink({
-  href,
-  children = "Quay lại",
+  fallbackHref,
+  forceFallback = false,
+  ariaLabel,
+  title,
+  className,
 }: {
-  href: string;
-  children?: ReactNode;
+  fallbackHref: string;
+  forceFallback?: boolean;
+  ariaLabel?: string;
+  title?: string;
+  className?: string;
 }) {
+  const label = ariaLabel ?? "Quay lại";
+
+  function goBack() {
+    if (forceFallback) {
+      window.location.assign(fallbackHref);
+      return;
+    }
+    const referrer = typeof document === "undefined" ? "" : document.referrer;
+    if (
+      referrer.startsWith(window.location.origin) &&
+      window.history.length > 1
+    )
+      window.history.back();
+    else window.location.assign(fallbackHref);
+  }
+
   return (
-    <Link href={href} className="back-link">
+    <button
+      type="button"
+      className={`back-link${className ? ` ${className}` : ""}`}
+      aria-label={label}
+      title={title ?? label}
+      onClick={goBack}
+    >
       <ChevronLeft size={16} aria-hidden="true" />
-      {children}
-    </Link>
+    </button>
   );
 }

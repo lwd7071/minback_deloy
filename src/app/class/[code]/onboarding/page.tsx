@@ -1,5 +1,5 @@
 import { ChangeCredentialsForm } from "@/components/auth/student/change-credentials-form";
-import { Card } from "@/components/ui/card";
+import { AuthCard } from "@/components/auth/auth-card";
 import { redirect } from "next/navigation";
 import { requireAnyStudentSession } from "@/server/auth/student-session";
 import { findClassSectionCodeById } from "@/server/repositories/student-repository";
@@ -31,11 +31,16 @@ export default async function OnboardingPage({
   }
   return (
     <main className="public-shell">
-      <Card className="auth-wrap stack">
-        <h1>Hoàn tất tài khoản</h1>
-        <p className="muted">Đổi nickname và PIN trước khi mở hồ sơ học tập.</p>
+      <AuthCard
+        title="Hoàn tất tài khoản"
+        context={
+          <span className="muted">
+            Đổi nickname và PIN trước khi mở hồ sơ học tập.
+          </span>
+        }
+      >
         <ChangeCredentialsForm classCode={code.toUpperCase()} />
-      </Card>
+      </AuthCard>
     </main>
   );
 }

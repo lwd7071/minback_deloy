@@ -16,7 +16,6 @@ export function GradeImportModal({
   open,
   onClose,
   assignmentId,
-  maxScore,
   onSuccess,
 }: GradeImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -122,7 +121,8 @@ export function GradeImportModal({
       }
 
       onSuccess(body.data);
-      handleClose();
+      resetState();
+      onClose();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Lỗi lưu bảng điểm");
       setSubmitBusy(false);
@@ -139,8 +139,7 @@ export function GradeImportModal({
       <div className="grade-import-modal-content">
         <p className="muted" style={{ marginTop: 0 }}>
           Tệp cần có đúng 4 cột: <strong>MSSV</strong>, <strong>Họ tên</strong>,{" "}
-          <strong>Điểm</strong> (tối đa {maxScore}), và{" "}
-          <strong>Feedback</strong>.
+          <strong>Điểm</strong> (thang 10), và <strong>Feedback</strong>.
         </p>
 
         {/* Input file */}
@@ -266,7 +265,7 @@ export function GradeImportModal({
                     disabled={preview.summary.valid === 0}
                     onClick={() => void executeImport("save_draft")}
                   >
-                    Lưu bản chấm
+                    Lưu chưa công bố
                   </Button>
                   <Button
                     type="button"

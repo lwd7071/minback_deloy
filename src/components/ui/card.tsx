@@ -5,6 +5,7 @@ export function Card({
   glass,
   variant = "default",
   className = "",
+  children,
   ...props
 }: HTMLAttributes<HTMLDivElement> & {
   hover?: boolean;
@@ -15,6 +16,8 @@ export function Card({
     <div
       className={`card card-${variant} ${hover ? "card-hover" : ""} ${glass ? "glass" : ""} ${className}`}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 }

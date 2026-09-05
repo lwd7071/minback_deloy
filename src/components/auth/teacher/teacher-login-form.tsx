@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function TeacherLoginForm() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export function TeacherLoginForm() {
       });
 
       if (res.ok) {
-        router.push("/admin/dashboard");
+        router.push("/admin/classes");
         return;
       }
 
@@ -45,35 +47,31 @@ export function TeacherLoginForm() {
   }
 
   return (
-    <form className="form-stack" onSubmit={handleSubmit}>
-      <div className="form-field">
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-          required
-          disabled={loading}
-        />
-      </div>
-      <div className="form-field">
-        <label htmlFor="password">Mật khẩu</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          required
-          disabled={loading}
-        />
-      </div>
+    <form className="login-form" onSubmit={handleSubmit}>
       {error && <Alert variant="error">{error}</Alert>}
-      <button type="submit" className="btn btn-primary" disabled={loading}>
-        {loading ? "Đang đăng nhập…" : "Đăng nhập"}
-      </button>
+      <Input
+        id="teacher-email"
+        label="Email"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoComplete="email"
+        required
+        disabled={loading}
+      />
+      <Input
+        id="teacher-password"
+        label="Mật khẩu"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        autoComplete="current-password"
+        required
+        disabled={loading}
+      />
+      <Button type="submit" loading={loading}>
+        Đăng nhập
+      </Button>
     </form>
   );
 }

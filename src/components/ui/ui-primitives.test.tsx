@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Modal } from "./modal";
 import { OtpInput } from "./otp-input";
 import { Button } from "./button";
+import { BackLink } from "./back-link";
 
 afterEach(cleanup);
 
@@ -85,5 +86,14 @@ describe("Button", () => {
   it("supports the compact shared control size", () => {
     render(<Button size="sm">Lưu</Button>);
     expect(screen.getByRole("button", { name: "Lưu" })).toHaveClass("btn-sm");
+  });
+});
+
+describe("BackLink", () => {
+  it("renders an icon-only link with the declared accessible name", () => {
+    render(<BackLink fallbackHref="/parent" ariaLabel="Quay lại trang cha" />);
+    const button = screen.getByRole("button", { name: "Quay lại trang cha" });
+    expect(button).toHaveAttribute("title", "Quay lại trang cha");
+    expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
 });

@@ -19,17 +19,6 @@ function toDatetimeLocal(d: Date = new Date()): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-function getDefaultDueDate(
-  daysAhead: number = 7,
-  hours: number = 23,
-  minutes: number = 59,
-): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysAhead);
-  d.setHours(hours, minutes, 0, 0);
-  return toDatetimeLocal(d);
-}
-
 type StatusFilter = "all" | AssignmentStatus;
 
 export function ClassAssignmentsView({
@@ -51,10 +40,6 @@ export function ClassAssignmentsView({
 
   const [draft, setDraft] = useState({
     title: "",
-    description: "",
-    assignedDate: toDatetimeLocal(new Date()),
-    dueDate: getDefaultDueDate(7, 23, 59),
-    maxScore: "10",
   });
 
   useEffect(() => {
@@ -93,8 +78,12 @@ export function ClassAssignmentsView({
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            ...draft,
-            maxScore: Number(draft.maxScore),
+            title: draft.title,
+            description: "",
+            assignedDate: toDatetimeLocal(new Date()),
+            dueDate: toDatetimeLocal(new Date()),
+            status: "published",
+            maxScore: 10,
           }),
         },
       );
@@ -108,10 +97,6 @@ export function ClassAssignmentsView({
       setShowCreate(false);
       setDraft({
         title: "",
-        description: "",
-        assignedDate: toDatetimeLocal(new Date()),
-        dueDate: getDefaultDueDate(7, 23, 59),
-        maxScore: "10",
       });
       setRefreshKey((value) => value + 1);
     } catch (cause) {
@@ -159,8 +144,9 @@ export function ClassAssignmentsView({
             autoComplete="off"
           >
             <label className="form-field">
-              <span>Tên bài tập</span>
+              <span className="form-label">Tên bài tập</span>
               <input
+                className="form-input"
                 required
                 autoComplete="off"
                 value={draft.title}
@@ -169,25 +155,6 @@ export function ClassAssignmentsView({
                 }
               />
             </label>
-
-            <div className="grid">
-              <label className="form-field">
-                <span>Điểm tối đa</span>
-                <input
-                  required
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  value={draft.maxScore}
-                  onChange={(event) =>
-                    setDraft((value) => ({
-                      ...value,
-                      maxScore: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-            </div>
 
             <div
               style={{
@@ -204,7 +171,7 @@ export function ClassAssignmentsView({
               >
                 Hủy
               </button>
-              <Button loading={busy}>Tạo bản nháp bài tập</Button>
+              <Button loading={busy}>Tạo bài tập</Button>
             </div>
           </form>
         </Card>

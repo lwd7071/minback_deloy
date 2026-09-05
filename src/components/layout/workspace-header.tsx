@@ -23,7 +23,7 @@ type WorkspaceHeaderProps = {
 
 type NavItem = { href: string; label: string; icon: typeof BookOpen };
 
-function makeItems(
+export function makeItems(
   role: WorkspaceHeaderProps["role"],
   classCode?: string,
 ): NavItem[] {
@@ -36,7 +36,6 @@ function makeItems(
     ];
   }
   return [
-    { href: "/admin/dashboard", label: "Tổng quan", icon: LayoutDashboard },
     { href: "/admin/classes", label: "Lớp học", icon: Users },
     { href: "/admin/settings", label: "Cài đặt", icon: Settings },
   ];
@@ -81,7 +80,7 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
           href={
             role === "student" && classCode
               ? `/class/${encodeURIComponent(classCode)}/profile`
-              : "/admin/dashboard"
+              : "/admin/classes"
           }
         >
           <span className="wordmark-mark">

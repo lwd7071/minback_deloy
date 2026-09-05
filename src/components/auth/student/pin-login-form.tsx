@@ -3,15 +3,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OtpInput } from "@/components/ui/otp-input";
-import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 export function PinLoginForm({
   classCode,
   initialNickname = "",
-  backUrl,
 }: {
   classCode: string;
   initialNickname?: string;
-  backUrl?: string;
 }) {
   const router = useRouter();
   const [nickname, setNickname] = useState(initialNickname);
@@ -63,31 +61,27 @@ export function PinLoginForm({
     }
   }
   return (
-    <form className="form-stack" onSubmit={(event) => void submit(event)}>
-      <Alert variant="info">
-        Lần đầu đăng nhập: dùng MSSV và PIN 111111. Bạn sẽ được yêu cầu đổi
-        nickname và PIN.
-      </Alert>
-      <div className="form-field">
-        <label className="form-label" htmlFor="student-identifier">
-          MSSV
-        </label>
-        <input
+    <form
+      className="form-stack student-login-form"
+      onSubmit={(event) => void submit(event)}
+    >
+      <div className="student-login-fields">
+        <Input
           id="student-identifier"
-          className="field-underline"
+          label="Nickname"
+          placeholder="Nhập nickname"
           autoComplete="off"
-          placeholder="Nhập mã số sinh viên"
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
         />
-      </div>
-      <div className="form-field">
-        <span className="form-label">PIN</span>
-        <OtpInput
-          value={pin}
-          onChange={setPin}
-          disabled={busy || remaining > 0}
-        />
+        <div className="form-field student-pin-field">
+          <span className="form-label">PIN</span>
+          <OtpInput
+            value={pin}
+            onChange={setPin}
+            disabled={busy || remaining > 0}
+          />
+        </div>
       </div>
       {remaining > 0 ? (
         <div className="auth-lockout">
@@ -100,33 +94,12 @@ export function PinLoginForm({
         </p>
       ) : null}
       <Button
+        className="student-login-submit"
         loading={busy}
         disabled={!nickname.trim() || pin.length !== 6 || remaining > 0}
       >
         Đăng nhập
       </Button>
-      <div
-        className="split"
-        style={{
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: "4px",
-        }}
-      >
-        <a
-          className="btn btn-ghost button-sm"
-          href={backUrl || `/class/${encodeURIComponent(classCode)}`}
-        >
-          Trở lại
-        </a>
-        <a
-          className="muted"
-          style={{ fontSize: "0.85rem", textDecoration: "underline" }}
-          href={`/class/${encodeURIComponent(classCode)}/forgot-pin`}
-        >
-          Quên mã PIN?
-        </a>
-      </div>
     </form>
   );
 }

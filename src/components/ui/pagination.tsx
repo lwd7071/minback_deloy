@@ -15,6 +15,7 @@ export type PaginationProps = {
   onPageSizeChange?: (newPageSize: number) => void;
   pageSizeOptions?: number[];
   disabled?: boolean;
+  showSummary?: boolean;
 };
 
 export function Pagination({
@@ -25,6 +26,7 @@ export function Pagination({
   onPageSizeChange,
   pageSizeOptions = [20, 50, 100],
   disabled = false,
+  showSummary = true,
 }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
@@ -65,37 +67,44 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <nav aria-label="Phân trang danh sách" className="pagination-wrap">
-      <div className="pagination-info">
-        <span>
-          Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong> trên
-          tổng số <strong>{total}</strong> sinh viên
-        </span>
+    <nav
+      aria-label="Phân trang danh sách"
+      className={`pagination-wrap ${!showSummary && !onPageSizeChange ? "pagination-wrap-controls-only" : ""}`}
+    >
+      {(showSummary || onPageSizeChange) && (
+        <div className="pagination-info">
+          {showSummary && (
+            <span>
+              Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong> trên
+              tổng số <strong>{total}</strong> sinh viên
+            </span>
+          )}
 
-        {onPageSizeChange && (
-          <label className="pagination-size-label">
-            <span>Hiển thị:</span>
-            <select
-              className="pagination-size-select"
-              value={pageSize}
-              disabled={disabled}
-              onChange={(e) => {
-                const newSize = parseInt(e.target.value, 10);
-                if (!Number.isNaN(newSize)) {
-                  onPageSizeChange(newSize);
-                }
-              }}
-              aria-label="Chọn số lượng mục trên mỗi trang"
-            >
-              {pageSizeOptions.map((size) => (
-                <option key={size} value={size}>
-                  {size} / trang
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
+          {onPageSizeChange && (
+            <label className="pagination-size-label">
+              <span>Hiển thị:</span>
+              <select
+                className="pagination-size-select"
+                value={pageSize}
+                disabled={disabled}
+                onChange={(e) => {
+                  const newSize = parseInt(e.target.value, 10);
+                  if (!Number.isNaN(newSize)) {
+                    onPageSizeChange(newSize);
+                  }
+                }}
+                aria-label="Chọn số lượng mục trên mỗi trang"
+              >
+                {pageSizeOptions.map((size) => (
+                  <option key={size} value={size}>
+                    {size} / trang
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="pagination-controls">

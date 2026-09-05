@@ -1517,6 +1517,29 @@ Các quyết định sau là canonical và không được tự thay đổi khi 
 
 ## 9. FINAL ACCEPTANCE CHECKLIST
 
+## 10. CORRECTIVE TASK — BACK NAVIGATION & SHARED AUTH CARD
+
+- [x] `BackLink` dùng API semantic, icon-only 44×44px, URL cha xác định và accessible label/title.
+- [x] Class subtree dùng duy nhất `ClassContextNav`; route grade không còn các BackLink trùng.
+- [x] Teacher standalone create-class dùng `PageHeader` BackLink về `/admin/classes`; teacher login dùng `AuthCard` về `/`.
+- [x] Student public login/forgot PIN dùng `AuthCard`; bỏ `backUrl` và footer Back trùng khỏi `PinLoginForm`.
+- [x] Onboarding không có BackLink; điều hướng bước OTP/wizard vẫn giữ nguyên.
+- [x] Teacher và Student dùng chung AuthCard width 440px, spacing, typography, notice/form/footer slots; API payload và redirect không đổi.
+- [x] CSS responsive breakpoint 800px, mobile gutter 12px, touch target 44px, OTP không tràn ngang.
+- [x] Unit tests cho BackLink, AuthCard order và `resolveClassBackTarget` đã bổ sung.
+
+## 11. CORRECTIVE REVISION — BACK ICON, AUTH PARITY & TEACHER DENSITY
+
+- [x] Back control hiển thị icon `ChevronLeft` chỉ, không lộ text; click dùng history nội bộ và có fallback URL.
+- [x] Bổ sung `.sr-only` chuẩn cho accessible text không chiếm layout.
+- [x] Student login rút gọn còn `Nickname` + `PIN`; bỏ notice PIN dài và footer Back.
+- [x] Teacher/Student login dùng chung AuthCard width, padding, field rhythm và submit button.
+- [x] Teacher dashboard/classes dùng cùng `StatCard` metric: lớp, sinh viên, bài tập, đã chấm.
+- [x] Teacher page header và ClassContextNav được thu gọn; navigation top giữ vai trò định vị chính.
+- [x] Font display/serif cũ được thay bằng Be Vietnam Pro; IBM Plex Mono chỉ dùng cho dữ liệu định danh.
+- [ ] Supabase local health check và flow mở lớp phải được xác nhận trên Docker đang chạy.
+- [ ] Chạy visual QA ở 375px, 390px, 768px và 1440px trước khi commit/push.
+
 - [ ] Toàn bộ semantic tokens mới được áp dụng, không còn biến màu cũ hay giá trị hardcode.
 - [ ] Bỏ hoàn toàn font Lora; 100% heading, body, control dùng Be Vietnam Pro (400, 500, 700).
 - [ ] Font IBM Plex Mono chỉ dùng cho MSSV và Mã lớp.
@@ -1531,3 +1554,25 @@ Các quyết định sau là canonical và không được tự thay đổi khi 
 - [ ] Hiển thị chính xác trên cả 4 độ phân giải: 375px, 390px, 768px, 1440px.
 - [ ] Độ tương phản màu đạt chuẩn WCAG 2.1 AA; focus-visible 3px hiển thị đầy đủ trên mọi control.
 - [ ] Chạy lệnh `npm run check` vượt qua 100% các bài kiểm tra (format, lint, typecheck, test, build).
+
+## 12. CORRECTIVE REVISION — MERGE TEACHER DASHBOARD INTO CLASSES
+
+- [x] `/admin/dashboard` trở thành compatibility redirect tới `/admin/classes`.
+- [x] Teacher login và wordmark dùng `/admin/classes` làm entry point.
+- [x] Teacher navigation chỉ còn `Lớp học` và `Cài đặt`; Student navigation giữ nguyên.
+- [x] `ClassSummaryDashboard` bỏ PageHeader lớn và giữ H1 sr-only cùng bốn StatCard.
+- [x] Loại bỏ UI dashboard gồm bài cần chấm, tiến độ theo lớp và hoạt động gần đây.
+- [x] Giữ API/service dashboard cho compatibility; không thay đổi backend/database/submission data.
+- [ ] Xác nhận health check Supabase và regression flow mở lớp trên Docker đang chạy.
+
+## 13. CORRECTIVE REVISION — FEEDBACK-FIRST TEACHER FLOW
+
+- [x] Form tạo bài tập chỉ còn tên; UI tự gửi `status=published`, `maxScore=10` và các giá trị kỹ thuật bắt buộc.
+- [x] Teacher không còn render mô tả, ngày giao, hạn nộp, attachment hoặc submission trong luồng feedback-first.
+- [x] Grade page chỉ có một CTA import và preview dùng `FormData`/import dùng JSON theo contract đã khóa.
+- [x] Bảng kết quả đọc-only hiển thị MSSV, họ tên, điểm, feedback và trạng thái hiển thị.
+- [x] `graded` vẫn hiển thị cho Teacher sau khi lưu; `returned` hiển thị sau khi công bố.
+- [x] Metrics tính theo Evaluation, không phụ thuộc Submission.
+- [x] Có thể công bố các Evaluation `graded` đã lưu mà không upload lại file.
+- [x] Back của class subtree là icon duy nhất ở góc trái content; không còn banner ClassContextNav.
+- [ ] Chạy visual QA 375px, 768px, 1440px và kiểm tra flow với Supabase local trước khi commit.

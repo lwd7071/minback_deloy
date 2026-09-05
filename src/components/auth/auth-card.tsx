@@ -1,21 +1,32 @@
 import type { ReactNode } from "react";
+import { BackLink } from "@/components/ui/back-link";
 
 export function AuthCard({
+  back,
   title,
-  description,
+  context,
   children,
+  footer,
 }: {
+  back?: { fallbackHref: string; ariaLabel?: string; forceFallback?: boolean };
   title?: string;
-  description?: string;
-  children: ReactNode;
+  context?: ReactNode;
+  children?: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
     <section className="auth-card">
-      {title ? <h1>{title}</h1> : null}
-      {description ? (
-        <p className="auth-card-description">{description}</p>
+      {back ? (
+        <div className="page-back-slot">
+          <BackLink {...back} />
+        </div>
       ) : null}
-      {children}
+      <header className={`auth-card-header${context ? " has-context" : ""}`}>
+        {title ? <h1>{title}</h1> : null}
+        {context ? <div className="auth-card-context">{context}</div> : null}
+      </header>
+      <div className="auth-form">{children}</div>
+      {footer ? <footer className="auth-card-footer">{footer}</footer> : null}
     </section>
   );
 }

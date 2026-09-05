@@ -1,28 +1,36 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { BackLink } from "@/components/ui/back-link";
+
+export function resolveClassBackTarget(
+  pathname: string,
+  classSectionId: string,
+) {
+  const root = `/admin/classes/${encodeURIComponent(classSectionId)}`;
+  if (/\/assignments\/[^/]+\/grade(?:\/|$)/.test(pathname)) {
+    return {
+      href: `${root}/assignments`,
+      ariaLabel: "Quay lại danh sách bài tập",
+    };
+  }
+  if (pathname !== root && pathname.startsWith(root)) {
+    return { href: root, ariaLabel: "Quay lại tổng quan lớp" };
+  }
+  return { href: "/admin/classes", ariaLabel: "Quay lại danh sách lớp học" };
+}
 
 export function ClassContextNav({
-  code,
-  name,
+  classSectionId,
 }: {
   classSectionId: string;
-  code: string;
-  name: string;
 }) {
+  const pathname = usePathname();
+  const sectionId = classSectionId;
+  const back = resolveClassBackTarget(pathname, sectionId);
   return (
-    <header className="class-context-nav">
-      <div className="class-context-top">
-        <Link href="/admin/classes" className="class-back-link">
-          <ArrowLeft size={16} aria-hidden="true" />
-          <span>Danh sách lớp học</span>
-        </Link>
-        <div className="class-title-block">
-          <span className="class-code-badge">{code}</span>
-          <h1 className="class-name-heading">{name}</h1>
-        </div>
-      </div>
-    </header>
+    <div className="teacher-content-back">
+      <BackLink fallbackHref={back.href} ariaLabel={back.ariaLabel} />
+    </div>
   );
 }

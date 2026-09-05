@@ -9,7 +9,6 @@ import { useNotificationPolling } from "@/components/notifications/student/use-n
 import { useStudentWorkspace } from "@/components/layout/student/student-workspace";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
-import { StudentEmailChangeForm } from "@/components/students/student/student-email-change-form";
 
 export type Section =
   "overview" | "assignments" | "submissions" | "grades" | "notifications";
@@ -83,32 +82,31 @@ export function StudentWorkspaceView({
 
       {section === "overview" ? (
         <>
-          <section className="student-summary-strip">
-            <div className="student-class-signature">
+          <section
+            className="student-summary-cards"
+            aria-label="Tổng quan lớp học"
+          >
+            <Card className="stat-card student-class-card">
               <span className="signature-icon">
                 <AppIcon name="book" size={28} />
               </span>
               <div>
-                <span>Tiến độ lớp</span>
                 <strong>{profile.classSection.code}</strong>
                 <small>{profile.classSection.name}</small>
               </div>
-            </div>
-            <Metric
-              icon="book"
-              label="Bài tập"
-              value={profile.assignments.length}
-            />
-            <Metric
-              icon="check"
-              label="Đã trả kết quả"
-              value={summary.returned}
-            />
-            <Metric
-              icon="star"
-              label="Tiến độ"
-              value={`${profile.progress.percentage}%`}
-            />
+            </Card>
+            <Card className="stat-card">
+              <strong>{profile.assignments.length}</strong>
+              <span className="muted">Bài tập</span>
+            </Card>
+            <Card className="stat-card">
+              <strong>{summary.returned}</strong>
+              <span className="muted">Đã trả kết quả</span>
+            </Card>
+            <Card className="stat-card">
+              <strong>{profile.progress.percentage}%</strong>
+              <span className="muted">Tiến độ</span>
+            </Card>
           </section>
           <div className="student-dashboard-panels">
             <Card className="workspace-panel">
@@ -135,7 +133,6 @@ export function StudentWorkspaceView({
               />
             </Card>
           </div>
-          <StudentEmailChangeForm />
         </>
       ) : section === "notifications" ? (
         <Card className="workspace-panel notification-page">
@@ -204,26 +201,6 @@ function navigationTitle(section: Exclude<Section, "overview">) {
   return titles[section];
 }
 
-function Metric({
-  icon,
-  label,
-  value,
-}: {
-  icon: "book" | "upload" | "check" | "star";
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="workspace-metric">
-      <AppIcon name={icon} size={21} />
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-    </div>
-  );
-}
-
 function PanelTitle({
   icon,
   title,
@@ -276,14 +253,6 @@ function AssignmentRows({
               <strong style={{ fontSize: "0.95rem" }}>
                 {assignment.title}
               </strong>
-              <div className="assignment-badge-cluster">
-                <span
-                  className="badge badge-neutral"
-                  style={{ fontSize: "0.72rem", padding: "1px 6px" }}
-                >
-                  Thang {assignment.maxScore}đ
-                </span>
-              </div>
             </div>
             <span
               className={`workspace-status ${hasReturned ? "is-complete" : "is-pending"}`}

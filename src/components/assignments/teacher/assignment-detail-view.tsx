@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
-import { AttachmentUploadPanel } from "./attachment-upload-panel";
+import type { AssignmentDto } from "@/types/assignment";
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
 
@@ -26,41 +25,15 @@ export function AssignmentDetailView({
   const router = useRouter();
   const [assignment, setAssignment] = useState<AssignmentDto | null>(null);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [assignedDate, setAssignedDate] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [maxScore, setMaxScore] = useState("");
-  const [status, setStatus] = useState<AssignmentStatus>("draft");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  function toDatetimeLocal(val: string | Date): string {
-    if (!val) return "";
-    const d =
-      typeof val === "string"
-        ? new Date(val.includes("T") ? val : `${val}T23:59:00+07:00`)
-        : val;
-    if (Number.isNaN(d.getTime())) return "";
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const year = d.getFullYear();
-    const month = pad(d.getMonth() + 1);
-    const day = pad(d.getDate());
-    const hours = pad(d.getHours());
-    const minutes = pad(d.getMinutes());
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  }
-
   function applyAssignment(next: AssignmentDto): void {
     setAssignment(next);
     setTitle(next.title);
-    setDescription(next.description);
-    setAssignedDate(toDatetimeLocal(next.assignedDate));
-    setDueDate(toDatetimeLocal(next.dueDate));
-    setMaxScore(String(next.maxScore));
-    setStatus(next.status);
   }
 
   useEffect(() => {
@@ -89,7 +62,6 @@ export function AssignmentDetailView({
       active = false;
     };
     // applyAssignment only updates local form state; assignmentId is the fetch lifecycle key.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignmentId]);
 
   async function updateAssignment(event: React.FormEvent<HTMLFormElement>) {
@@ -103,14 +75,7 @@ export function AssignmentDetailView({
         {
           method: "PATCH",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            title,
-            description,
-            assignedDate,
-            dueDate,
-            maxScore: Number(maxScore),
-            status,
-          }),
+          body: JSON.stringify({ title }),
         },
       );
       const body = (await response.json()) as ApiResult<AssignmentDto>;
@@ -170,22 +135,6 @@ export function AssignmentDetailView({
     );
   }
 
-  const statusOptions: Array<{ value: AssignmentStatus; label: string }> =
-    assignment.status === "draft"
-      ? [
-          { value: "draft", label: "Bản nháp (draft)" },
-          { value: "published", label: "Đã phát hành (published)" },
-        ]
-      : assignment.status === "published"
-        ? [
-            { value: "published", label: "Đã phát hành (published)" },
-            { value: "closed", label: "Đã đóng bài (closed)" },
-          ]
-        : [
-            { value: "closed", label: "Đã đóng bài (closed)" },
-            { value: "published", label: "Đã phát hành (published)" },
-          ];
-
   return (
     <div className="settings-stack">
       <form
@@ -203,38 +152,6 @@ export function AssignmentDetailView({
             autoComplete="off"
           />
         </label>
-        <div className="grid">
-          <label className="form-field">
-            <span className="form-label">Điểm tối đa</span>
-            <input
-              className="form-input"
-              type="number"
-              min="0.1"
-              max="999.9"
-              step="0.1"
-              value={maxScore}
-              onChange={(event) => setMaxScore(event.target.value)}
-              required
-            />
-          </label>
-          <label className="form-field">
-            <span className="form-label">Trạng thái bài tập</span>
-            <select
-              className="form-input"
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as AssignmentStatus)
-              }
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -310,11 +227,6 @@ export function AssignmentDetailView({
           </div>
         )}
       </form>
-
-      <AttachmentUploadPanel
-        assignmentId={assignment.id}
-        disabled={assignment.status === "closed"}
-      />
     </div>
   );
 }

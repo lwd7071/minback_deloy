@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BulkGradeView } from "@/components/evaluations/teacher/bulk-grade-view";
@@ -6,7 +5,6 @@ import { handleTeacherPageError } from "@/server/navigation/page-errors";
 import { getTeacherAssignment } from "@/server/services/assignments/assignment-service";
 import { listTeacherEvaluations } from "@/server/services/evaluations/evaluation-service";
 import { listStudentsInClass } from "@/server/services/students/student-management-service";
-import { listTeacherSubmissions } from "@/server/services/students/teacher-submission-service";
 export default async function GradePage({
   params,
   searchParams,
@@ -18,9 +16,6 @@ export default async function GradePage({
   const query = await searchParams;
   return (
     <div className="stack">
-      <Link className="btn btn-ghost" href={`/admin/classes/${id}/assignments`}>
-        ← Quay lại lớp
-      </Link>
       <Suspense
         fallback={<p className="muted">Đang tải danh sách chấm bài…</p>}
       >
@@ -44,27 +39,22 @@ async function BulkGradeData({
   let assignment: Awaited<ReturnType<typeof getTeacherAssignment>>;
   let studentResult: Awaited<ReturnType<typeof listStudentsInClass>>;
   let evaluations: Awaited<ReturnType<typeof listTeacherEvaluations>>;
-  let submissions: Awaited<ReturnType<typeof listTeacherSubmissions>>;
   try {
     assignment = await getTeacherAssignment(assignmentId);
     if (assignment.classSectionId !== classSectionId) {
       notFound();
     }
-    [studentResult, evaluations, submissions] = await Promise.all([
+    [studentResult, evaluations] = await Promise.all([
       listStudentsInClass(classSectionId, {
         page: Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1,
         pageSize: 100,
         search: search || undefined,
       }),
       listTeacherEvaluations(assignmentId),
-      listTeacherSubmissions(assignmentId),
     ]);
   } catch (error) {
     return handleTeacherPageError(error);
   }
-  const studentIds = new Set(
-    studentResult.students.map((student) => student.id),
-  );
   return (
     <BulkGradeView
       key={`${assignmentId}:${studentResult.meta.page}:${search}`}
@@ -73,12 +63,7 @@ async function BulkGradeData({
       students={studentResult.students}
       studentMeta={studentResult.meta}
       initialSearch={search}
-      evaluations={evaluations.filter((evaluation) =>
-        studentIds.has(evaluation.studentId),
-      )}
-      submissions={submissions.filter((submission) =>
-        studentIds.has(submission.student.id),
-      )}
+      evaluations={evaluations}
     />
   );
 }

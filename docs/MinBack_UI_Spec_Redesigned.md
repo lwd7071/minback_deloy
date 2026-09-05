@@ -408,7 +408,11 @@ Quy ước chung cho mọi component: dùng đúng token Phần A; trạng thái
 
 ### B.17. Breadcrumb / Back-link
 
-- Chuẩn hóa mọi "← Quay lại…" hiện tại thành component `BackLink`: ghost sm + icon chevron trái, luôn đặt trên PageHeader, dẫn đúng 1 cấp cha.
+- Mỗi route chỉ render tối đa một `BackLink`; component dùng icon `ChevronLeft` duy nhất trong vùng bấm 44×44px, có `aria-label` và tooltip `title`, không dùng ký tự `←` hoặc `router.back()`.
+- API: `BackLinkProps = { fallbackHref, ariaLabel?, title?, className? }`. Nút ưu tiên history nội bộ; `fallbackHref` dùng khi mở trực tiếp hoặc không có history phù hợp.
+- BackLink nằm trong `.page-back-slot`, là phần tử đầu tiên của vùng nội dung trước eyebrow/H1, căn theo góc trái container; không fixed/absolute.
+- `ClassContextNav` là owner cho class subtree; `AuthCard` là owner cho auth/public route; `PageHeader` là owner cho teacher standalone route. Child view/form không tự render BackLink.
+- Điều hướng trong wizard/OTP (ví dụ “Quay lại bước trước”) là điều hướng nội bộ và không tính là BackLink cấp trang.
 
 ### B.18. Empty / Loading / Error / Confirmation states
 
@@ -444,23 +448,16 @@ Mọi route phải phân biệt ba câu hỏi: **route có tồn tại không / 
 
 ### C.2. Đăng nhập giảng viên —** `/admin/login`
 
-- **Giữ nguyên**: form email/password, `POST /api/v1/teacher/auth/login`, xử lý lỗi inline, loading "Đang đăng nhập…", link về trang chủ.
+- **Giữ nguyên**: form email/password, `POST /api/v1/teacher/auth/login`, xử lý lỗi inline và loading "Đang đăng nhập…".
+- Sau khi đăng nhập thành công, Teacher chuyển tới `/admin/classes`; `/admin/dashboard` chỉ còn là compatibility redirect.
 
 - **Thay đổi thiết kế**: auth card radius-xl padding 32px (mobile 24px), max-width 440px căn giữa trong public-shell; tiêu đề H1 + mô tả Body Small; lỗi chuyển từ `form-error` lẻ sang **Alert error** phía trên form; nút submit primary full-width; footer link dùng BackLink.
 
-### C.3. Dashboard giảng viên — `/admin/dashboard`
+### C.3. Dashboard giảng viên — `/admin/dashboard` (compatibility redirect)
 
-- **Cập nhật theo contract mới**:
-  - Dashboard không còn xoay quanh submission/chưa nộp/deadline.
-  - Trạng thái nghiệp vụ chính chuyển sang **chưa chấm / đã lưu bản chấm (`graded`) / đã công bố (`returned`)**.
-  - Teacher dashboard không hiển thị file nộp hay hành động download submission trong layout redesign này; không suy diễn thành xóa backend submission capability.
-- **Thay đổi thiết kế**:
-  - PageHeader: eyebrow Label "Tổng quan" + H1 "Bảng điều khiển".
-  - 4 KPI → `StatCard`; nội dung KPI phải lấy từ contract dashboard mới và ưu tiên số lớp, sinh viên, bài chưa chấm, kết quả đã công bố.
-  - Panel hành động chính: "Bài cần xử lý" hiển thị assignment + mã lớp + trạng thái chấm/công bố; bỏ hoàn toàn metadata hạn chốt.
-  - Panel "Tiến độ theo lớp" dùng MiniProgressRing + ProgressBar dựa trên tỷ lệ evaluation được xử lý/công bố, không dựa trên submission.
-  - Activity feed → Card default với danh sách compact, timestamp Caption, Pagination sm ở chân.
-  - Empty states theo B.18 cho mọi vùng.
+- `/admin/dashboard` không còn là màn hình UI độc lập; truy cập route này redirect về `/admin/classes`.
+- API/service dashboard vẫn được giữ cho compatibility và không thay đổi backend/data contract.
+- Teacher landing page canonical là `/admin/classes`, không hiển thị các panel bài cần chấm, tiến độ theo lớp hoặc activity feed cũ.
 
 ### C.4. Danh sách lớp —** `/admin/classes`
 
@@ -839,5 +836,9 @@ Trước khi dùng file này để tạo implementation plan, phải chạy cons
 ---
 
 ## FINAL SOURCE OF TRUTH DECLARATION
+
+## FEEDBACK-FIRST TEACHER FLOW — CANONICAL
+
+Teacher tạo Assignment chỉ nhập tên. UI dùng thang 10 ẩn và trạng thái `published` kỹ thuật để Assignment xuất hiện trong danh sách Student. Teacher nhập một file gồm `MSSV | Họ tên | Điểm | Feedback`, xem preview, sau đó chọn lưu chưa công bố hoặc công bố ngay. Bản `graded` luôn hiển thị lại trong bảng kết quả của Teacher; chỉ bản `returned` mới xuất hiện điểm và feedback trên Student UI. Attachment, deadline, submission và các ô chấm tay không được render trong UI, nhưng API/schema/database tương ứng được giữ lại cho compatibility. Teacher protected pages không dùng page header; Back chỉ là một icon 44px ở góc trái content.
 
 Sau lần cập nhật này, **`MinBack_UI_Spec_Redesigned.md` là FINAL SOURCE OF TRUTH cho UI redesign**. `UI_REDESIGN_PLAN.md` phải được tạo bằng cách đọc file này cùng codebase để map requirement → implementation, nhưng **không được thay đổi intent của Functional & Visibility Changes**. Nếu codebase và spec khác nhau, plan phải ghi discrepancy; không tự sửa spec bằng suy đoán.

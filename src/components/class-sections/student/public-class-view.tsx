@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { PinLoginForm } from "@/components/auth/student/pin-login-form";
+import { AuthCard } from "@/components/auth/auth-card";
+import Link from "next/link";
 import type { PublicClassSectionDto } from "@/types/frontend-rebuild";
 export function PublicClassView({ code }: { code: string }) {
   const [section, setSection] = useState<PublicClassSectionDto | null>(null);
@@ -33,36 +34,39 @@ export function PublicClassView({ code }: { code: string }) {
   }, [code]);
   if (error)
     return (
-      <section className="public-record-card">
-        <p className="eyebrow">Không tìm thấy</p>
-        <h1>Mã lớp chưa đúng</h1>
-        <p className="form-error">{error}</p>
-        <Link className="btn btn-secondary" href="/">
-          Nhập lại mã lớp
-        </Link>
-      </section>
+      <AuthCard
+        back={{ fallbackHref: "/", ariaLabel: "Quay lại" }}
+        title="Mã lớp chưa đúng"
+        context={<span className="form-error">{error}</span>}
+      />
     );
   if (!section)
     return (
-      <section className="public-record-card">
-        <p className="muted">Đang xác nhận lớp học phần…</p>
-      </section>
+      <AuthCard
+        back={{ fallbackHref: "/", ariaLabel: "Quay lại" }}
+        title="Đang xác nhận lớp học phần"
+      />
     );
   return (
-    <section className="public-record-card stack">
-      <div className="auth-heading">
-        <p className="auth-eyebrow">Đăng nhập</p>
-        <h2
-          className="auth-title"
-          style={{ marginTop: 0, marginBottom: "4px" }}
+    <AuthCard
+      back={{ fallbackHref: "/", ariaLabel: "Quay lại" }}
+      title="Đăng nhập"
+      context={
+        <span>
+          <strong>{section.name}</strong>{" "}
+          <span className="auth-class-code">{section.code}</span>
+        </span>
+      }
+      footer={
+        <Link
+          className="auth-card-footer-link"
+          href={`/class/${encodeURIComponent(section.code)}/forgot-pin`}
         >
-          {section.name}
-        </h2>
-        <p className="auth-class" style={{ marginTop: 0 }}>
-          Mã lớp: {section.code}
-        </p>
-      </div>
-      <PinLoginForm classCode={section.code} backUrl="/" />
-    </section>
+          Quên mã PIN?
+        </Link>
+      }
+    >
+      <PinLoginForm classCode={section.code} />
+    </AuthCard>
   );
 }

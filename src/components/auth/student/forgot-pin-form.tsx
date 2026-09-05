@@ -237,15 +237,6 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
       <Button loading={busy} disabled={busy || !mssv.trim()}>
         Gửi mã OTP qua email
       </Button>
-
-      <div className="split" style={{ justifyContent: "center" }}>
-        <Link
-          href={`/class/${encodeURIComponent(classCode)}`}
-          className="btn btn-ghost button-sm"
-        >
-          Trở lại đăng nhập
-        </Link>
-      </div>
     </form>
   );
 }

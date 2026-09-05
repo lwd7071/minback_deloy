@@ -7,34 +7,10 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { SearchInput } from "@/components/ui/search-input";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/layout/page-header";
 import { Toolbar } from "@/components/layout/toolbar";
-import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
+import { AppIcon } from "@/components/ui/app-icon";
+import { StatCard } from "@/components/ui/stat-card";
 import type { ClassSectionSummaryDto } from "@/types/frontend-rebuild";
-
-export function DashboardMetric({
-  icon,
-  tone,
-  label,
-  value,
-}: {
-  icon: AppIconName;
-  tone: string;
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="teacher-metric">
-      <span className={`student-icon-tile ${tone}`}>
-        <AppIcon name={icon} size={19} />
-      </span>
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-    </div>
-  );
-}
 
 export function MiniProgressRing({ percentage }: { percentage: number }) {
   const size = 38;
@@ -108,37 +84,21 @@ export function ClassSummaryDashboard({
   };
   return (
     <div className="teacher-dash">
-      <PageHeader
-        eyebrow="Quản lý lớp học"
-        title="Lớp học phần"
-        description="Theo dõi sinh viên và tiến độ phản hồi theo từng lớp."
-      />
+      <h1 className="sr-only">Lớp học</h1>
 
       <div className="teacher-metrics-grid" aria-label="Tổng quan lớp học">
-        <DashboardMetric
-          icon="classes"
-          tone="blue"
-          label="Lớp"
-          value={metrics.classCount}
-        />
-        <DashboardMetric
-          icon="students"
-          tone="green"
-          label="Sinh viên"
-          value={metrics.studentCount}
-        />
-        <DashboardMetric
-          icon="book"
-          tone="amber"
-          label="Bài mở"
-          value={metrics.assignmentCount}
-        />
-        <DashboardMetric
-          icon="check"
-          tone="violet"
-          label="Đã chấm"
-          value={`${metrics.gradingPercentage}%`}
-        />
+        <StatCard label="Lớp" value={metrics.classCount}>
+          <AppIcon name="classes" size={19} />
+        </StatCard>
+        <StatCard label="Sinh viên" value={metrics.studentCount}>
+          <AppIcon name="students" size={19} />
+        </StatCard>
+        <StatCard label="Bài tập" value={metrics.assignmentCount}>
+          <AppIcon name="book" size={19} />
+        </StatCard>
+        <StatCard label="Đã chấm" value={`${metrics.gradingPercentage}%`}>
+          <AppIcon name="check" size={19} />
+        </StatCard>
       </div>
 
       <Toolbar
@@ -198,6 +158,7 @@ export function ClassSummaryDashboard({
           pageSize={meta.pageSize}
           total={meta.total}
           onPageChange={(page) => router.push(pageHref(page))}
+          showSummary={false}
         />
       ) : null}
 

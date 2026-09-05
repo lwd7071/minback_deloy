@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import { Modal } from "@/components/ui/modal";
 import type { StudentProfileAssignmentDto } from "@/types/student-profile";
@@ -18,13 +18,6 @@ export function StudentAssignmentModal({
   return (
     <Modal open={open} onClose={onClose} title={assignment.title} size="lg">
       <div className="student-modal-body">
-        <div className="student-assignment-meta-bar">
-          <div className="student-assignment-meta-item">
-            <Award size={16} aria-hidden="true" />
-            <span>Thang điểm:</span>
-            <strong>{assignment.maxScore} điểm</strong>
-          </div>
-        </div>
         {assignment.evaluation ? (
           <section
             className="student-section-card"
