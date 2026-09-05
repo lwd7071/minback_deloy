@@ -19,9 +19,10 @@
 - **Typography hiện tại:** `next/font/google` nạp tại `src/app/layout.tsx`: `Be_Vietnam_Pro`, `Lora`, `IBM_Plex_Mono`.  
   *Yêu cầu spec mới:* **Loại bỏ hoàn toàn Lora (serif)**. Toàn bộ app dùng `Be Vietnam Pro` (400, 500, 700). `IBM Plex Mono` (400, 500) **chỉ dùng cho MSSV và Mã lớp**.
 - **Client/Server Boundaries:** Data loader ban đầu ở Server Components (`src/server/services/*`). Client components (`"use client"`) quản lý state cục bộ, mutation API, debounce tìm kiếm và polling thông báo 30s.
+- **Email-change contract:** `POST /api/v1/student/profile/email-change/request` nhận `{ email }`; `POST /api/v1/student/profile/email-change/confirm` nhận `{ otp }`. Email mới được giữ trong server challenge sau bước request, nên UI không gửi lại `newEmail` ở bước confirm.
 - **Tiến độ backend vừa pull về:**
   - Route Quên PIN (`/class/[code]/forgot-pin`), schema & backend API (`request`, `confirm`) đã sẵn sàng.
-  - Route import điểm (`/api/v1/teacher/assignments/[assignmentId]/evaluations/import`, `import-preview`, `import-template`) và modal sơ khai `GradeImportModal` đã có backend.
+  - Route import điểm (`/api/v1/teacher/assignments/[assignmentId]/evaluations/import`, `import-preview`, `import-template`) và modal sơ khai `GradeImportModal` đã có backend. Preview gửi `FormData` chứa file; sau preview import gửi JSON `{ mode, evaluations }`, không gửi lại file.
   - `class-create-flow.tsx` đã bỏ tải file CSV PIN và gate `beforeunload`, PIN mặc định là `111111`.
   - `student-assignment-modal.tsx` đã gỡ bỏ form upload submission.
   - *Tuy nhiên:* Hệ thống màu sắc (CTA vẫn vàng gold cũ), typography (vẫn Lora), elevation (vẫn dùng shadow), modal mobile (chưa chuyển bottom-sheet), và cấu trúc layout/view vẫn ở style cũ chưa đồng bộ Design System.
@@ -1485,7 +1486,7 @@ Sau khi hoàn thành `TASK-14` (Shell Layouts) và các Shared Patterns (`TASK-1
 Theo quy tắc F.6, các điểm sau đây trong codebase hiện tại cần lưu ý đối chiếu khi thực hiện:
 1. **Hành vi truy cập trực tiếp URL `/class/[code]/submissions`:**
    - *Vấn đề:* Spec F.3 và C.19 xác định route này được giữ lại vì tính tương thích/nội bộ nhưng không hiển thị trong menu điều hướng sinh viên.
-   - *Hành vi đề xuất cho implementation:* Nếu sinh viên gõ URL trực tiếp, giữ nguyên trang hiển thị danh sách bài nộp lịch sử cũ (read-only) hoặc chuyển hướng an toàn về `/class/[code]/assignments` tùy theo router guard hiện tại mà không xóa route.
+   - *Quyết định canonical:* Nếu sinh viên gõ URL trực tiếp, redirect về `/class/[code]/assignments`; vẫn giữ route handler, backend API, database table và dữ liệu submission.
 
 ---
 

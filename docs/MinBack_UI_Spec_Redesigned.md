@@ -540,7 +540,9 @@ Mọi route phải phân biệt ba câu hỏi: **route có tồn tại không / 
   - Contract file bắt buộc đúng bốn cột: `MSSV | Họ tên | Điểm | Feedback`; header không phân biệt hoa thường.
   - Giới hạn: **5 MB / 2.000 dòng**; MSSV là khóa ghép Student; họ tên chỉ dùng đối chiếu/cảnh báo; score `0..maxScore`, tối đa một chữ số thập phân; feedback tối đa 5.000 ký tự; phát hiện duplicate MSSV.
   - Preview: `POST /api/v1/teacher/assignments/:assignmentId/evaluations/import-preview`, không mutation, phân loại `create/update/unchanged/invalid`.
-  - Lưu bản chấm: cùng endpoint import với `mode=save_draft`; parse/validate lại, chỉ dòng hợp lệ được ghi thành `graded`, không notification/email.
+  - Preview gửi file bằng `FormData` tới `POST /api/v1/teacher/assignments/:assignmentId/evaluations/import-preview`; không mutation.
+  - Sau preview, endpoint `POST /api/v1/teacher/assignments/:assignmentId/evaluations/import` nhận JSON `{ mode, evaluations }`; UI không gửi lại file. Server vẫn parse/validate lại payload trước khi ghi.
+  - Lưu bản chấm: `mode=save_draft`; chỉ dòng hợp lệ được ghi thành `graded`, không notification/email.
   - Công bố: `mode=publish`; Evaluation thành `returned`; notification sau commit, email sau notification; email lỗi không rollback điểm/notification.
   - UI grade flow chính không expose filter `unsubmitted`, file nộp, input điểm theo từng row, textarea nhận xét inline hoặc sticky save bar. Việc endpoint cũ có còn tồn tại hay không là backend compatibility concern; UI spec không tự yêu cầu xóa endpoint chỉ vì không còn entry point.
 - **Thay đổi thiết kế**:
@@ -637,8 +639,8 @@ Mọi route phải phân biệt ba câu hỏi: **route có tồn tại không / 
 - Email mặc định của sinh viên mới là `{lowercase-mssv}@student.hcmute.edu.vn`.
 - Email cá nhân chỉ thay email chính sau khi OTP xác minh thành công.
 - Endpoint:
-  - `POST /api/v1/student/profile/email-change/request` với `{ newEmail }`.
-  - `POST /api/v1/student/profile/email-change/confirm` với `{ newEmail, otp }`.
+  - `POST /api/v1/student/profile/email-change/request` với `{ email }`.
+  - `POST /api/v1/student/profile/email-change/confirm` với `{ otp }`; email mới được giữ trong challenge phía server, không gửi lại trong bước confirm.
 - Flow UI: nhập email mới → gửi OTP → xác minh OTP → cập nhật email hiện hành.
 - Email cũ tiếp tục nhận notification cho đến khi xác minh thành công; UI không được cập nhật optimistic thành email mới trước confirm.
 - Card/dialog dùng form B.2 + OtpInput B.3; trạng thái verified hiển thị Badge success, email suy ra mặc định dùng Badge info/neutral.
@@ -691,8 +693,8 @@ Mọi route phải phân biệt ba câu hỏi: **route có tồn tại không / 
 - Student-facing UI tại các route bình thường không được gọi submission upload/submit actions vì không có UI entry point cho các action đó.
 - Teacher/backend behavior liên quan submission không được thay đổi chỉ từ requirement F.2; phải theo các Teacher functional requirements khác nếu có.
 
-> **OPEN QUESTION / DECISION REQUIRED**  
-> Khi Student nhập trực tiếp URL `/class/[code]/submissions`, specification hiện tại chỉ quyết định rằng route được retained nhưng không expose qua normal navigation. Chưa có quyết định canonical về việc route phải render legacy UI, trả trạng thái restricted, hay redirect. Implementation plan **không được tự chọn** một trong ba behavior này nếu codebase hiện tại không đủ để xác nhận intent.
+> **Canonical direct-access decision**
+> Khi Student nhập trực tiếp URL `/class/[code]/submissions`, route được giữ để compatibility nhưng phải redirect về `/class/[code]/assignments`. Không xóa route handler, backend API, database table hoặc dữ liệu submission.
 
 ---
 
@@ -839,4 +841,3 @@ Trước khi dùng file này để tạo implementation plan, phải chạy cons
 ## FINAL SOURCE OF TRUTH DECLARATION
 
 Sau lần cập nhật này, **`MinBack_UI_Spec_Redesigned.md` là FINAL SOURCE OF TRUTH cho UI redesign**. `UI_REDESIGN_PLAN.md` phải được tạo bằng cách đọc file này cùng codebase để map requirement → implementation, nhưng **không được thay đổi intent của Functional & Visibility Changes**. Nếu codebase và spec khác nhau, plan phải ghi discrepancy; không tự sửa spec bằng suy đoán.
-
