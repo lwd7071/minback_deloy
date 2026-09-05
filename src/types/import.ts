@@ -3,7 +3,6 @@ export type ImportRowDto = {
   status: "created" | "updated" | "skipped";
   studentId?: string;
   initialNickname?: string;
-  initialPin?: string;
   errors?: Array<{ field: string; message: string }>;
 };
 

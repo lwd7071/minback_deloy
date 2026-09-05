@@ -48,6 +48,18 @@ function matchColumnIndex(
   return undefined;
 }
 
+export function resolveEvaluationColumns(headerCells: string[]) {
+  const keys = headerCells.map(normalizeHeaderKey);
+  const mssvIndex = matchColumnIndex(keys, ["mssv", "masv", "masinhvien", "studentcode", "studentid", "ma"]);
+  const nameIndex = matchColumnIndex(keys, ["hoten", "hovaten", "fullname", "name", "sinhvien"]);
+  const scoreIndex = matchColumnIndex(keys, ["diem", "diemso", "score", "grade", "point", "points"]);
+  const feedbackIndex = matchColumnIndex(keys, ["feedback", "nhanxet", "ghichu", "comment", "comments", "danhgia"]);
+  if (mssvIndex === undefined || nameIndex === undefined || scoreIndex === undefined || feedbackIndex === undefined) {
+    validationError("Tệp phải có đủ 4 cột bắt buộc: MSSV, Họ tên, Điểm và Feedback/Nhận xét.");
+  }
+  return { mssvIndex, nameIndex, scoreIndex, feedbackIndex };
+}
+
 function parseCsvRecords(text: string): string[][] {
   const records: string[][] = [];
   let row: string[] = [];
@@ -177,52 +189,7 @@ export async function previewEvaluationFile(
     validationError("Tệp phải có hàng tiêu đề");
   }
 
-  const headerKeys = headerRow.cells.map(normalizeHeaderKey);
-
-  // Semantic columns are required. Aliases are accepted for exported/localized files.
-  const mssvIndex = matchColumnIndex(headerKeys, [
-    "mssv",
-    "masv",
-    "masinhvien",
-    "studentcode",
-    "studentid",
-    "ma",
-  ]);
-  const scoreIndex = matchColumnIndex(headerKeys, [
-    "diem",
-    "diemso",
-    "score",
-    "grade",
-    "point",
-    "points",
-  ]);
-  const feedbackIndex = matchColumnIndex(headerKeys, [
-    "nhanxet",
-    "feedback",
-    "ghichu",
-    "comment",
-    "comments",
-    "danhgia",
-  ]);
-  const nameIndex = matchColumnIndex(headerKeys, [
-    "hoten",
-    "hovaten",
-    "fullname",
-    "name",
-    "sinhvien",
-  ]);
-
-  if (mssvIndex === undefined) {
-    validationError(
-      "Không tìm thấy cột MSSV trong tệp. Tiêu đề hợp lệ: MSSV, Mã SV, Mã sinh viên.",
-    );
-  }
-
-  if (nameIndex === undefined || scoreIndex === undefined || feedbackIndex === undefined) {
-    validationError(
-      "Tệp phải có đủ 4 cột bắt buộc: MSSV, Họ tên, Điểm và Feedback/Nhận xét.",
-    );
-  }
+  const { mssvIndex, nameIndex, scoreIndex, feedbackIndex } = resolveEvaluationColumns(headerRow.cells);
 
   // Fetch all students in the class section
   const { data: students, error: studentError } = await supabase
@@ -236,6 +203,13 @@ export async function previewEvaluationFile(
 
   const studentMap = new Map(
     students.map((s) => [s.mssv.trim().toLowerCase(), s]),
+  );
+  const { data: existingEvaluations } = await supabase
+    .from("evaluations")
+    .select("student_id, score, feedback")
+    .eq("assignment_id", assignmentId);
+  const existingByStudent = new Map(
+    (existingEvaluations ?? []).map((evaluation) => [evaluation.student_id, evaluation]),
   );
 
   const nonEmptyRows = dataRows.filter((row) =>
@@ -322,6 +296,13 @@ export async function previewEvaluationFile(
       }
     }
 
+    const existing = student ? existingByStudent.get(student.id) : undefined;
+    const action = !existing
+      ? "create"
+      : Number(existing.score ?? -1) === Number(parsedScore ?? -1) && (existing.feedback ?? "") === (parsedFeedback ?? "")
+        ? "unchanged"
+        : "update";
+
     if (errors.length > 0) {
       parsedRows.push({
         rowNumber: row.row,
@@ -342,7 +323,7 @@ export async function previewEvaluationFile(
         score: parsedScore,
         feedback: parsedFeedback,
         status: "valid",
-        action: "create",
+        action,
       });
     }
   }
@@ -356,6 +337,9 @@ export async function previewEvaluationFile(
       valid: validCount,
       skipped: skippedCount,
       invalid: skippedCount,
+      create: parsedRows.filter((r) => r.action === "create").length,
+      update: parsedRows.filter((r) => r.action === "update").length,
+      unchanged: parsedRows.filter((r) => r.action === "unchanged").length,
     },
     rows: parsedRows,
   };

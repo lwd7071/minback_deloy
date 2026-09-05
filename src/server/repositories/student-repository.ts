@@ -178,7 +178,7 @@ export async function findStudentById(
 export async function updateStudentEmail(studentId: string, email: string): Promise<void> {
   const { error } = await createAdminClient()
     .from("students")
-    .update({ email: email.trim().toLowerCase() })
+    .update({ email: email.trim().toLowerCase(), email_source: "student_verified", email_verified_at: new Date().toISOString() })
     .eq("id", studentId);
   if (error) throw new Error("STUDENT_EMAIL_UPDATE_FAILED");
 }

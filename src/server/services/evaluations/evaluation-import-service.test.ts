@@ -6,6 +6,7 @@ import {
   MAX_EVALUATION_IMPORT_FILE_BYTES,
   normalizeHeaderKey,
   parseEvaluationCsv,
+  resolveEvaluationColumns,
 } from "./evaluation-import-service";
 
 describe("Evaluation Import Service - normalizeHeaderKey", () => {
@@ -38,5 +39,15 @@ describe("Evaluation Import Service - parseEvaluationCsv", () => {
 
   it("handles CSV byte limits correctly", () => {
     expect(MAX_EVALUATION_IMPORT_FILE_BYTES).toBe(5 * 1024 * 1024);
+  });
+
+  it("requires the four semantic columns", () => {
+    expect(resolveEvaluationColumns(["MSSV", "Họ tên", "Điểm", "Feedback"])).toEqual({
+      mssvIndex: 0,
+      nameIndex: 1,
+      scoreIndex: 2,
+      feedbackIndex: 3,
+    });
+    expect(() => resolveEvaluationColumns(["MSSV", "Điểm"])).toThrow();
   });
 });

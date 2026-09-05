@@ -16,6 +16,7 @@ import {
   parseStudentCsv,
   parseStudentXlsx,
   validateImportFile,
+  deriveInstitutionalEmail,
 } from "@/server/services/class-sections/import-service";
 import type { ClassSectionSetupDto } from "@/types/class-section";
 import type { ImportResultDto } from "@/types/import";
@@ -66,9 +67,8 @@ export async function createTeacherClassSectionSetup(
         studentId: randomUUID(),
         mssv: row.student.mssv,
         fullName: row.student.fullName,
-        email: row.student.email ?? null,
+        email: row.student.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.student.mssv),
         nickname: row.student.mssv,
-        initialPin,
         pinHash: await hash(initialPin, BCRYPT_ROUNDS),
       };
     }),
@@ -118,7 +118,6 @@ export async function createTeacherClassSectionSetup(
         status: "created",
         studentId: credential.studentId,
         initialNickname: credential.nickname,
-        initialPin: credential.initialPin,
       };
     });
     importResult = {
