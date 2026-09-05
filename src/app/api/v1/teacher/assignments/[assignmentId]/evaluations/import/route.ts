@@ -26,7 +26,12 @@ export async function POST(
         field: i.path.join("."),
         message: i.message,
       }));
-      throw new ApiError(400, "VALIDATION_ERROR", "Dữ liệu đánh giá không hợp lệ", details);
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Dữ liệu đánh giá không hợp lệ",
+        details,
+      );
     }
 
     const result = await executeEvaluationImport(assignmentId, parsed.data);

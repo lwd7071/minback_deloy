@@ -19,7 +19,9 @@ export function Modal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,6 +74,7 @@ export function Modal({
         ref={panelRef}
         tabIndex={-1}
       >
+        <div className="modal-grab-handle" aria-hidden="true" />
         <div className="modal-header split">
           <h2 id="modal-title">{title}</h2>
           <button

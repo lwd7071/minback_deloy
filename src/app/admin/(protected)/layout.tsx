@@ -15,5 +15,10 @@ export default async function ProtectedAdminLayout({
       redirect("/admin/login");
     throw error;
   }
-  return <div className="workspace-page teacher-workspace"><WorkspaceHeader role="teacher" /><main className="workspace-main">{children}</main></div>;
+  return (
+    <div className="workspace-page teacher-workspace">
+      <WorkspaceHeader role="teacher" />
+      <main className="workspace-main">{children}</main>
+    </div>
+  );
 }

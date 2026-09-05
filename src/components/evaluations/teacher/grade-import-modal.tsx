@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { ImportPreviewTable } from "@/components/evaluations/teacher/import-preview-table";
 import type {
   EvaluationImportPreviewDto,
   EvaluationImportResultDto,
@@ -21,7 +21,9 @@ export function GradeImportModal({
 }: GradeImportModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<EvaluationImportPreviewDto | null>(null);
+  const [preview, setPreview] = useState<EvaluationImportPreviewDto | null>(
+    null,
+  );
   const [previewBusy, setPreviewBusy] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,9 +64,12 @@ export function GradeImportModal({
         `/api/v1/teacher/assignments/${assignmentId}/evaluations/import-preview`,
         { method: "POST", body: formData },
       );
-      const body = (await response.json()) as ApiResult<EvaluationImportPreviewDto>;
+      const body =
+        (await response.json()) as ApiResult<EvaluationImportPreviewDto>;
       if (!response.ok || !("data" in body)) {
-        throw new Error("error" in body ? body.error.message : "Không thể kiểm tra tệp");
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể kiểm tra tệp",
+        );
       }
       setPreview(body.data);
     } catch (cause) {
@@ -108,9 +113,12 @@ export function GradeImportModal({
         },
       );
 
-      const body = (await response.json()) as ApiResult<EvaluationImportResultDto>;
+      const body =
+        (await response.json()) as ApiResult<EvaluationImportResultDto>;
       if (!response.ok || !("data" in body)) {
-        throw new Error("error" in body ? body.error.message : "Không thể lưu điểm");
+        throw new Error(
+          "error" in body ? body.error.message : "Không thể lưu điểm",
+        );
       }
 
       onSuccess(body.data);
@@ -130,8 +138,9 @@ export function GradeImportModal({
     >
       <div className="grade-import-modal-content">
         <p className="muted" style={{ marginTop: 0 }}>
-          Hệ thống tự động nhận diện các cột: <strong>MSSV</strong>,{" "}
-          <strong>Điểm</strong> (tối đa {maxScore}), và <strong>Nhận xét</strong>.
+          Tệp cần có đúng 4 cột: <strong>MSSV</strong>, <strong>Họ tên</strong>,{" "}
+          <strong>Điểm</strong> (tối đa {maxScore}), và{" "}
+          <strong>Feedback</strong>.
         </p>
 
         {/* Input file */}
@@ -155,7 +164,16 @@ export function GradeImportModal({
         </div>
 
         {error ? (
-          <div className="form-error" style={{ margin: "14px 0", padding: "10px 14px", borderRadius: "6px", background: "var(--danger-soft)" }} role="alert">
+          <div
+            className="form-error"
+            style={{
+              margin: "14px 0",
+              padding: "10px 14px",
+              borderRadius: "6px",
+              background: "var(--color-error-soft)",
+            }}
+            role="alert"
+          >
             {error}
           </div>
         ) : null}
@@ -163,82 +181,49 @@ export function GradeImportModal({
         {/* Preview content */}
         {preview ? (
           <div className="grade-import-preview-box">
-            <div className="preview-summary-grid" style={{ margin: "16px 0" }}>
+            <div className="preview-summary-grid">
               <div>
-                <span className="muted">Tổng số dòng</span>
-                <strong style={{ fontSize: "1.25rem" }}>{preview.summary.total}</strong>
+                <span className="muted">Tạo mới</span>
+                <strong>{preview.summary.create ?? 0}</strong>
               </div>
               <div>
-                <span className="muted">Hợp lệ</span>
-                <strong style={{ fontSize: "1.25rem", color: "var(--success)" }}>
-                  {preview.summary.valid}
-                </strong>
+                <span className="muted">Cập nhật</span>
+                <strong>{preview.summary.update ?? 0}</strong>
               </div>
               <div>
-                <span className="muted">Bỏ qua / Lỗi</span>
-                <strong style={{ fontSize: "1.25rem", color: preview.summary.skipped > 0 ? "var(--danger)" : "var(--text-disabled)" }}>
-                  {preview.summary.skipped}
+                <span className="muted">Không đổi</span>
+                <strong>{preview.summary.unchanged ?? 0}</strong>
+              </div>
+              <div>
+                <span className="muted">Lỗi</span>
+                <strong
+                  className={preview.summary.invalid > 0 ? "text-danger" : ""}
+                >
+                  {preview.summary.invalid}
                 </strong>
               </div>
             </div>
 
-            <div className="table-wrap" style={{ maxHeight: "280px", overflowY: "auto", border: "1px solid var(--border)", borderRadius: "6px" }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th style={{ width: "60px" }}>Dòng</th>
-                    <th>MSSV</th>
-                    <th>Họ tên</th>
-                    <th style={{ width: "80px" }}>Điểm</th>
-                    <th>Nhận xét</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((row) => (
-                    <tr
-                      key={row.rowNumber}
-                      style={{
-                        background: row.status === "skipped" ? "var(--danger-soft)" : undefined,
-                      }}
-                    >
-                      <td>{row.rowNumber}</td>
-                      <td>
-                        <strong>{row.mssv || "—"}</strong>
-                      </td>
-                      <td>{row.fullName || "—"}</td>
-                      <td>
-                        {row.score !== null ? (
-                          <strong style={{ color: "var(--navy-900)" }}>{row.score}</strong>
-                        ) : (
-                          <span className="muted">—</span>
-                        )}
-                      </td>
-                      <td style={{ maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={row.feedback ?? ""}>
-                        {row.feedback || <span className="muted">—</span>}
-                      </td>
-                      <td>
-                        {row.status === "valid" ? (
-                          <span className="badge badge-success">Hợp lệ</span>
-                        ) : (
-                          <span className="badge badge-danger" title={row.errors?.map((e) => e.message).join(", ")}>
-                            {row.errors?.[0]?.message || "Lỗi"}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ImportPreviewTable rows={preview.rows} />
 
             {/* Confirmation when publishing */}
             {confirmPublish ? (
-              <div className="form-notice" style={{ marginTop: "16px", borderColor: "var(--gold-500)" }}>
+              <div
+                className="form-notice"
+                style={{
+                  marginTop: "16px",
+                  borderColor: "var(--color-accent)",
+                }}
+              >
                 <p>
-                  <strong>Xác nhận công bố kết quả:</strong> Hệ thống sẽ chuyển trạng thái thành <strong>Đã công bố (returned)</strong> và gửi email thông báo kèm nhận xét tới <strong>{preview.summary.valid} sinh viên</strong> hợp lệ.
+                  <strong>Xác nhận công bố kết quả:</strong> Hệ thống sẽ chuyển
+                  trạng thái thành <strong>Đã công bố (returned)</strong> và gửi
+                  email thông báo kèm nhận xét tới{" "}
+                  <strong>{preview.summary.valid} sinh viên</strong> hợp lệ.
                 </p>
-                <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <div
+                  style={{ display: "flex", gap: "10px", marginTop: "10px" }}
+                >
                   <Button
                     type="button"
                     variant="primary"
@@ -258,7 +243,10 @@ export function GradeImportModal({
                 </div>
               </div>
             ) : (
-              <div className="class-create-actions is-split" style={{ marginTop: "20px" }}>
+              <div
+                className="class-create-actions is-split"
+                style={{ marginTop: "20px" }}
+              >
                 <Button
                   type="button"
                   variant="ghost"
@@ -267,7 +255,10 @@ export function GradeImportModal({
                 >
                   Đóng
                 </Button>
-                <div className="button-group" style={{ display: "flex", gap: "10px" }}>
+                <div
+                  className="button-group"
+                  style={{ display: "flex", gap: "10px" }}
+                >
                   <Button
                     type="button"
                     variant="secondary"
@@ -275,7 +266,7 @@ export function GradeImportModal({
                     disabled={preview.summary.valid === 0}
                     onClick={() => void executeImport("save_draft")}
                   >
-                    Lưu bản chấm (Nháp)
+                    Lưu bản chấm
                   </Button>
                   <Button
                     type="button"

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { StudentAdminDto } from "@/types/student";
 import type { TeacherStudentProfileDto } from "@/types/student-profile";
 import { Modal } from "@/components/ui/modal";
 import { Pagination } from "@/components/ui/pagination";
+import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 
 type ApiResult<T> =
   | { data: T; meta?: { page: number; pageSize: number; total: number } }
@@ -24,14 +25,15 @@ export function StudentManagementView({
   initialSearch: string;
 }) {
   const router = useRouter();
-  const [students, setStudents] = useState<StudentAdminDto[]>([]);
+  const { push: toast } = useToast();
+  const [students, setStudents] = useState<StudentAdminDto[]>(initialStudents);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch] = useState(initialSearch);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(initialMeta.total);
 
   // Debounce tìm kiếm 300ms để chống spam request và race condition
   useEffect(() => {
@@ -59,7 +61,6 @@ export function StudentManagementView({
   // State Reset PIN
   const [resetPinStudent, setResetPinStudent] =
     useState<StudentAdminDto | null>(null);
-  const [initialPin, setInitialPin] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
 
   // State hồ sơ học tập Teacher xem trong đúng ClassSection hiện hành.
@@ -69,10 +70,6 @@ export function StudentManagementView({
   const [studentProfile, setStudentProfile] =
     useState<TeacherStudentProfileDto | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
-
-  // refreshKey tăng lên mỗi khi cần tải lại danh sách (sau save/reset PIN)
-  const [refreshKey, setRefreshKey] = useState(0);
-  const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -120,7 +117,7 @@ export function StudentManagementView({
     return () => {
       controller.abort();
     };
-  }, [classSectionId, page, pageSize, debouncedSearch, refreshKey]);
+  }, [classSectionId, page, pageSize, debouncedSearch]);
 
   function startEdit(st: StudentAdminDto) {
     setEditingStudent(st);
@@ -180,7 +177,6 @@ export function StudentManagementView({
 
   async function handleResetPin(st: StudentAdminDto) {
     setResetPinStudent(st);
-    setInitialPin(null);
     setResetBusy(true);
 
     try {
@@ -196,14 +192,14 @@ export function StudentManagementView({
         );
       }
 
-      setInitialPin(body.data.initialPin);
+      toast("Đã đặt lại PIN về mặc định 111111", "success");
       setStudents((current) =>
         current.map((student) =>
           student.id === st.id ? { ...student, mustChangePin: true } : student,
         ),
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Lỗi reset PIN");
+      toast(err instanceof Error ? err.message : "Lỗi reset PIN", "error");
       setResetPinStudent(null);
     } finally {
       setResetBusy(false);
@@ -228,7 +224,10 @@ export function StudentManagementView({
       }
       setStudentProfile(body.data);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Không thể tải hồ sơ học tập");
+      toast(
+        err instanceof Error ? err.message : "Không thể tải hồ sơ học tập",
+        "error",
+      );
       setProfileStudent(null);
     } finally {
       setProfileLoading(false);
@@ -483,40 +482,33 @@ export function StudentManagementView({
         open={Boolean(resetPinStudent)}
         onClose={() => {
           setResetPinStudent(null);
-          setInitialPin(null);
         }}
         title="Reset PIN thành công"
         size="sm"
       >
         <div className="settings-stack">
           <p className="muted dialog-copy">
-            Đã tạo PIN khởi tạo mới cho sinh viên{" "}
-            <strong>{resetPinStudent?.fullName}</strong> (
-            {resetPinStudent?.mssv}):
+            Đã đặt lại PIN cho <strong>{resetPinStudent?.fullName}</strong> (
+            {resetPinStudent?.mssv}).
           </p>
 
           {resetBusy ? (
-            <p className="muted">Đang tạo PIN ngẫu nhiên…</p>
-          ) : initialPin ? (
-            <div className="pin-reveal">
-              <span className="pin-label">PIN KHỞI TẠO MỚI:</span>
-              <div className="pin-value">{initialPin}</div>
-              <small className="muted pin-help">
-                Mã PIN này chỉ hiển thị đúng một lần. Hãy sao chép để gửi cho
-                Sinh viên.
-              </small>
-            </div>
-          ) : null}
+            <p className="muted">Đang đặt lại PIN…</p>
+          ) : (
+            <Alert variant="success">
+              PIN đã được đặt về mặc định 111111. Sinh viên sẽ đổi PIN sau lần
+              đăng nhập tiếp theo.
+            </Alert>
+          )}
 
           <div className="dialog-actions">
             <button
               className="button"
               onClick={() => {
                 setResetPinStudent(null);
-                setInitialPin(null);
               }}
             >
-              Đã sao chép & Đóng
+              Đóng
             </button>
           </div>
         </div>

@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { SearchInput } from "@/components/ui/search-input";
+import { Pagination } from "@/components/ui/pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/layout/page-header";
+import { Toolbar } from "@/components/layout/toolbar";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import type { ClassSectionSummaryDto } from "@/types/frontend-rebuild";
 
@@ -45,7 +49,7 @@ export function MiniProgressRing({ percentage }: { percentage: number }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="var(--surface-muted)"
+          stroke="var(--color-neutral-soft)"
           strokeWidth="4"
           fill="none"
         />
@@ -104,17 +108,11 @@ export function ClassSummaryDashboard({
   };
   return (
     <div className="teacher-dash">
-      <header className="teacher-dash-header">
-        <div className="teacher-dash-heading">
-          <span className="teacher-dash-icon">
-            <AppIcon name="study" size={28} />
-          </span>
-          <div>
-            <p className="eyebrow">Quản lý lớp học</p>
-            <h1>Lớp học phần</h1>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Quản lý lớp học"
+        title="Lớp học phần"
+        description="Theo dõi sinh viên và tiến độ phản hồi theo từng lớp."
+      />
 
       <div className="teacher-metrics-grid" aria-label="Tổng quan lớp học">
         <DashboardMetric
@@ -143,25 +141,20 @@ export function ClassSummaryDashboard({
         />
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          justifyContent: "flex-start",
-          alignItems: "center",
-        }}
-      >
-        <div style={{ flex: 1, maxWidth: "400px" }}>
+      <Toolbar
+        search={
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Tìm theo mã hoặc tên lớp"
           />
-        </div>
-        <Link className="btn btn-primary" href="/admin/classes/new">
-          + Tạo lớp mới
-        </Link>
-      </div>
+        }
+        actions={
+          <Link className="btn btn-primary" href="/admin/classes/new">
+            + Tạo lớp mới
+          </Link>
+        }
+      />
 
       <div className="teacher-class-grid">
         {rows.map((row) => {
@@ -199,42 +192,21 @@ export function ClassSummaryDashboard({
         })}
       </div>
 
-      {pages > 1 && (
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            justifyContent: "center",
-            marginTop: "32px",
-          }}
-        >
-          <Link
-            className="btn btn-outline"
-            aria-disabled={meta.page === 1}
-            href={pageHref(Math.max(1, meta.page - 1))}
-          >
-            Trang trước
-          </Link>
-          <span className="pagination-summary">
-            {meta.page} / {pages}
-          </span>
-          <Link
-            className="btn btn-outline"
-            aria-disabled={meta.page === pages}
-            href={pageHref(Math.min(pages, meta.page + 1))}
-          >
-            Trang sau
-          </Link>
-        </div>
-      )}
+      {pages > 1 ? (
+        <Pagination
+          page={meta.page}
+          pageSize={meta.pageSize}
+          total={meta.total}
+          onPageChange={(page) => router.push(pageHref(page))}
+        />
+      ) : null}
 
       {!rows.length ? (
-        <div className="teacher-empty-state">
-          <span className="student-icon-tile blue">
-            <AppIcon name="classes" size={22} />
-          </span>
-          <p>Chưa có lớp phù hợp. Tạo lớp đầu tiên để bắt đầu.</p>
-        </div>
+        <EmptyState
+          icon="classes"
+          title="Chưa có lớp phù hợp"
+          description="Tạo lớp đầu tiên để bắt đầu quản lý phản hồi."
+        />
       ) : null}
     </div>
   );

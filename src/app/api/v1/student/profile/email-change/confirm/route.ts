@@ -9,9 +9,11 @@ export async function POST(request: Request) {
   try {
     const session = await requireFullStudentSession();
     const parsed = schema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) throw new ApiError(400, API_ERROR_CODES.validation, "OTP không hợp lệ");
+    if (!parsed.success)
+      throw new ApiError(400, API_ERROR_CODES.validation, "OTP không hợp lệ");
     await confirmStudentEmailChange(session.studentId, parsed.data.otp);
     return successResponse({ message: "Cập nhật email thành công" });
+  } catch (error) {
+    return errorResponse(error);
   }
-  catch (error) { return errorResponse(error); }
 }

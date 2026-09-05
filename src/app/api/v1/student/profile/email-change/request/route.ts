@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ApiError, API_ERROR_CODES } from "@/lib/api/errors";
 import { errorResponse, successResponse } from "@/lib/api/response";
@@ -10,9 +9,11 @@ export async function POST(request: Request) {
   try {
     const session = await requireFullStudentSession();
     const parsed = schema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) throw new ApiError(400, API_ERROR_CODES.validation, "Email không hợp lệ");
+    if (!parsed.success)
+      throw new ApiError(400, API_ERROR_CODES.validation, "Email không hợp lệ");
     await requestStudentEmailChange(session.studentId, parsed.data.email);
     return successResponse({ message: "OTP đã được gửi đến email mới" });
+  } catch (error) {
+    return errorResponse(error);
   }
-  catch (error) { return errorResponse(error); }
 }

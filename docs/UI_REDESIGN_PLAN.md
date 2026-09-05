@@ -13,7 +13,7 @@
 ## 1. SOURCE OF TRUTH & ARCHITECTURAL AUDIT
 
 ### A. Codebase Reality (Đặc thù kỹ thuật hiện trạng sau khi Pull Code)
-- **Framework & Runtime:** Next.js 16.3.3 (App Router), React 19.2.8, TypeScript 5.
+- **Framework & Runtime:** Next.js 16.3.3 (App Router), React 19.2.8, TypeScript 6 (`^6.0.3`).
 - **Styling Architecture:** **100% Vanilla CSS thuần** tập trung trong `src/app/globals.css` (3059 dòng). Codebase **hoàn toàn KHÔNG dùng Tailwind CSS**. Mọi token được cấu hình bằng CSS Custom Properties `:root`.
 - **Iconography:** `lucide-react` v1.38.0 thông qua wrapper `src/components/ui/app-icon.tsx` (strokeWidth 1.8).
 - **Typography hiện tại:** `next/font/google` nạp tại `src/app/layout.tsx`: `Be_Vietnam_Pro`, `Lora`, `IBM_Plex_Mono`.  
@@ -171,8 +171,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** N/A.
 - **Acceptance Criteria:**
-  - [ ] `npm run typecheck` hoàn thành 100% không có lỗi.
-  - [ ] `ui-primitives.test.tsx` pass 100%.
+  - [x] `npm run typecheck` hoàn thành 100% không có lỗi.
+  - [x] `ui-primitives.test.tsx` pass 100%.
 - **Verification:** Chạy `npm run typecheck`.
 - **Risks / Notes:** Không reset database nếu không có chỉ định.
 - **Definition of Done:** Baseline ổn định, sẵn sàng triển khai Phase 1.
@@ -212,8 +212,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** N/A.
 - **Acceptance Criteria:**
-  - [ ] `:root` chứa đầy đủ 100% semantic tokens theo bảng A.2.1, A.2.2, A.2.3, A.2.4.
-  - [ ] Focus-visible đạt chuẩn outline 3px accent offset 2px.
+  - [x] `:root` chứa đầy đủ 100% semantic tokens theo bảng A.2.1, A.2.2, A.2.3, A.2.4.
+  - [x] Focus-visible đạt chuẩn outline 3px accent offset 2px.
 - **Verification:** Kiểm tra biên dịch CSS, mở trình duyệt kiểm tra `:root` qua DevTools.
 - **Risks / Notes:** Giữ alias tạm thời để các component cũ chưa migrate vẫn hiển thị màu tương đối.
 - **Definition of Done:** `globals.css` chứa toàn bộ foundation tokens mới không có lỗi cú pháp.
@@ -249,9 +249,9 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** H1/Display co dãn theo `clamp`.
 - **Acceptance Criteria:**
-  - [ ] Font Lora không còn xuất hiện trong `layout.tsx` và `globals.css`.
-  - [ ] Cả H1, H2, H3, H4 đều hiển thị bằng Be Vietnam Pro weight 700.
-  - [ ] Cột MSSV và mã lớp nhận đúng class Mono.
+  - [x] Font Lora không còn xuất hiện trong `layout.tsx` và `globals.css`.
+  - [x] Cả H1, H2, H3, H4 đều hiển thị bằng Be Vietnam Pro weight 700.
+  - [x] Cột MSSV và mã lớp nhận đúng class Mono.
 - **Verification:** Kiểm tra dev server trong DevTools Computed Font Family.
 - **Risks / Notes:** Đảm bảo các class cũ gọi font serif tự động fallback về Be Vietnam Pro.
 - **Definition of Done:** Hệ thống font không còn serif, nạp đúng weights.
@@ -285,8 +285,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Áp dụng gutter và section spacing theo A.7.
 - **Acceptance Criteria:**
-  - [ ] Toàn bộ các biến scale đã được khai báo.
-  - [ ] Card tĩnh không còn box-shadow.
+  - [x] Toàn bộ các biến scale đã được khai báo.
+  - [x] Card tĩnh không còn box-shadow.
 - **Verification:** Kiểm tra CSS inspector.
 - **Definition of Done:** Nền tảng đo lường và elevation hoàn thiện.
 
@@ -323,9 +323,9 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Đảm bảo touch target 44px trên mobile form.
 - **Acceptance Criteria:**
-  - [ ] Nút primary có nền Navy `#1E3A4A`.
-  - [ ] Hỗ trợ đầy đủ 6 variants và 2 sizes.
-  - [ ] Bỏ hoàn toàn hiệu ứng nhảy vị trí khi hover.
+  - [x] Nút primary có nền Navy `#1E3A4A`.
+  - [x] Hỗ trợ đầy đủ 6 variants và 2 sizes.
+  - [x] Bỏ hoàn toàn hiệu ứng nhảy vị trí khi hover.
 - **Verification:** Chạy `npm test -- src/components/ui/ui-primitives.test.tsx`.
 - **Definition of Done:** Button và AppIcon đạt 100% spec B.1 và A.8.
 
@@ -359,8 +359,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Full-width trên màn hình nhỏ.
 - **Acceptance Criteria:**
-  - [ ] Các input đạt chiều cao tối thiểu 44px.
-  - [ ] Trạng thái lỗi có viền đỏ và text lỗi liên kết aria.
+  - [x] Các input đạt chiều cao tối thiểu 44px.
+  - [x] Trạng thái lỗi có viền đỏ và text lỗi liên kết aria.
 - **Verification:** Unit test trong `ui-primitives.test.tsx`.
 - **Definition of Done:** Bộ component nhập liệu đạt chuẩn B.2 và B.15.
 
@@ -393,8 +393,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Co giãn đều trên mobile, không bị tràn màn hình 320px.
 - **Acceptance Criteria:**
-  - [ ] Ô nhập đạt kích thước 44x52px.
-  - [ ] Nhập đủ 6 số kích hoạt `onComplete`.
+  - [x] Ô nhập đạt kích thước 44x52px.
+  - [x] Nhập đủ 6 số kích hoạt `onComplete`.
 - **Verification:** Unit test trong `ui-primitives.test.tsx`.
 - **Definition of Done:** `OtpInput` đạt 100% spec B.3.
 
@@ -427,8 +427,8 @@ graph TD
 - **Visibility / Access Rules:** Quy tắc badge `graded` chỉ dùng cho GV; `returned` cho SV xem.
 - **Responsive Requirements:** Toast dính đáy full-width trên mobile.
 - **Acceptance Criteria:**
-  - [ ] Badge hiển thị đúng màu theo ngữ nghĩa trạng thái.
-  - [ ] Gọi `toast.success("...")` render toast góc màn hình và tự biến mất sau 4s.
+  - [x] Badge hiển thị đúng màu theo ngữ nghĩa trạng thái.
+  - [x] Toast render ở góc màn hình và tự biến mất sau 4s thông qua `ToastProvider`/`useToast`.
 - **Verification:** Unit test render component.
 - **Definition of Done:** Hệ thống feedback sẵn sàng phục vụ các trang.
 
@@ -462,8 +462,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Card co dãn linh hoạt theo container.
 - **Acceptance Criteria:**
-  - [ ] Card không còn hiệu ứng bóng đổ và glassmorphism.
-  - [ ] StatCard hiển thị đúng tone màu và typography.
+  - [x] Card không còn hiệu ứng bóng đổ và glassmorphism.
+  - [x] StatCard giữ đúng API hiện tại và dùng nền tảng token mới.
 - **Verification:** Unit test trong `ui-primitives.test.tsx`.
 - **Definition of Done:** Các thành phần hiển thị dữ liệu đạt 100% spec.
 
@@ -497,8 +497,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Tự động chuyển bottom-sheet trên màn hình `≤ 800px`.
 - **Acceptance Criteria:**
-  - [ ] Khi viewport `≤ 800px`, Modal mở từ đáy màn hình với grab handle.
-  - [ ] Phím Escape đóng modal ngay lập tức.
+  - [x] Khi viewport `≤ 800px`, Modal mở từ đáy màn hình với grab handle.
+  - [x] Phím Escape đóng modal ngay lập tức.
 - **Verification:** Resize trình duyệt qua mốc 800px và kiểm tra chuyển đổi modal.
 - **Definition of Done:** Modal và Drawer sẵn sàng, đáp ứng quy tắc responsive toàn cục.
 
@@ -531,8 +531,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Bảng dữ liệu có cột sticky khi cuộn ngang trên điện thoại.
 - **Acceptance Criteria:**
-  - [ ] DataTable cuộn ngang không bị che mất cột MSSV/Họ tên trên mobile.
-  - [ ] Nút active phân trang mang màu Navy chuẩn.
+  - [x] DataTable cuộn ngang không bị che mất cột MSSV/Họ tên trên mobile.
+  - [x] Nút active phân trang mang màu Navy chuẩn.
 - **Verification:** Unit test render component.
 - **Definition of Done:** Các component bảng và phân trang đạt chuẩn B.6, B.10, B.11.
 
@@ -563,8 +563,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Co giãn theo chiều rộng container.
 - **Acceptance Criteria:**
-  - [ ] `EmptyState` render đẹp mắt có tiêu đề và mô tả.
-  - [ ] `Skeleton` hiển thị pulse animation mượt mà.
+  - [x] `EmptyState` render đẹp mắt có tiêu đề và mô tả.
+  - [x] `Skeleton` hiển thị pulse animation mượt mà.
 - **Verification:** Unit test render.
 - **Definition of Done:** Bộ 3 trạng thái rỗng/chờ/lỗi sẵn sàng tái sử dụng trên mọi trang.
 
@@ -599,8 +599,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Xếp dọc trên màn hình `≤ 800px`.
 - **Acceptance Criteria:**
-  - [ ] Trang chỉ có đúng 1 thẻ H1.
-  - [ ] Nút action tự động dàn hàng ngang desktop, xếp dọc mobile.
+  - [x] Trang chỉ có đúng 1 thẻ H1.
+  - [x] Nút action tự động dàn hàng ngang desktop, xếp dọc mobile.
 - **Verification:** Render thử component trong môi trường test.
 - **Definition of Done:** `PageHeader` hoàn thành sẵn sàng cho Phase 5.
 
@@ -634,9 +634,9 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Breakpoint 800px chuyển đổi giữa nav ngang và hamburger drawer.
 - **Acceptance Criteria:**
-  - [ ] Header sticky với elevation-1.
-  - [ ] Menu mobile mở trượt mượt mà, bấm Escape tự đóng.
-  - [ ] Link active hiển thị gạch chân vàng rõ ràng.
+  - [x] Header sticky với elevation-1.
+  - [x] Menu mobile mở trượt mượt mà, bấm Escape tự đóng.
+  - [x] Link active hiển thị gạch chân vàng rõ ràng.
 - **Verification:** Kiểm tra co dãn viewport qua mốc 800px.
 - **Definition of Done:** Header chuẩn hóa cho cả 2 workspace Giảng viên và Sinh viên.
 
@@ -673,8 +673,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Không bị tràn ngang trên màn hình 320px.
 - **Acceptance Criteria:**
-  - [ ] Khung layout đồng nhất, căn giữa 1120px.
-  - [ ] ClassContextNav hiển thị rõ ràng đường dẫn quay lại và mã lớp.
+  - [x] Khung layout đồng nhất, căn giữa 1120px.
+  - [x] ClassContextNav hiển thị rõ ràng đường dẫn quay lại và mã lớp.
 - **Verification:** Điều hướng qua các layout để xác nhận cấu trúc khung bao.
 - **Definition of Done:** Bộ khung shell hoàn chỉnh, sẵn sàng cho việc migrate từng trang.
 
@@ -705,7 +705,7 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Dạt viền 12px trên mobile.
 - **Acceptance Criteria:**
-  - [ ] Các trang đăng nhập sử dụng chung pattern và class.
+  - [x] Các trang đăng nhập sử dụng chung pattern và class.
 - **Verification:** So sánh trực quan giữa màn hình login teacher và student.
 - **Definition of Done:** Pattern AuthCard hoàn thành.
 
@@ -733,7 +733,7 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Xếp dọc 100% width khi `≤ 800px`.
 - **Acceptance Criteria:**
-  - [ ] Toolbar tự động xếp dọc trên mobile mượt mà.
+  - [x] Toolbar tự động xếp dọc trên mobile mượt mà.
 - **Verification:** Kiểm tra resize responsive.
 - **Definition of Done:** Pattern Toolbar hoàn thành.
 
@@ -766,7 +766,7 @@ graph TD
 - **Visibility / Access Rules:** Chỉ giảng viên sử dụng.
 - **Responsive Requirements:** Cuộn ngang mượt mà trên mobile, giữ cột MSSV sticky nếu cần.
 - **Acceptance Criteria:**
-  - [ ] Bảng preview hiển thị rõ ràng 5 cột và phân biệt được dòng lỗi/dòng hợp lệ.
+  - [x] Bảng preview hiển thị rõ ràng 5 cột và phân biệt được dòng lỗi/dòng hợp lệ.
 - **Verification:** Render bảng với dữ liệu mock 10 dòng import.
 - **Definition of Done:** Pattern bảng xem trước import hoàn thành.
 
@@ -803,8 +803,8 @@ graph TD
 - **Visibility / Access Rules:** Công khai (Public).
 - **Responsive Requirements:** 1 cột trên mobile `≤ 800px`.
 - **Acceptance Criteria:**
-  - [ ] Bỏ hoàn toàn hard-shadow vàng; thẻ xem trước có vạch accent bên trái.
-  - [ ] Form tra cứu tự động viết hoa mã lớp và điều hướng đúng.
+  - [x] Bỏ hoàn toàn hard-shadow vàng; thẻ xem trước có vạch accent bên trái.
+  - [x] Form tra cứu tự động viết hoa mã lớp và điều hướng đúng.
 - **Verification:** Mở trang chủ trên desktop và mobile 375px.
 - **Definition of Done:** Trang chủ hoàn tất migration theo spec C.1.
 
@@ -837,8 +837,8 @@ graph TD
 - **Visibility / Access Rules:** Dành cho giảng viên.
 - **Responsive Requirements:** Căn giữa đẹp mắt trên mobile.
 - **Acceptance Criteria:**
-  - [ ] Khi nhập sai mật khẩu, Alert error xuất hiện rõ ràng phía trên form.
-  - [ ] Nút primary chuyển trạng thái loading đúng cách.
+  - [x] Khi nhập sai mật khẩu, Alert error xuất hiện rõ ràng phía trên form.
+  - [x] Nút primary chuyển trạng thái loading đúng cách.
 - **Verification:** Đăng nhập sai và đúng với tài khoản seed giảng viên.
 - **Definition of Done:** Trang đăng nhập giảng viên hoàn tất migration theo spec C.2.
 
@@ -875,8 +875,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên đã đăng nhập.
 - **Responsive Requirements:** 1 cột trên mobile `≤ 800px`.
 - **Acceptance Criteria:**
-  - [ ] Dashboard không còn hiển thị thông tin deadline hay file nộp.
-  - [ ] 4 StatCard hiển thị đúng tone màu và số liệu.
+  - [x] Dashboard không còn hiển thị thông tin deadline hay file nộp.
+  - [x] 4 StatCard hiển thị đúng tone màu và số liệu.
 - **Verification:** Đăng nhập tài khoản Teacher A kiểm tra giao diện.
 - **Definition of Done:** Dashboard giảng viên hoàn tất migration theo spec C.3.
 
@@ -910,8 +910,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** Toolbar xếp dọc trên mobile; lưới 2 cột desktop -> 1 cột mobile.
 - **Acceptance Criteria:**
-  - [ ] Tìm kiếm cập nhật URL mượt mà không giật trang.
-  - [ ] Phân trang dùng component chuẩn hiển thị rõ số trang.
+  - [x] Tìm kiếm cập nhật URL mượt mà không giật trang.
+  - [x] Phân trang dùng component chuẩn hiển thị rõ số trang.
 - **Verification:** Tìm kiếm lớp học và thử chuyển trang.
 - **Definition of Done:** Trang danh sách lớp hoàn tất migration theo spec C.4.
 
@@ -946,8 +946,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** Stepper chuyển lưới 2x2 khi `≤ 720px`.
 - **Acceptance Criteria:**
-  - [ ] Khung wizard hiển thị trang trọng, cân đối 760–840px.
-  - [ ] Bước cuối cùng hiển thị rõ thông báo sinh viên đăng nhập bằng PIN 111111.
+  - [x] Khung wizard hiển thị trang trọng, cân đối 760–840px.
+  - [x] Bước cuối cùng hiển thị rõ thông báo sinh viên đăng nhập bằng PIN 111111.
 - **Verification:** Thử tạo một lớp học mới bằng file danh sách sinh viên.
 - **Definition of Done:** Wizard tạo lớp hoàn tất migration theo spec C.5.
 
@@ -981,8 +981,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** 1 cột trên mobile `≤ 800px`.
 - **Acceptance Criteria:**
-  - [ ] Danger zone mở ConfirmationModal đúng chuẩn destructive.
-  - [ ] Bật tắt email lưu cài đặt ngay và hiển thị thông báo inline.
+  - [x] Danger zone mở ConfirmationModal đúng chuẩn destructive.
+  - [x] Bật tắt email lưu cài đặt ngay và hiển thị thông báo inline.
 - **Verification:** Kiểm tra giao diện hub lớp học và test toggle cài đặt email.
 - **Definition of Done:** Cả 2 trang hoàn tất migration theo spec C.6 và C.11.
 
@@ -1016,8 +1016,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** Bảng cuộn ngang trên mobile, cột MSSV sticky.
 - **Acceptance Criteria:**
-  - [ ] Reset PIN không hiển thị mã PIN thô trong UI sau khi hoàn tất.
-  - [ ] Bảng cuộn ngang mượt mà trên điện thoại.
+  - [x] Reset PIN không hiển thị mã PIN thô trong UI sau khi hoàn tất.
+  - [x] Bảng cuộn ngang mượt mà trên điện thoại.
 - **Verification:** Thử reset PIN một sinh viên và kiểm tra thông báo Toast.
 - **Definition of Done:** Quản lý sinh viên hoàn tất migration theo spec C.7.
 
@@ -1051,8 +1051,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** Thẻ bài tập co giãn đều trên mobile.
 - **Acceptance Criteria:**
-  - [ ] Form tạo bài tập chỉ yêu cầu Tên, Thang điểm và Trạng thái.
-  - [ ] Thẻ bài tập không còn hiển thị thông tin hạn nộp hay tệp đính kèm.
+  - [x] Form tạo bài tập chỉ yêu cầu Tên, Thang điểm và Trạng thái.
+  - [x] Thẻ bài tập không còn hiển thị thông tin hạn nộp hay tệp đính kèm.
 - **Verification:** Tạo một bài tập mới và kiểm tra hiển thị trên danh sách.
 - **Definition of Done:** Quản lý bài tập hoàn tất migration theo spec C.8.
 
@@ -1086,12 +1086,18 @@ graph TD
 - **Files To Create:** Không có.
 - **Files To Delete:** Không có.
 - **Design System Requirements:** MSSV font Mono; bảng preview rõ ràng; nút Công bố là nút primary Navy.
-- **Functional Constraints:** Giữ đúng contract 4 cột và cơ chế không gửi mail khi lưu bản chấm.
+- **Functional Constraints:**
+  - Giữ đúng contract 4 cột và cơ chế không gửi mail khi lưu bản chấm.
+  - Bước preview gửi file bằng `FormData` tới `POST /api/v1/teacher/assignments/:assignmentId/evaluations/import-preview`; endpoint này không mutation.
+  - Sau preview, bước import gửi JSON `{ mode, evaluations }` tới `POST /api/v1/teacher/assignments/:assignmentId/evaluations/import`; tuyệt đối không gửi lại file.
+  - Chỉ gửi các dòng hợp lệ mà GV chọn tiếp tục; backend vẫn parse/validate lại payload trước khi ghi.
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** Bảng preview cuộn ngang trên mobile, nút action full-width.
 - **Acceptance Criteria:**
-  - [ ] Chọn file CSV hiển thị ngay bảng preview phân loại trạng thái.
-  - [ ] Click "Công bố kết quả" hiển thị modal xác nhận rõ ràng trước khi gửi thông báo.
+  - [x] Chọn file CSV hiển thị ngay bảng preview phân loại trạng thái.
+  - [x] Preview dùng `FormData`; import dùng JSON `{ mode, evaluations }` và không upload lại file.
+  - [x] `mode=save_draft` tạo/cập nhật Evaluation ở trạng thái `graded` và không gửi notification/email.
+  - [x] Click "Công bố kết quả" hiển thị modal xác nhận rõ ràng trước khi gửi thông báo.
 - **Verification:** Thử tải lên một file CSV điểm mẫu và thực hiện "Lưu bản chấm".
 - **Definition of Done:** Chức năng chấm bài import file hoàn tất migration theo spec C.9.
 
@@ -1124,8 +1130,8 @@ graph TD
 - **Visibility / Access Rules:** Giảng viên.
 - **Responsive Requirements:** Cột sinh viên luôn cố định khi cuộn ngang trên điện thoại.
 - **Acceptance Criteria:**
-  - [ ] Ma trận cuộn ngang mượt mà, không lệch dòng giữa cột cố định và cột cuộn.
-  - [ ] Phân trang 2 chiều hoạt động chính xác.
+  - [x] Ma trận cuộn ngang mượt mà, không lệch dòng giữa cột cố định và cột cuộn.
+  - [x] Phân trang 2 chiều hoạt động chính xác.
 - **Verification:** Mở bảng điểm lớp có nhiều bài tập và kiểm tra cuộn ngang trên mobile.
 - **Definition of Done:** Bảng điểm ma trận hoàn tất migration theo spec C.10.
 
@@ -1171,8 +1177,8 @@ graph TD
 - **Visibility / Access Rules:** Sinh viên.
 - **Responsive Requirements:** Ô nhập và nút bấm đạt touch target 44px trên mobile.
 - **Acceptance Criteria:**
-  - [ ] Đăng nhập bằng MSSV + 111111 thành công và chuyển sang onboarding.
-  - [ ] Luồng Quên PIN gửi OTP và cập nhật PIN mới mượt mà.
+  - [x] Đăng nhập bằng MSSV + 111111 thành công và chuyển sang onboarding.
+  - [x] Luồng Quên PIN gửi OTP và cập nhật PIN mới mượt mà.
 - **Verification:** Thử nghiệm toàn bộ chu kỳ: Đăng nhập lần đầu -> Onboarding -> Đăng nhập lại.
 - **Definition of Done:** Toàn bộ nhánh xác thực sinh viên hoàn tất migration.
 
@@ -1189,7 +1195,7 @@ graph TD
     - Topbar cá nhân: Avatar 48px + H1 "Chào [Tên]!" + Caption mã lớp và MSSV (font mono).
     - Metric strip: Thống kê số bài tập, bài chưa công bố, kết quả đã trả (không thống kê nộp bài).
     - Panel "Kết quả gần đây": Thẻ `Card compact interactive`, ưu tiên bài `returned`, click mở modal xem kết quả.
-    - Panel "Đang xử lý": Hiển thị các bài tập đã có `graded` dưới dạng trạng thái "Chưa công bố" (tuyệt đối không lộ điểm/feedback).
+    - Panel "Đang xử lý": Hiển thị các bài tập chưa có kết quả `returned` bằng nhãn trung tính "Chưa công bố". UI sinh viên không được biết hoặc phân biệt Evaluation nội bộ đang là `graded` hay chưa được chấm.
     - Vùng "Email nhận thông báo" (C.15A): Hiển thị email hiện hành, trạng thái verified và nút "Đổi email" (xác minh qua OTP).
     - **ÁP DỤNG F.2 BẮT BUỘC TRÊN PROFILE:**
       - **XÓA BỎ nút "Nộp bài ngay"**.
@@ -1213,13 +1219,18 @@ graph TD
 - **Files To Create:** Không có.
 - **Files To Delete:** Không có.
 - **Design System Requirements:** MSSV font Mono; avatar 48px; không có CTA nộp bài.
-- **Functional Constraints:** Giữ nguyên 100% backend API submission, giữ logic refresh dữ liệu.
+- **Functional Constraints:**
+  - Giữ nguyên 100% backend API submission và logic refresh dữ liệu.
+  - Sinh viên chỉ nhận và hiển thị Evaluation ở trạng thái `returned`; không suy luận hoặc expose trạng thái `graded` nội bộ của GV.
+  - Đổi email: bước request gửi `{ email }` tới `POST /api/v1/student/profile/email-change/request`; bước confirm chỉ gửi `{ otp }` tới `POST /api/v1/student/profile/email-change/confirm`, không gửi lại email.
 - **Visibility / Access Rules:** Sinh viên KHÔNG được thấy bất kỳ UI nộp bài nào.
 - **Responsive Requirements:** Bố cục 1 cột mượt mà trên mobile.
 - **Acceptance Criteria:**
-  - [ ] Không còn nút "Nộp bài ngay" hay bất kỳ form upload tệp nào trên Student UI.
-  - [ ] Modal bài tập không chứa khu vực upload hay submit.
-  - [ ] Dữ liệu kết quả bài tập hiển thị rõ ràng khi đã được công bố.
+  - [x] Không còn nút "Nộp bài ngay" hay bất kỳ form upload tệp nào trên Student UI.
+  - [x] Modal bài tập không chứa khu vực upload hay submit.
+  - [x] Dữ liệu kết quả bài tập hiển thị rõ ràng khi đã được công bố.
+  - [x] Luồng đổi email gửi đúng `{ email }` ở bước request và chỉ `{ otp }` ở bước confirm.
+  - [x] Student UI không phân biệt `graded` với chưa chấm; cả hai chỉ được thể hiện là chưa có kết quả công bố.
 - **Verification:** Đăng nhập tài khoản sinh viên kiểm tra profile, danh sách bài tập và modal chi tiết.
 - **Definition of Done:** Giao diện sinh viên hoàn tất migration, tuân thủ 100% quy tắc F.2.
 
@@ -1234,14 +1245,15 @@ graph TD
 - **Scope:**
   - Kết quả học tập (`/class/[code]/grades` - C.17):
     - Bảng chuẩn: `Bài tập | Trạng thái | Điểm | Ngày công bố`.
-    - Bài `graded`: Hiển thị "Đang xử lý / Chưa công bố" (Badge warning/info), **không hiển thị điểm hay feedback**.
+    - Bài chưa có Evaluation `returned`: Hiển thị "Chưa công bố" (Badge warning/info), **không hiển thị điểm hay feedback và không phân biệt `graded` với chưa chấm**.
     - Bài `returned`: Hiển thị điểm Be Vietnam Pro 700 + Badge returned. Click mở modal xem nhận xét dạng quote block viền trái accent 3px.
     - **Hỗ trợ deep-link chính thức**: `/class/{code}/grades?assignment={assignmentId}` tự động kích hoạt mở modal kết quả của bài đó. Chặn truy cập trái phép chéo sinh viên/lớp.
   - Thông báo sinh viên (`/class/[code]/notifications` - C.18):
     - Danh sách notification-item, chưa đọc có chấm accent + nền secondary. Click vào đánh dấu đã đọc và chuyển thẳng sang deep-link `/class/{code}/grades?assignment={id}`.
   - Route tương thích Submissions (`/class/[code]/submissions` - C.19, F.3):
     - **Không xuất hiện trong navigation sinh viên** (file `workspace-header.tsx` đã bỏ link này).
-    - Giữ route cho mục đích tương thích/nội bộ (Retained for compatibility / internal use).
+    - Nếu truy cập trực tiếp URL này, Server Component phải redirect ngay về `/class/[code]/assignments`.
+    - Chỉ thay hành vi route UI; giữ nguyên backend API, database table, schema và dữ liệu submission cho mục đích tương thích/nội bộ.
 - **Out of Scope:** Không xóa route handler hay file submission backend.
 - **Specification References:** C.17 Kết quả cá nhân, C.18 Thông báo, C.19 Submissions compatibility route, F.3.
 - **Existing Code:** `src/components/students/student/student-workspace-view.tsx`, `src/app/class/[code]/(workspace)/submissions/page.tsx`.
@@ -1249,18 +1261,21 @@ graph TD
   1. Cập nhật bảng kết quả trong `StudentWorkspaceView` đúng 4 cột quy định.
   2. Bổ sung xử lý query param `?assignment={id}` tự động mở modal kết quả.
   3. Cập nhật giao diện danh sách thông báo và liên kết click mark-read.
-  4. Xác nhận route `/class/[code]/submissions` không hiển thị trên thanh menu sinh viên.
-- **Files To Modify:** `src/components/students/student/student-workspace-view.tsx`, `src/app/globals.css`.
+  4. Cập nhật `src/app/class/[code]/(workspace)/submissions/page.tsx` dùng `redirect()` của Next.js để chuyển về `/class/[code]/assignments` khi truy cập trực tiếp.
+  5. Xác nhận route `/class/[code]/submissions` không hiển thị trên thanh menu sinh viên.
+- **Files To Modify:** `src/components/students/student/student-workspace-view.tsx`, `src/app/class/[code]/(workspace)/submissions/page.tsx`, `src/app/globals.css`.
 - **Files To Create:** Không có.
 - **Files To Delete:** Không có.
 - **Design System Requirements:** Điểm số font Be Vietnam Pro 700; quote block nhận xét viền accent 3px.
-- **Functional Constraints:** Chỉ hiển thị điểm và nhận xét khi trạng thái là `returned`.
-- **Visibility / Access Rules:** Không expose route `/submissions` trên menu sinh viên.
+- **Functional Constraints:** Chỉ hiển thị điểm và nhận xét khi Evaluation ở trạng thái `returned`; Student UI không được nhận biết hoặc expose trạng thái `graded` nội bộ.
+- **Visibility / Access Rules:** Không expose route `/submissions` trên menu sinh viên; truy cập trực tiếp phải redirect về route `/assignments` cùng mã lớp.
 - **Responsive Requirements:** Mobile chuyển dạng card row nhưng giữ đủ 4 trường thông tin.
 - **Acceptance Criteria:**
-  - [ ] Truy cập đường link có `?assignment={id}` mở thẳng modal bài tập tương ứng.
-  - [ ] Bài chưa công bố không bị lộ điểm hay nhận xét.
-  - [ ] Menu điều hướng sinh viên không có mục "Nộp bài" hay "Submissions".
+  - [x] Truy cập đường link có `?assignment={id}` mở thẳng modal bài tập tương ứng.
+  - [x] Bài chưa công bố không bị lộ điểm hay nhận xét.
+  - [x] Menu điều hướng sinh viên không có mục "Nộp bài" hay "Submissions".
+  - [x] Truy cập trực tiếp `/class/[code]/submissions` redirect về `/class/[code]/assignments` và không render legacy submissions view.
+  - [x] Backend API, schema, table và dữ liệu submission không bị xóa hoặc thay đổi bởi task UI này.
 - **Verification:** Kiểm tra deep-link kết quả và click thông báo trên trình duyệt.
 - **Definition of Done:** Toàn bộ 19 routes của MinBack hoàn tất migration giao diện.
 
@@ -1294,9 +1309,9 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Hoàn hảo trên cả 4 mốc màn hình.
 - **Acceptance Criteria:**
-  - [ ] Không có tràn viền ngang ở 375px.
-  - [ ] Mọi nút bấm trên mobile đạt kích thước tối thiểu 44x44px.
-  - [ ] Modal chuyển thành bottom-sheet mượt mà trên mobile.
+  - [x] Không có tràn viền ngang ở 375px.
+  - [x] Mọi nút bấm trên mobile đạt kích thước tối thiểu 44x44px.
+  - [x] Modal chuyển thành bottom-sheet mượt mà trên mobile.
 - **Verification:** Kiểm tra thực tế bằng responsive emulator trong Chrome DevTools.
 - **Definition of Done:** Toàn bộ hệ thống hiển thị mượt mà trên mọi thiết bị.
 
@@ -1331,8 +1346,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** Focus ring hiển thị tốt trên cả mobile và desktop.
 - **Acceptance Criteria:**
-  - [ ] Đạt điểm Accessibility cao trên công cụ audit.
-  - [ ] Có thể hoàn thành việc đăng nhập và thao tác cơ bản chỉ bằng bàn phím.
+  - [x] Đạt điểm Accessibility cao trên công cụ audit.
+  - [x] Có thể hoàn thành việc đăng nhập và thao tác cơ bản chỉ bằng bàn phím.
 - **Verification:** Điều hướng toàn bộ ứng dụng bằng bàn phím (Keyboard-only).
 - **Definition of Done:** Đạt toàn bộ tiêu chí tiếp cận của mục D.3.
 
@@ -1366,8 +1381,8 @@ graph TD
 - **Visibility / Access Rules:** N/A.
 - **Responsive Requirements:** N/A.
 - **Acceptance Criteria:**
-  - [ ] Không còn class hay biến token cũ tồn tại trong codebase.
-  - [ ] Toàn bộ test suite và build Next.js pass 100%.
+  - [x] Không còn class hay biến token cũ tồn tại trong codebase.
+  - [x] Toàn bộ test suite và build Next.js pass 100%.
 - **Verification:** Chạy `npm run check`.
 - **Definition of Done:** Dự án hoàn tất 100% quá trình tái thiết kế giao diện.
 
@@ -1472,21 +1487,31 @@ Sau khi hoàn thành `TASK-14` (Shell Layouts) và các Shared Patterns (`TASK-1
 3. **Chấm bài bằng Import file CSV/XLSX 4 cột (`TASK-26`):**
    - *Rủi ro:* Lỗi định dạng dữ liệu, sai lệch điểm số thập phân hoặc vô tình gửi email thông báo khi giảng viên chỉ muốn "Lưu bản chấm".
    - *Biện pháp phòng ngừa:* Tách bạch rành rẽ 2 hành động: `Lưu bản chấm` (`mode=save_draft`, trạng thái `graded`, tuyệt đối không gửi mail) và `Công bố kết quả` (`mode=publish`, trạng thái `returned`, có modal xác nhận trước khi phát sinh email/notification).
-4. **Bảo mật kết quả đánh giá (Privacy Contract - `TASK-30`):**
+4. **Bảo mật kết quả đánh giá (Privacy Contract - `TASK-29`, `TASK-30`):**
    - *Rủi ro:* Để lộ điểm số hoặc feedback cho sinh viên khi bài tập mới chỉ ở trạng thái `graded`.
-   - *Biện pháp phòng ngừa:* Sinh viên chỉ được xem điểm và feedback khi assignment đạt trạng thái `returned`. Trạng thái `graded` chỉ hiển thị nhãn trung tính "Chưa công bố".
+   - *Biện pháp phòng ngừa:* Sinh viên chỉ được xem điểm và feedback khi Evaluation đạt trạng thái `returned`. API/UI sinh viên không phân biệt `graded` với chưa chấm; mọi bài chưa có kết quả `returned` chỉ hiển thị nhãn trung tính "Chưa công bố".
 5. **Modal tự chuyển Bottom-sheet trên Mobile (`TASK-09`, `TASK-31`):**
    - *Rủi ro:* Xung đột sự kiện scroll bên trong modal dài và cử chỉ vuốt, hoặc focus trap bị kẹt trên thiết bị di động.
    - *Biện pháp phòng ngừa:* Cấu hình media query chuẩn `≤ 800px`, khóa scroll body khi mở modal và hỗ trợ phím Escape / click outside đóng an toàn.
 
 ---
 
-## 8. OPEN QUESTIONS & DECISIONS REQUIRED
+## 8. LOCKED DECISIONS
 
-Theo quy tắc F.6, các điểm sau đây trong codebase hiện tại cần lưu ý đối chiếu khi thực hiện:
+Các quyết định sau là canonical và không được tự thay đổi khi triển khai:
 1. **Hành vi truy cập trực tiếp URL `/class/[code]/submissions`:**
    - *Vấn đề:* Spec F.3 và C.19 xác định route này được giữ lại vì tính tương thích/nội bộ nhưng không hiển thị trong menu điều hướng sinh viên.
    - *Quyết định canonical:* Nếu sinh viên gõ URL trực tiếp, redirect về `/class/[code]/assignments`; vẫn giữ route handler, backend API, database table và dữ liệu submission.
+2. **Contract đổi email sinh viên:**
+   - Bước request gọi `POST /api/v1/student/profile/email-change/request` với JSON `{ email }`.
+   - Bước confirm gọi `POST /api/v1/student/profile/email-change/confirm` chỉ với JSON `{ otp }`; không gửi lại email vì server challenge đang giữ email mới.
+3. **Contract import điểm và feedback:**
+   - Preview gửi file bằng `FormData` tới endpoint `import-preview`; không mutation.
+   - Import gửi JSON `{ mode, evaluations }` tới endpoint `import`; không gửi lại file.
+   - `mode=save_draft` lưu trạng thái `graded` và không gửi notification/email; `mode=publish` chuyển sang `returned` và mới phát sinh notification/email.
+4. **Quyền xem kết quả của sinh viên:**
+   - Chỉ Evaluation `returned` được trả và hiển thị điểm/feedback trên Student UI.
+   - `graded` là trạng thái nội bộ của GV. Student UI không phân biệt `graded` với chưa chấm; chỉ hiển thị trạng thái trung tính "Chưa công bố" khi chưa có kết quả `returned`.
 
 ---
 

@@ -52,8 +52,15 @@ export function PublicClassView({ code }: { code: string }) {
     <section className="public-record-card stack">
       <div className="auth-heading">
         <p className="auth-eyebrow">Đăng nhập</p>
-        <h2 className="auth-title" style={{ marginTop: 0, marginBottom: "4px" }}>{section.name}</h2>
-        <p className="auth-class" style={{ marginTop: 0 }}>Mã lớp: {section.code}</p>
+        <h2
+          className="auth-title"
+          style={{ marginTop: 0, marginBottom: "4px" }}
+        >
+          {section.name}
+        </h2>
+        <p className="auth-class" style={{ marginTop: 0 }}>
+          Mã lớp: {section.code}
+        </p>
       </div>
       <PinLoginForm classCode={section.code} backUrl="/" />
     </section>

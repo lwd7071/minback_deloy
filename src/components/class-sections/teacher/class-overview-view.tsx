@@ -7,7 +7,7 @@ import { Trash2 } from "lucide-react";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export function ClassOverviewView({
   classSectionId,
@@ -28,13 +28,15 @@ export function ClassOverviewView({
       href: `/admin/classes/${classSectionId}/students`,
       icon: "students" as const,
       title: "Sinh viên",
-      description: "Quản lý danh sách sinh viên, đặt lại mã PIN và xem hồ sơ học tập.",
+      description:
+        "Quản lý danh sách sinh viên, đặt lại mã PIN và xem hồ sơ học tập.",
     },
     {
       href: `/admin/classes/${classSectionId}/assignments`,
       icon: "book" as const,
       title: "Bài tập",
-      description: "Tạo, cập nhật và công bố bài tập kèm file hướng dẫn cho lớp.",
+      description:
+        "Tạo, cập nhật và công bố bài tập kèm file hướng dẫn cho lớp.",
     },
     {
       href: `/admin/classes/${classSectionId}/gradebook`,
@@ -53,16 +55,18 @@ export function ClassOverviewView({
         { method: "DELETE" },
       );
       if (!response.ok) {
-        const body = (await response.json()) as { error?: { message?: string } };
-        throw new Error(
-          body.error?.message ?? "Không thể xóa lớp học phần",
-        );
+        const body = (await response.json()) as {
+          error?: { message?: string };
+        };
+        throw new Error(body.error?.message ?? "Không thể xóa lớp học phần");
       }
       setShowDeleteModal(false);
-      window.location.href = "/admin/classes";
+      router.push("/admin/classes");
     } catch (err) {
       setDeleteError(
-        err instanceof Error ? err.message : "Đã xảy ra lỗi khi xóa lớp học phần",
+        err instanceof Error
+          ? err.message
+          : "Đã xảy ra lỗi khi xóa lớp học phần",
       );
       setIsDeleting(false);
     }
@@ -87,7 +91,7 @@ export function ClassOverviewView({
               </span>
               <h2>{item.title}</h2>
               <p>{item.description}</p>
-              <span style={{ fontWeight: 600, color: "var(--navy-900)" }}>
+              <span style={{ fontWeight: 600, color: "var(--color-primary)" }}>
                 Vào quản lý →
               </span>
             </Card>
@@ -101,7 +105,8 @@ export function ClassOverviewView({
           <div className="class-danger-info">
             <h3>Xóa lớp học phần</h3>
             <p className="muted">
-              Xóa hoàn toàn lớp học này. Chỉ thực hiện được khi lớp chưa có sinh viên và chưa có bài tập.
+              Xóa hoàn toàn lớp học này. Chỉ thực hiện được khi lớp chưa có sinh
+              viên và chưa có bài tập.
             </p>
           </div>
           <button
@@ -119,7 +124,7 @@ export function ClassOverviewView({
       </div>
 
       {/* Modal xác nhận xóa */}
-      <Modal
+      <ConfirmationModal
         open={showDeleteModal}
         onClose={() => {
           if (!isDeleting) {
@@ -128,7 +133,9 @@ export function ClassOverviewView({
           }
         }}
         title={`Xác nhận xóa lớp: ${code || ""}`}
-        size="md"
+        confirmLabel={isDeleting ? "Đang xóa…" : "Xác nhận xóa lớp"}
+        loading={isDeleting}
+        onConfirm={() => void handleDeleteClass()}
       >
         <div className="form-stack">
           <p>
@@ -139,58 +146,35 @@ export function ClassOverviewView({
           <div
             className="form-notice"
             style={{
-              borderColor: "var(--danger)",
+              borderColor: "var(--color-error)",
               background: "rgba(180, 40, 40, 0.05)",
             }}
           >
             <p
               style={{
-                color: "var(--danger)",
+                color: "var(--color-error)",
                 margin: 0,
                 fontSize: "0.88rem",
                 fontWeight: 500,
               }}
             >
-              ⚠️ <strong>Lưu ý:</strong> Hành động này không thể hoàn tác. Hệ thống sẽ từ chối xóa nếu lớp học đã có sinh viên hoặc bài tập để bảo vệ dữ liệu.
+              ⚠️ <strong>Lưu ý:</strong> Hành động này không thể hoàn tác. Hệ
+              thống sẽ từ chối xóa nếu lớp học đã có sinh viên hoặc bài tập để
+              bảo vệ dữ liệu.
             </p>
           </div>
 
           {deleteError && (
-            <p className="form-error" role="alert" style={{ margin: "4px 0 0 0" }}>
+            <p
+              className="form-error"
+              role="alert"
+              style={{ margin: "4px 0 0 0" }}
+            >
               {deleteError}
             </p>
           )}
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "10px",
-              marginTop: "16px",
-            }}
-          >
-            <button
-              type="button"
-              className="btn btn-secondary"
-              disabled={isDeleting}
-              onClick={() => {
-                setShowDeleteModal(false);
-                setDeleteError(null);
-              }}
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              disabled={isDeleting}
-              onClick={() => void handleDeleteClass()}
-            >
-              {isDeleting ? "Đang xóa..." : "Xác nhận xóa lớp"}
-            </button>
-          </div>
         </div>
-      </Modal>
+      </ConfirmationModal>
     </div>
   );
 }

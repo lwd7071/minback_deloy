@@ -122,7 +122,7 @@ function ProgressRing({ percentage }: { percentage: number }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="var(--surface-muted)"
+          stroke="var(--color-neutral-soft)"
           strokeWidth="10"
           fill="none"
         />
@@ -526,7 +526,11 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
                           <td>
                             <span className="assignment-leading-icon complete">
                               <AppIcon
-                                name={score !== null && score !== undefined ? "check" : "clock"}
+                                name={
+                                  score !== null && score !== undefined
+                                    ? "check"
+                                    : "clock"
+                                }
                                 size={18}
                               />
                             </span>

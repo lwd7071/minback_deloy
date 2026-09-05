@@ -8,6 +8,8 @@ import {
   Mail,
   RefreshCw,
 } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
+import { Alert } from "@/components/ui/alert";
 
 export type Settings = {
   emailEnabled: boolean;
@@ -121,23 +123,12 @@ export function NotificationSettingsForm({
               MinBack.
             </p>
           </div>
-          <button
-            className={`button ${settings.emailEnabled ? "button-primary" : "button-secondary"}`}
-            type="button"
+          <Toggle
+            checked={settings.emailEnabled}
             disabled={isToggling || isSendingTest}
-            aria-pressed={settings.emailEnabled}
-            onClick={() => void toggleEmail()}
-            style={{
-              minWidth: "100px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-            }}
-          >
-            {isToggling ? <RefreshCw size={14} className="spin" /> : null}
-            {settings.emailEnabled ? "Đang bật" : "Đang tắt"}
-          </button>
+            label={settings.emailEnabled ? "Đang bật" : "Đang tắt"}
+            onChange={() => void toggleEmail()}
+          />
         </div>
 
         {/* Brevo Service & Sender Details */}
@@ -218,20 +209,10 @@ export function NotificationSettingsForm({
       </>
 
       {/* Success Alert */}
-      {message ? (
-        <div className="settings-alert is-success" role="status">
-          <CheckCircle2 size={16} />
-          {message}
-        </div>
-      ) : null}
+      {message ? <Alert variant="success">{message}</Alert> : null}
 
       {/* Error Alert */}
-      {error ? (
-        <div className="settings-alert is-danger" role="alert">
-          <AlertTriangle size={16} />
-          {error}
-        </div>
-      ) : null}
+      {error ? <Alert variant="error">{error}</Alert> : null}
     </div>
   );
 }

@@ -3,12 +3,17 @@ import type { HTMLAttributes } from "react";
 export function Card({
   hover,
   glass,
+  variant = "default",
   className = "",
   ...props
-}: HTMLAttributes<HTMLDivElement> & { hover?: boolean; glass?: boolean }) {
+}: HTMLAttributes<HTMLDivElement> & {
+  hover?: boolean;
+  glass?: boolean;
+  variant?: "default" | "interactive" | "highlighted" | "compact";
+}) {
   return (
     <div
-      className={`card ${hover ? "card-hover" : ""} ${glass ? "glass" : ""} ${className}`}
+      className={`card card-${variant} ${hover ? "card-hover" : ""} ${glass ? "glass" : ""} ${className}`}
       {...props}
     />
   );

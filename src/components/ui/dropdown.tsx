@@ -8,7 +8,9 @@ export function Dropdown({
   return (
     <label className="form-field">
       <span>{label}</span>
-      <select {...props}>{children}</select>
+      <select className={`input ${props.className ?? ""}`} {...props}>
+        {children}
+      </select>
     </label>
   );
 }

@@ -1,8 +1,8 @@
 import type { ApiErrorDetail } from "@/types/api";
 
-// do cài đặt trình quản trị tự dộng quy định 
-// chuẩn hóa backend và frontend khi nhận mã 401 ko bt user sai mk pin hay token hết hay bị đổi mk mới 
-// có cái này sẽ trả về json chuản trỉnh hơn 
+// do cài đặt trình quản trị tự dộng quy định
+// chuẩn hóa backend và frontend khi nhận mã 401 ko bt user sai mk pin hay token hết hay bị đổi mk mới
+// có cái này sẽ trả về json chuản trỉnh hơn
 export const API_ERROR_CODES = {
   validation: "VALIDATION_ERROR",
   invalidStateTransition: "INVALID_STATE_TRANSITION",
@@ -22,12 +22,12 @@ export const API_ERROR_CODES = {
 export type ApiErrorCode =
   (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
 
-// apierror này đc backend khởi tạo và xy ly sau do thanh json và trả về cho frontend 
+// apierror này đc backend khởi tạo và xy ly sau do thanh json và trả về cho frontend
 export class ApiError extends Error {
   constructor(
-    public readonly status: number, // mã trạng thái http tương ứng 
-    public readonly code: ApiErrorCode, // hẹ thống chuản mã lội phải thuộc danh sách 
-    message: string,  // thông báo rút gọn văn bản 
+    public readonly status: number, // mã trạng thái http tương ứng
+    public readonly code: ApiErrorCode, // hẹ thống chuản mã lội phải thuộc danh sách
+    message: string, // thông báo rút gọn văn bản
     public readonly details?: ApiErrorDetail[],
   ) {
     super(message);

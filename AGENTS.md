@@ -33,6 +33,7 @@ Khi tài liệu mâu thuẫn, áp dụng theo thứ tự:
 ### Khi nào chạy `npm run test:setup`
 
 Chạy khi:
+
 - Đổi `supabase/seed.sql` hoặc thêm/sửa migration.
 - Lần đầu clone repo hoặc sau `supabase stop`.
 - Gặp lỗi 401 khi login demo account hoặc DB trạng thái không xác định.
@@ -42,6 +43,7 @@ Script thực hiện: `supabase db reset` → verify auth teacher-a, teacher-b.
 ### Khi nào chạy `npm run test:health`
 
 Chạy khi:
+
 - Muốn xác nhận nhanh Supabase local + seed accounts vẫn hoạt động.
 - Không đổi seed/migration — chỉ cần verify trước khi chạy `test:integration`.
 

@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 export type PaginationProps = {
   page: number;
@@ -60,14 +65,11 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <nav
-      aria-label="Phân trang danh sách"
-      className="pagination-wrap"
-    >
+    <nav aria-label="Phân trang danh sách" className="pagination-wrap">
       <div className="pagination-info">
         <span>
-          Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong> trên tổng số{" "}
-          <strong>{total}</strong> sinh viên
+          Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong> trên
+          tổng số <strong>{total}</strong> sinh viên
         </span>
 
         {onPageSizeChange && (
@@ -123,7 +125,11 @@ export function Pagination({
             {pageNumbers.map((p, index) => {
               if (p === "...") {
                 return (
-                  <span key={`ellipsis-${index}`} className="pagination-ellipsis" aria-hidden="true">
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="pagination-ellipsis"
+                    aria-hidden="true"
+                  >
                     …
                   </span>
                 );

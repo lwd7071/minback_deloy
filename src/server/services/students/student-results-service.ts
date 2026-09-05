@@ -10,7 +10,13 @@ export async function getStudentResults(
   assignmentId?: string,
 ): Promise<StudentResultsResponseDto> {
   try {
-    return { results: await listStudentResults(session.studentId, session.classSectionId, assignmentId) };
+    return {
+      results: await listStudentResults(
+        session.studentId,
+        session.classSectionId,
+        assignmentId,
+      ),
+    };
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");

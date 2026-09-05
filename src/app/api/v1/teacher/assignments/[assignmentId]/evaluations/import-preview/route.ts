@@ -16,11 +16,19 @@ export async function POST(
     const file = formData.get("file");
 
     if (!file || !(file instanceof File)) {
-      throw new ApiError(400, "VALIDATION_ERROR", "Vui lòng chọn tệp bảng điểm Excel hoặc CSV");
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Vui lòng chọn tệp bảng điểm Excel hoặc CSV",
+      );
     }
 
     const buffer = await file.arrayBuffer();
-    const preview = await previewEvaluationFile(assignmentId, buffer, file.name);
+    const preview = await previewEvaluationFile(
+      assignmentId,
+      buffer,
+      file.name,
+    );
 
     return successResponse(preview);
   } catch (error) {

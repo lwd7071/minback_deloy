@@ -27,8 +27,7 @@ export function calculateProfileProgress(
   if (total === 0) return { completed: 0, total: 0, percentage: 0 };
 
   const completed = assignments.filter(
-    (assignment) =>
-      assignment.evaluation?.status === "returned",
+    (assignment) => assignment.evaluation?.status === "returned",
   ).length;
 
   return {
@@ -71,7 +70,10 @@ export async function getStudentProfile(
 
     // Chỉ evaluation 'returned' mới hiển thị điểm và nhận xét cho sinh viên
     const sanitizedAssignments = data.assignments.map((assignment) => {
-      if (!assignment.evaluation || assignment.evaluation.status !== "returned") {
+      if (
+        !assignment.evaluation ||
+        assignment.evaluation.status !== "returned"
+      ) {
         return {
           ...assignment,
           evaluation: null,
@@ -94,10 +96,6 @@ export async function getStudentProfile(
   } catch (error) {
     if (error instanceof ApiError) throw error;
     // Mọi lỗi không phải ApiError từ repository đều là lỗi hệ thống
-    throw new ApiError(
-      500,
-      API_ERROR_CODES.internal,
-      "Đã xảy ra lỗi hệ thống",
-    );
+    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
   }
 }

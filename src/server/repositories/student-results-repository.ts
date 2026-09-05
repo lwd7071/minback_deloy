@@ -28,19 +28,23 @@ export async function listStudentResults(
     .eq("status", "returned");
   if (evaluationError) throw new Error("STUDENT_RESULTS_EVALUATIONS_FAILED");
 
-  const byAssignment = new Map((evaluations ?? []).map((row) => [row.assignment_id, row]));
+  const byAssignment = new Map(
+    (evaluations ?? []).map((row) => [row.assignment_id, row]),
+  );
   return assignments.flatMap((assignment) => {
     const evaluation = byAssignment.get(assignment.id);
     if (!evaluation) return [];
-    return [{
-      assignmentId: assignment.id,
-      assignmentTitle: assignment.title,
-      maxScore: Number(assignment.max_score),
-      score: evaluation.score === null ? null : Number(evaluation.score),
-      feedback: evaluation.feedback || null,
-      status: "returned" as const,
-      returnedAt: evaluation.updated_at,
-      updatedAt: evaluation.updated_at,
-    }];
+    return [
+      {
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.title,
+        maxScore: Number(assignment.max_score),
+        score: evaluation.score === null ? null : Number(evaluation.score),
+        feedback: evaluation.feedback || null,
+        status: "returned" as const,
+        returnedAt: evaluation.updated_at,
+        updatedAt: evaluation.updated_at,
+      },
+    ];
   });
 }

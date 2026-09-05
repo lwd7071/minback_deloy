@@ -25,7 +25,7 @@ export function GradebookView({
         <table>
           <thead>
             <tr>
-              <th>Sinh viên</th>
+              <th className="table-sticky-col">Sinh viên</th>
               {data.assignments.map((assignment) => (
                 <th key={assignment.id} title={assignment.title}>
                   {assignment.title}
@@ -36,7 +36,7 @@ export function GradebookView({
           <tbody>
             {data.students.map((student) => (
               <tr key={student.id}>
-                <td>
+                <td className="table-sticky-col">
                   <strong>{student.mssv}</strong>
                   <br />
                   <span className="muted">{student.fullName}</span>
@@ -71,45 +71,45 @@ export function GradebookView({
         <span>
           Sinh viên {data.meta.students.page}/{studentPages}
         </span>
-        <Link
-          href={href(
-            Math.max(1, data.meta.students.page - 1),
-            data.meta.assignments.page,
-          )}
-          aria-disabled={data.meta.students.page === 1}
-        >
-          Trước
-        </Link>
-        <Link
-          href={href(
-            Math.min(studentPages, data.meta.students.page + 1),
-            data.meta.assignments.page,
-          )}
-          aria-disabled={data.meta.students.page === studentPages}
-        >
-          Sau
-        </Link>
+        {data.meta.students.page === 1 ? (
+          <span className="pagination-link is-disabled">Trước</span>
+        ) : (
+          <Link
+            href={href(data.meta.students.page - 1, data.meta.assignments.page)}
+          >
+            Trước
+          </Link>
+        )}
+        {data.meta.students.page === studentPages ? (
+          <span className="pagination-link is-disabled">Sau</span>
+        ) : (
+          <Link
+            href={href(data.meta.students.page + 1, data.meta.assignments.page)}
+          >
+            Sau
+          </Link>
+        )}
         <span>
           Bài tập {data.meta.assignments.page}/{assignmentPages}
         </span>
-        <Link
-          href={href(
-            data.meta.students.page,
-            Math.max(1, data.meta.assignments.page - 1),
-          )}
-          aria-disabled={data.meta.assignments.page === 1}
-        >
-          Trước
-        </Link>
-        <Link
-          href={href(
-            data.meta.students.page,
-            Math.min(assignmentPages, data.meta.assignments.page + 1),
-          )}
-          aria-disabled={data.meta.assignments.page === assignmentPages}
-        >
-          Sau
-        </Link>
+        {data.meta.assignments.page === 1 ? (
+          <span className="pagination-link is-disabled">Trước</span>
+        ) : (
+          <Link
+            href={href(data.meta.students.page, data.meta.assignments.page - 1)}
+          >
+            Trước
+          </Link>
+        )}
+        {data.meta.assignments.page === assignmentPages ? (
+          <span className="pagination-link is-disabled">Sau</span>
+        ) : (
+          <Link
+            href={href(data.meta.students.page, data.meta.assignments.page + 1)}
+          >
+            Sau
+          </Link>
+        )}
       </nav>
     </>
   );

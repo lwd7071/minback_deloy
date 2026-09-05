@@ -75,14 +75,19 @@ export const studentEmailSchema = z
  * POST /api/v1/student/auth/login
  * Body: { classCode, nickname/identifier, pin }
  */
-export const studentLoginSchema = z.object({
-  classCode: classSectionCodeSchema,
-  nickname: nicknameSchema.optional(),
-  identifier: nicknameSchema.optional(),
-  pin: pinSchema,
-}).refine((data) => data.nickname !== undefined || data.identifier !== undefined, {
-  message: "Phải cung cấp nickname hoặc MSSV",
-});
+export const studentLoginSchema = z
+  .object({
+    classCode: classSectionCodeSchema,
+    nickname: nicknameSchema.optional(),
+    identifier: nicknameSchema.optional(),
+    pin: pinSchema,
+  })
+  .refine(
+    (data) => data.nickname !== undefined || data.identifier !== undefined,
+    {
+      message: "Phải cung cấp nickname hoặc MSSV",
+    },
+  );
 
 export type StudentLoginInput = {
   classCode: string;
@@ -97,7 +102,11 @@ export type StudentLoginInput = {
  */
 export const forgotPinRequestSchema = z.object({
   classCode: classSectionCodeSchema,
-  mssv: z.string().trim().min(3, "MSSV không hợp lệ").max(50, "MSSV không hợp lệ"),
+  mssv: z
+    .string()
+    .trim()
+    .min(3, "MSSV không hợp lệ")
+    .max(50, "MSSV không hợp lệ"),
 });
 
 export type ForgotPinRequestInput = z.infer<typeof forgotPinRequestSchema>;
@@ -108,8 +117,15 @@ export type ForgotPinRequestInput = z.infer<typeof forgotPinRequestSchema>;
  */
 export const forgotPinConfirmSchema = z.object({
   classCode: classSectionCodeSchema,
-  mssv: z.string().trim().min(3, "MSSV không hợp lệ").max(50, "MSSV không hợp lệ"),
-  otp: z.string().trim().regex(/^\d{6}$/, "Mã OTP phải là đúng 6 chữ số"),
+  mssv: z
+    .string()
+    .trim()
+    .min(3, "MSSV không hợp lệ")
+    .max(50, "MSSV không hợp lệ"),
+  otp: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Mã OTP phải là đúng 6 chữ số"),
   newPin: pinSchema,
 });
 

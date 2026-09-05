@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Alert } from "@/components/ui/alert";
 
 export function TeacherLoginForm() {
   const router = useRouter();
@@ -69,8 +70,8 @@ export function TeacherLoginForm() {
           disabled={loading}
         />
       </div>
-      {error && <p className="form-error">{error}</p>}
-      <button type="submit" className="button" disabled={loading}>
+      {error && <Alert variant="error">{error}</Alert>}
+      <button type="submit" className="btn btn-primary" disabled={loading}>
         {loading ? "Đang đăng nhập…" : "Đăng nhập"}
       </button>
     </form>

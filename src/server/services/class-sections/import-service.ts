@@ -2,7 +2,6 @@ import "server-only";
 
 import { hash } from "bcrypt";
 import { Workbook } from "exceljs";
-import { randomInt } from "node:crypto";
 import { z } from "zod";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
@@ -168,7 +167,11 @@ function getCellString(value: unknown): string {
     return value.trim();
   }
   if (typeof value === "object") {
-    if ("result" in value && value.result !== undefined && value.result !== null) {
+    if (
+      "result" in value &&
+      value.result !== undefined &&
+      value.result !== null
+    ) {
       return String(value.result).trim();
     }
     if (
@@ -180,7 +183,10 @@ function getCellString(value: unknown): string {
         .join("")
         .trim();
     }
-    if ("text" in value && typeof (value as { text: unknown }).text === "string") {
+    if (
+      "text" in value &&
+      typeof (value as { text: unknown }).text === "string"
+    ) {
       return (value as { text: string }).text.trim();
     }
   }
@@ -343,7 +349,8 @@ async function importTeacherClassSection(
       classSectionId,
       mssv: row.mssv,
       fullName: row.fullName,
-      email: row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
+      email:
+        row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
       nickname: row.mssv,
       pinHash,
     })),
@@ -370,7 +377,9 @@ async function importTeacherClassSection(
         const studentId = existingByMssv.get(row.mssv)!;
         await updateImportedStudent(studentId, classSectionId, {
           fullName: row.fullName,
-          email: row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
+          email:
+            row.email?.trim().toLowerCase() ||
+            deriveInstitutionalEmail(row.mssv),
         });
         outcomes.set(row.row, { row: row.row, status: "updated", studentId });
       }),

@@ -27,7 +27,10 @@ export async function loadTeacherDashboard() {
   "use cache: private";
   privateNavigationLife();
   const { teacher } = await requireTeacher();
-  cacheTag(cacheTags.teacher(teacher.id), cacheTags.teacherDashboard(teacher.id));
+  cacheTag(
+    cacheTags.teacher(teacher.id),
+    cacheTags.teacherDashboard(teacher.id),
+  );
   return getTeacherDashboardOverview();
 }
 
@@ -43,7 +46,10 @@ export async function loadTeacherSettings() {
   "use cache: private";
   privateNavigationLife();
   const { teacher } = await requireTeacher();
-  cacheTag(cacheTags.teacher(teacher.id), cacheTags.teacherSettings(teacher.id));
+  cacheTag(
+    cacheTags.teacher(teacher.id),
+    cacheTags.teacherSettings(teacher.id),
+  );
   return getNotificationSettings();
 }
 
@@ -51,7 +57,10 @@ export async function loadTeacherClassOverview(classSectionId: string) {
   "use cache: private";
   privateNavigationLife();
   const { teacher } = await requireTeacher();
-  cacheTag(cacheTags.teacher(teacher.id), cacheTags.classSection(classSectionId));
+  cacheTag(
+    cacheTags.teacher(teacher.id),
+    cacheTags.classSection(classSectionId),
+  );
   return getTeacherClassSection(classSectionId);
 }
 
@@ -83,17 +92,25 @@ export async function loadClassStudents(classSectionId: string) {
   "use cache: private";
   privateNavigationLife();
   const { teacher } = await requireTeacher();
-  cacheTag(cacheTags.teacher(teacher.id), cacheTags.classStudents(classSectionId));
+  cacheTag(
+    cacheTags.teacher(teacher.id),
+    cacheTags.classStudents(classSectionId),
+  );
   return listStudentsInClass(classSectionId, { page: 1, pageSize: 20 });
 }
 
-export async function loadBulkGrade(classSectionId: string, assignmentId: string) {
+export async function loadBulkGrade(
+  classSectionId: string,
+  assignmentId: string,
+) {
   "use cache: private";
   privateNavigationLife();
   const { teacher } = await requireTeacher();
   cacheTag(
-    cacheTags.teacher(teacher.id), cacheTags.classStudents(classSectionId),
-    cacheTags.assignment(assignmentId), cacheTags.assignmentGrading(assignmentId),
+    cacheTags.teacher(teacher.id),
+    cacheTags.classStudents(classSectionId),
+    cacheTags.assignment(assignmentId),
+    cacheTags.assignmentGrading(assignmentId),
   );
   const [assignment, students, evaluations, submissions] = await Promise.all([
     getTeacherAssignment(assignmentId),

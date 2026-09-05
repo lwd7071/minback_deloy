@@ -20,7 +20,9 @@ export function parseDeadlineTimestamp(dueDate: string): number {
   return new Date(trimmed).getTime();
 }
 
-export function getPeriodLabel(hours: number): "Sáng" | "Trưa" | "Chiều" | "Tối" | "Đêm" {
+export function getPeriodLabel(
+  hours: number,
+): "Sáng" | "Trưa" | "Chiều" | "Tối" | "Đêm" {
   if (hours >= 5 && hours < 12) return "Sáng";
   if (hours >= 12 && hours < 14) return "Trưa";
   if (hours >= 14 && hours < 18) return "Chiều";

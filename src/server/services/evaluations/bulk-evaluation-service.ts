@@ -79,7 +79,10 @@ export async function bulkUpsertTeacherEvaluations(
             : "evaluation_updated",
         assignmentTitle: assignment.title,
       }).catch((err) => {
-        console.error(`[BulkEvaluation] Lỗi thông báo cho sinh viên ${row.student_id}:`, err);
+        console.error(
+          `[BulkEvaluation] Lỗi thông báo cho sinh viên ${row.student_id}:`,
+          err,
+        );
       }),
     ),
   );

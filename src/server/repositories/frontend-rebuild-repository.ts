@@ -64,11 +64,17 @@ export async function listClassSectionSummaries(
   if (initialPage.error) {
     console.error(
       "[listClassSectionSummaries] RPC error:",
-      initialPage.error.message ?? initialPage.error.code ?? JSON.stringify(initialPage.error),
+      initialPage.error.message ??
+        initialPage.error.code ??
+        JSON.stringify(initialPage.error),
     );
 
     // Graceful fallback nếu RPC chưa được tạo trong DB (hoặc Docker/migration chưa chạy)
-    const { data: classes, count, error: tableError } = await supabase
+    const {
+      data: classes,
+      count,
+      error: tableError,
+    } = await supabase
       .from("class_sections")
       .select("id, code, name", { count: "exact" })
       .order("created_at", { ascending: false });
@@ -79,10 +85,17 @@ export async function listClassSectionSummaries(
 
     const rows = await Promise.all(
       classes.map(async (c) => {
-        const [{ count: studentCount }, { count: assignmentCount }] = await Promise.all([
-          supabase.from("students").select("id", { count: "exact", head: true }).eq("class_section_id", c.id),
-          supabase.from("assignments").select("id", { count: "exact", head: true }).eq("class_section_id", c.id),
-        ]);
+        const [{ count: studentCount }, { count: assignmentCount }] =
+          await Promise.all([
+            supabase
+              .from("students")
+              .select("id", { count: "exact", head: true })
+              .eq("class_section_id", c.id),
+            supabase
+              .from("assignments")
+              .select("id", { count: "exact", head: true })
+              .eq("class_section_id", c.id),
+          ]);
         return {
           id: String(c.id),
           code: String(c.code),

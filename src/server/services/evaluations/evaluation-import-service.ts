@@ -5,9 +5,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findAssignmentById } from "@/server/repositories/assignment-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
-import type {
-  EvaluationImportInput,
-} from "@/schemas/evaluation-import";
+import type { EvaluationImportInput } from "@/schemas/evaluation-import";
 import type {
   EvaluationImportPreviewDto,
   EvaluationImportPreviewRowDto,
@@ -57,15 +55,52 @@ export function resolveEvaluationColumns(headerCells: string[]) {
     ["feedback", "nhanxet", "ghichu", "comment", "comments", "danhgia"],
   ];
   for (const aliases of semanticAliases) {
-    const matches = keys.filter((key) => aliases.some((alias) => normalizeHeaderKey(alias) === key));
-    if (matches.length > 1) validationError("Tệp không được có tiêu đề semantic bị trùng.");
+    const matches = keys.filter((key) =>
+      aliases.some((alias) => normalizeHeaderKey(alias) === key),
+    );
+    if (matches.length > 1)
+      validationError("Tệp không được có tiêu đề semantic bị trùng.");
   }
-  const mssvIndex = matchColumnIndex(keys, ["mssv", "masv", "masinhvien", "studentcode", "studentid", "ma"]);
-  const nameIndex = matchColumnIndex(keys, ["hoten", "hovaten", "fullname", "name", "sinhvien"]);
-  const scoreIndex = matchColumnIndex(keys, ["diem", "diemso", "score", "grade", "point", "points"]);
-  const feedbackIndex = matchColumnIndex(keys, ["feedback", "nhanxet", "ghichu", "comment", "comments", "danhgia"]);
-  if (mssvIndex === undefined || nameIndex === undefined || scoreIndex === undefined || feedbackIndex === undefined) {
-    validationError("Tệp phải có đủ 4 cột bắt buộc: MSSV, Họ tên, Điểm và Feedback/Nhận xét.");
+  const mssvIndex = matchColumnIndex(keys, [
+    "mssv",
+    "masv",
+    "masinhvien",
+    "studentcode",
+    "studentid",
+    "ma",
+  ]);
+  const nameIndex = matchColumnIndex(keys, [
+    "hoten",
+    "hovaten",
+    "fullname",
+    "name",
+    "sinhvien",
+  ]);
+  const scoreIndex = matchColumnIndex(keys, [
+    "diem",
+    "diemso",
+    "score",
+    "grade",
+    "point",
+    "points",
+  ]);
+  const feedbackIndex = matchColumnIndex(keys, [
+    "feedback",
+    "nhanxet",
+    "ghichu",
+    "comment",
+    "comments",
+    "danhgia",
+  ]);
+  if (
+    mssvIndex === undefined ||
+    nameIndex === undefined ||
+    scoreIndex === undefined ||
+    feedbackIndex === undefined
+  ) {
+    validationError(
+      "Tệp phải có đủ 4 cột bắt buộc: MSSV, Họ tên, Điểm và Feedback/Nhận xét.",
+    );
   }
   return { mssvIndex, nameIndex, scoreIndex, feedbackIndex };
 }
@@ -123,7 +158,11 @@ function getCellString(value: unknown): string {
     return value.trim();
   }
   if (typeof value === "object") {
-    if ("result" in value && value.result !== undefined && value.result !== null) {
+    if (
+      "result" in value &&
+      value.result !== undefined &&
+      value.result !== null
+    ) {
       return String(value.result).trim();
     }
     if (
@@ -135,14 +174,19 @@ function getCellString(value: unknown): string {
         .join("")
         .trim();
     }
-    if ("text" in value && typeof (value as { text: unknown }).text === "string") {
+    if (
+      "text" in value &&
+      typeof (value as { text: unknown }).text === "string"
+    ) {
       return (value as { text: string }).text.trim();
     }
   }
   return String(value).trim();
 }
 
-export async function parseEvaluationXlsx(buffer: ArrayBuffer): Promise<SourceRow[]> {
+export async function parseEvaluationXlsx(
+  buffer: ArrayBuffer,
+): Promise<SourceRow[]> {
   const workbook = new Workbook();
   try {
     await workbook.xlsx.load(Buffer.from(buffer) as never);
@@ -199,8 +243,14 @@ export async function previewEvaluationFile(
     validationError("Tệp phải có hàng tiêu đề");
   }
 
-  const { mssvIndex, nameIndex, scoreIndex, feedbackIndex } = resolveEvaluationColumns(headerRow.cells);
-  const semanticIndexes = new Set([mssvIndex, nameIndex, scoreIndex, feedbackIndex]);
+  const { mssvIndex, nameIndex, scoreIndex, feedbackIndex } =
+    resolveEvaluationColumns(headerRow.cells);
+  const semanticIndexes = new Set([
+    mssvIndex,
+    nameIndex,
+    scoreIndex,
+    feedbackIndex,
+  ]);
   const extraHeaderIndexes = headerRow.cells
     .map((_, index) => index)
     .filter((index) => !semanticIndexes.has(index));
@@ -212,7 +262,11 @@ export async function previewEvaluationFile(
     .eq("class_section_id", assignment.classSectionId);
 
   if (studentError || !students) {
-    throw new ApiError(500, API_ERROR_CODES.internal, "Lỗi đọc danh sách sinh viên");
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Lỗi đọc danh sách sinh viên",
+    );
   }
 
   const studentMap = new Map(
@@ -223,7 +277,10 @@ export async function previewEvaluationFile(
     .select("student_id, score, feedback")
     .eq("assignment_id", assignmentId);
   const existingByStudent = new Map(
-    (existingEvaluations ?? []).map((evaluation) => [evaluation.student_id, evaluation]),
+    (existingEvaluations ?? []).map((evaluation) => [
+      evaluation.student_id,
+      evaluation,
+    ]),
   );
 
   const nonEmptyRows = dataRows.filter((row) =>
@@ -239,12 +296,19 @@ export async function previewEvaluationFile(
 
   for (const row of nonEmptyRows) {
     const rawMssv = (row.cells[mssvIndex] ?? "").trim();
-    const rawName = nameIndex !== undefined ? (row.cells[nameIndex] ?? "").trim() : undefined;
-    const rawScore = scoreIndex !== undefined ? (row.cells[scoreIndex] ?? "").trim() : "";
-    const rawFeedback = feedbackIndex !== undefined ? (row.cells[feedbackIndex] ?? "").trim() : "";
+    const rawName =
+      nameIndex !== undefined ? (row.cells[nameIndex] ?? "").trim() : undefined;
+    const rawScore =
+      scoreIndex !== undefined ? (row.cells[scoreIndex] ?? "").trim() : "";
+    const rawFeedback =
+      feedbackIndex !== undefined
+        ? (row.cells[feedbackIndex] ?? "").trim()
+        : "";
 
     const errors: Array<{ field: string; message: string }> = [];
-    const warnings = extraHeaderIndexes.some((index) => (row.cells[index] ?? "").trim() !== "")
+    const warnings = extraHeaderIndexes.some(
+      (index) => (row.cells[index] ?? "").trim() !== "",
+    )
       ? [{ field: "columns", message: "Cột thừa đã được bỏ qua" }]
       : undefined;
 
@@ -288,7 +352,10 @@ export async function previewEvaluationFile(
     if (rawScore !== "") {
       const numScore = Number(rawScore.replace(",", "."));
       if (Number.isNaN(numScore)) {
-        errors.push({ field: "score", message: "Điểm không phải là số hợp lệ" });
+        errors.push({
+          field: "score",
+          message: "Điểm không phải là số hợp lệ",
+        });
       } else if (numScore < 0) {
         errors.push({ field: "score", message: "Điểm không được nhỏ hơn 0" });
       } else if (numScore > assignment.maxScore) {
@@ -307,7 +374,10 @@ export async function previewEvaluationFile(
     let parsedFeedback: string | null = null;
     if (rawFeedback !== "") {
       if (rawFeedback.length > 5000) {
-        errors.push({ field: "feedback", message: "Nhận xét vượt quá 5.000 ký tự" });
+        errors.push({
+          field: "feedback",
+          message: "Nhận xét vượt quá 5.000 ký tự",
+        });
       } else {
         parsedFeedback = rawFeedback;
       }
@@ -316,7 +386,8 @@ export async function previewEvaluationFile(
     const existing = student ? existingByStudent.get(student.id) : undefined;
     const action = !existing
       ? "create"
-      : Number(existing.score ?? -1) === Number(parsedScore ?? -1) && (existing.feedback ?? "") === (parsedFeedback ?? "")
+      : Number(existing.score ?? -1) === Number(parsedScore ?? -1) &&
+          (existing.feedback ?? "") === (parsedFeedback ?? "")
         ? "unchanged"
         : "update";
 
@@ -389,7 +460,11 @@ export async function executeEvaluationImport(
   });
 
   if (error) {
-    throw new ApiError(400, API_ERROR_CODES.validation, "Không thể lưu kết quả đánh giá: " + error.message);
+    throw new ApiError(
+      400,
+      API_ERROR_CODES.validation,
+      "Không thể lưu kết quả đánh giá: " + error.message,
+    );
   }
 
   const changed = (data ?? []) as Array<{
@@ -416,10 +491,16 @@ export async function executeEvaluationImport(
         });
       }),
     );
-    notificationSent = deliveries.filter((item) => item.status === "fulfilled").length;
+    notificationSent = deliveries.filter(
+      (item) => item.status === "fulfilled",
+    ).length;
     notificationFailed = deliveries.length - notificationSent;
-    emailSent = deliveries.filter((item) => item.status === "fulfilled" && item.value.emailSent).length;
-    emailFailed = deliveries.filter((item) => item.status === "fulfilled" && !item.value.emailSent).length;
+    emailSent = deliveries.filter(
+      (item) => item.status === "fulfilled" && item.value.emailSent,
+    ).length;
+    emailFailed = deliveries.filter(
+      (item) => item.status === "fulfilled" && !item.value.emailSent,
+    ).length;
   }
 
   return {

@@ -65,9 +65,7 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
     await fetch(endpoint, { method: "POST" });
     if (role === "student") {
       router.replace(
-        classCode
-          ? `/class/${encodeURIComponent(classCode)}/login`
-          : "/",
+        classCode ? `/class/${encodeURIComponent(classCode)}/login` : "/",
       );
     } else {
       router.replace("/admin/login");
@@ -160,6 +158,7 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
 
 function StudentNotificationBell({ classCode }: { classCode: string }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const { notifications, unreadCount, markAsRead } = useNotificationPolling();
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -193,6 +192,11 @@ function StudentNotificationBell({ classCode }: { classCode: string }) {
                 onClick={() => {
                   void markAsRead(notif.id);
                   setOpen(false);
+                  if (notif.evaluationId) {
+                    router.push(
+                      `/class/${encodeURIComponent(classCode)}/grades?assignment=${encodeURIComponent(notif.evaluationId)}`,
+                    );
+                  }
                 }}
                 className={`header-notification-item ${notif.readAt ? "" : "is-unread"}`}
               >

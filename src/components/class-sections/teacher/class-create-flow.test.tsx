@@ -1,10 +1,4 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.fn();
@@ -145,7 +139,9 @@ describe("ClassCreateFlow", () => {
         (_content, element) =>
           element?.tagName.toLowerCase() === "p" &&
           Boolean(
-            element.textContent?.includes("mã PIN mặc định 111111 trong lần đầu tiên"),
+            element.textContent?.includes(
+              "mã PIN mặc định 111111 trong lần đầu tiên",
+            ),
           ),
       ),
     ).toBeInTheDocument();

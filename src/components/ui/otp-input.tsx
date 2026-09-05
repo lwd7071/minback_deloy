@@ -5,13 +5,19 @@ import { useRef } from "react";
 export function OtpInput({
   value,
   onChange,
+  onComplete,
   disabled,
+  isError = false,
+  isLocked = false,
   length = 6,
 }: {
   value: string;
   onChange: (value: string) => void;
+  onComplete?: (value: string) => void;
   disabled?: boolean;
   length?: number;
+  isError?: boolean;
+  isLocked?: boolean;
 }) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -20,6 +26,7 @@ export function OtpInput({
     currentChars[index] = digit;
     const nextValue = currentChars.join("").trimEnd();
     onChange(nextValue);
+    if (nextValue.length === length) onComplete?.(nextValue);
 
     if (digit && index < length - 1) {
       refs.current[index + 1]?.focus();
@@ -28,7 +35,7 @@ export function OtpInput({
 
   return (
     <div
-      className="otp-input"
+      className={`otp-input ${isError ? "otp-input-error" : ""} ${isLocked ? "otp-input-locked" : ""}`}
       onPaste={(event) => {
         const digits = event.clipboardData
           .getData("text")
@@ -37,6 +44,7 @@ export function OtpInput({
         if (digits) {
           event.preventDefault();
           onChange(digits);
+          if (digits.length === length) onComplete?.(digits);
           const targetIndex = Math.min(digits.length, length) - 1;
           refs.current[Math.max(0, targetIndex)]?.focus();
         }
@@ -47,7 +55,7 @@ export function OtpInput({
           aria-label={`Chữ số PIN ${index + 1}`}
           autoComplete={index === 0 ? "one-time-code" : "off"}
           className="otp-digit"
-          disabled={disabled}
+          disabled={disabled || isLocked}
           inputMode="numeric"
           key={index}
           maxLength={1}

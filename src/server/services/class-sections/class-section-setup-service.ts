@@ -67,7 +67,9 @@ export async function createTeacherClassSectionSetup(
         studentId: randomUUID(),
         mssv: row.student.mssv,
         fullName: row.student.fullName,
-        email: row.student.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.student.mssv),
+        email:
+          row.student.email?.trim().toLowerCase() ||
+          deriveInstitutionalEmail(row.student.mssv),
         nickname: row.student.mssv,
         pinHash: await hash(initialPin, BCRYPT_ROUNDS),
       };

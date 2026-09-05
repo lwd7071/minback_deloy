@@ -175,16 +175,29 @@ export async function findStudentById(
   return toStudentAdminDto(data as StudentRow);
 }
 
-export async function updateStudentEmail(studentId: string, email: string): Promise<void> {
+export async function updateStudentEmail(
+  studentId: string,
+  email: string,
+): Promise<void> {
   const { error } = await createAdminClient()
     .from("students")
-    .update({ email: email.trim().toLowerCase(), email_source: "student_verified", email_verified_at: new Date().toISOString() })
+    .update({
+      email: email.trim().toLowerCase(),
+      email_source: "student_verified",
+      email_verified_at: new Date().toISOString(),
+    })
     .eq("id", studentId);
   if (error) throw new Error("STUDENT_EMAIL_UPDATE_FAILED");
 }
 
-export async function findStudentByIdForSession(studentId: string): Promise<StudentAdminDto | null> {
-  const { data, error } = await createAdminClient().from("students").select("*").eq("id", studentId).maybeSingle();
+export async function findStudentByIdForSession(
+  studentId: string,
+): Promise<StudentAdminDto | null> {
+  const { data, error } = await createAdminClient()
+    .from("students")
+    .select("*")
+    .eq("id", studentId)
+    .maybeSingle();
   if (error || !data) return null;
   return toStudentAdminDto(data as StudentRow);
 }

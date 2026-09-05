@@ -13,11 +13,11 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 
-import { errorResponse, successResponse } from "@/lib/api/response";  // trợ giúp chuẩn hóa cấu trúc json 
-import { studentLoginSchema } from "@/schemas/student-auth"; // tính hợp lệ input 
-import { loginStudent } from "@/server/services/students/student-auth-service"; // xử lý logic đăng nhập của sinh viên 
-import { ApiError } from "@/lib/api/errors"; // xử lý lỗi 
-import { assertSameOrigin } from "@/lib/api/origin"; //  kiểm tra tính hợp lệ của request  
+import { errorResponse, successResponse } from "@/lib/api/response"; // trợ giúp chuẩn hóa cấu trúc json
+import { studentLoginSchema } from "@/schemas/student-auth"; // tính hợp lệ input
+import { loginStudent } from "@/server/services/students/student-auth-service"; // xử lý logic đăng nhập của sinh viên
+import { ApiError } from "@/lib/api/errors"; // xử lý lỗi
+import { assertSameOrigin } from "@/lib/api/origin"; //  kiểm tra tính hợp lệ của request
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -35,7 +35,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const parsed = studentLoginSchema.safeParse(body);
-    if (!parsed.success) { // nếu lỗi trích ra filed va lý do qua message 
+    if (!parsed.success) {
+      // nếu lỗi trích ra filed va lý do qua message
       const details = parsed.error.issues.map((e) => ({
         field: e.path.join("."),
         message: e.message,
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Lấy IP từ header (Next.js / Vercel / nginx forward)
-    const rawIp = // đếm số lần đăng nhập sai qua trích xuất ip client 
+    const rawIp = // đếm số lần đăng nhập sai qua trích xuất ip client
       request.headers.get("x-forwarded-for") ??
       request.headers.get("x-real-ip");
 

@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { OtpInput } from "@/components/ui/otp-input";
+import { Alert } from "@/components/ui/alert";
 export function PinLoginForm({
   classCode,
   initialNickname = "",
@@ -35,7 +36,7 @@ export function PinLoginForm({
       const response = await fetch("/api/v1/student/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ classCode, nickname, pin }),
+        body: JSON.stringify({ classCode, identifier: nickname, pin }),
       });
       const body = await response.json();
       if (!response.ok) {
@@ -63,13 +64,19 @@ export function PinLoginForm({
   }
   return (
     <form className="form-stack" onSubmit={(event) => void submit(event)}>
+      <Alert variant="info">
+        Lần đầu đăng nhập: dùng MSSV và PIN 111111. Bạn sẽ được yêu cầu đổi
+        nickname và PIN.
+      </Alert>
       <div className="form-field">
-        <label className="form-label" htmlFor="student-identifier">Nickname hoặc MSSV</label>
+        <label className="form-label" htmlFor="student-identifier">
+          MSSV
+        </label>
         <input
           id="student-identifier"
           className="field-underline"
           autoComplete="off"
-          placeholder="Nhập nickname hoặc mã số sinh viên"
+          placeholder="Nhập mã số sinh viên"
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
         />
@@ -98,9 +105,27 @@ export function PinLoginForm({
       >
         Đăng nhập
       </Button>
-      <div className="split" style={{ justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
-        <a className="btn btn-ghost button-sm" href={backUrl || `/class/${encodeURIComponent(classCode)}`}>Trở lại</a>
-        <a className="muted" style={{ fontSize: "0.85rem", textDecoration: "underline" }} href={`/class/${encodeURIComponent(classCode)}/forgot-pin`}>Quên mã PIN?</a>
+      <div
+        className="split"
+        style={{
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: "4px",
+        }}
+      >
+        <a
+          className="btn btn-ghost button-sm"
+          href={backUrl || `/class/${encodeURIComponent(classCode)}`}
+        >
+          Trở lại
+        </a>
+        <a
+          className="muted"
+          style={{ fontSize: "0.85rem", textDecoration: "underline" }}
+          href={`/class/${encodeURIComponent(classCode)}/forgot-pin`}
+        >
+          Quên mã PIN?
+        </a>
       </div>
     </form>
   );

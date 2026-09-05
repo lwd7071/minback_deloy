@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -19,6 +25,17 @@ describe("OtpInput", () => {
       clipboardData: { getData: () => "12a3456" },
     });
     expect(screen.getByLabelText("Chữ số PIN 6")).toHaveValue("6");
+  });
+
+  it("calls onComplete when all digits are entered", () => {
+    const onComplete = vi.fn();
+    render(
+      <OtpInput value="" onChange={() => undefined} onComplete={onComplete} />,
+    );
+    fireEvent.paste(screen.getByLabelText("Chữ số PIN 1"), {
+      clipboardData: { getData: () => "123456" },
+    });
+    expect(onComplete).toHaveBeenCalledWith("123456");
   });
 });
 
@@ -44,6 +61,23 @@ describe("Modal", () => {
       </Modal>,
     );
     expect(screen.getByRole("dialog")).toHaveClass("modal-lg");
+  });
+
+  it("keeps keyboard focus inside the dialog", async () => {
+    render(
+      <Modal open onClose={() => undefined} title="Chi tiết">
+        <button>Đầu</button>
+        <button>Cuối</button>
+      </Modal>,
+    );
+    const close = screen.getByRole("button", { name: "Đóng" });
+    const last = screen.getByRole("button", { name: "Cuối" });
+    await waitFor(() => expect(screen.getByRole("dialog")).toHaveFocus());
+    last.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(last).toHaveFocus();
   });
 });
 

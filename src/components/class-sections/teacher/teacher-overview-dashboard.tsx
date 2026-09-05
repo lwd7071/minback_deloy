@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
+import { PageHeader } from "@/components/layout/page-header";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { AppIcon } from "@/components/ui/app-icon";
-import { formatDeadlineInfo } from "@/lib/deadline-utils";
-import { DashboardMetric, MiniProgressRing } from "./class-summary-dashboard";
+import { MiniProgressRing } from "./class-summary-dashboard";
 import type {
   DashboardActivityItem,
   PendingGradingItem,
@@ -30,15 +31,6 @@ export type DashboardOverviewData = {
   classProgressMeta: { page: number; pageSize: number; total: number };
   recentActivity: DashboardActivityItem[];
 };
-
-function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
-}
 
 function timeAgo(dateStr: string) {
   const date = new Date(dateStr);
@@ -70,42 +62,28 @@ export function TeacherOverviewDashboard({
 
   return (
     <div className="teacher-dash">
-      <header className="teacher-dash-header">
-        <div className="teacher-dash-heading">
-          <span className="teacher-dash-icon">
-            <AppIcon name="study" size={28} />
-          </span>
-          <div>
-            <h1>Tổng quan</h1>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Tổng quan"
+        title="Bảng điều khiển"
+        description="Theo dõi tiến độ chấm và công bố phản hồi cho các lớp học phần."
+      />
 
       <div className="teacher-metrics-grid" aria-label="Tổng quan lớp học">
-        <DashboardMetric
-          icon="classes"
-          tone="blue"
-          label="Lớp"
-          value={data.metrics.classCount}
-        />
-        <DashboardMetric
-          icon="students"
-          tone="green"
-          label="Sinh viên"
-          value={data.metrics.studentCount}
-        />
-        <DashboardMetric
-          icon="book"
-          tone="amber"
-          label="Bài mở"
-          value={data.metrics.assignmentCount}
-        />
-        <DashboardMetric
-          icon="check"
-          tone="violet"
-          label="Đã chấm"
+        <StatCard label="Lớp" value={data.metrics.classCount}>
+          <AppIcon name="classes" size={19} />
+        </StatCard>
+        <StatCard label="Sinh viên" value={data.metrics.studentCount}>
+          <AppIcon name="students" size={19} />
+        </StatCard>
+        <StatCard label="Bài cần xử lý" value={data.pendingGrading.length}>
+          <AppIcon name="gradebook" size={19} />
+        </StatCard>
+        <StatCard
+          label="Đã công bố"
           value={`${data.metrics.gradingPercentage}%`}
-        />
+        >
+          <AppIcon name="check" size={19} />
+        </StatCard>
       </div>
 
       <div className="teacher-overview-panels">
@@ -118,7 +96,6 @@ export function TeacherOverviewDashboard({
           {data.pendingGrading.length > 0 ? (
             <div className="pending-grading-list">
               {data.pendingGrading.map((item) => {
-                const deadline = formatDeadlineInfo(item.dueDate);
                 return (
                   <Link
                     key={item.assignmentId}
@@ -131,14 +108,11 @@ export function TeacherOverviewDashboard({
                         <span className="badge badge-amber">
                           {item.classCode}
                         </span>
-                        <span className="pending-deadline">
-                          Hạn: {deadline.formattedShort}
-                        </span>
                       </div>
                       <h3>{item.assignmentTitle}</h3>
                       <div className="pending-card-footer">
-                        <AppIcon name="upload" size={16} />
-                        <strong>{item.pendingCount}</strong> bài nộp chờ chấm
+                        <AppIcon name="gradebook" size={16} />
+                        <strong>{item.pendingCount}</strong> kết quả cần xử lý
                       </div>
                     </Card>
                   </Link>

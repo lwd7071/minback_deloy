@@ -10,15 +10,12 @@ export const cacheTags = {
   teacher: (teacherId: string) => `minback:teacher:${teacherId}`,
   teacherDashboard: (teacherId: string) =>
     `minback:teacher:${teacherId}:dashboard`,
-  teacherClasses: (teacherId: string) =>
-    `minback:teacher:${teacherId}:classes`,
+  teacherClasses: (teacherId: string) => `minback:teacher:${teacherId}:classes`,
   teacherSettings: (teacherId: string) =>
     `minback:teacher:${teacherId}:settings`,
   student: (studentId: string) => `minback:student:${studentId}`,
-  studentProfile: (studentId: string) =>
-    `minback:student:${studentId}:profile`,
-  classSection: (classSectionId: string) =>
-    `minback:class:${classSectionId}`,
+  studentProfile: (studentId: string) => `minback:student:${studentId}:profile`,
+  classSection: (classSectionId: string) => `minback:class:${classSectionId}`,
   classAssignments: (classSectionId: string) =>
     `minback:class:${classSectionId}:assignments`,
   classStudents: (classSectionId: string) =>

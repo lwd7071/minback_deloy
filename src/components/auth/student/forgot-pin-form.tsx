@@ -93,7 +93,10 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
   if (step === "SUCCESS") {
     return (
       <div className="stack" style={{ textAlign: "center", gap: "16px" }}>
-        <div className="badge badge-success" style={{ alignSelf: "center", padding: "6px 14px" }}>
+        <div
+          className="badge badge-success"
+          style={{ alignSelf: "center", padding: "6px 14px" }}
+        >
           Thành công
         </div>
         <p style={{ margin: 0 }}>{successMessage}</p>
@@ -112,17 +115,22 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
       <form onSubmit={(e) => void handleConfirmOtp(e)} className="form-stack">
         <div className="form-notice" role="note">
           <p>
-            Mã OTP 6 số đã được gửi tới email sinh viên của bạn (HCMUTE). Vui lòng kiểm tra hộp thư và nhập mã OTP bên dưới.
+            Mã OTP 6 số đã được gửi tới email sinh viên của bạn (HCMUTE). Vui
+            lòng kiểm tra hộp thư và nhập mã OTP bên dưới.
           </p>
         </div>
 
         <div className="form-field">
-          <label className="form-label" htmlFor="otp-input">Mã OTP (6 chữ số)</label>
+          <label className="form-label" htmlFor="otp-input">
+            Mã OTP (6 chữ số)
+          </label>
           <OtpInput value={otp} onChange={setOtp} disabled={busy} />
         </div>
 
         <div className="form-field">
-          <label className="form-label" htmlFor="new-pin-input">Mã PIN mới (6 chữ số)</label>
+          <label className="form-label" htmlFor="new-pin-input">
+            Mã PIN mới (6 chữ số)
+          </label>
           <input
             id="new-pin-input"
             type="password"
@@ -131,14 +139,18 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
             className="field-underline"
             placeholder="••••••"
             value={newPin}
-            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) =>
+              setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             disabled={busy}
             required
           />
         </div>
 
         <div className="form-field">
-          <label className="form-label" htmlFor="confirm-pin-input">Xác nhận mã PIN mới</label>
+          <label className="form-label" htmlFor="confirm-pin-input">
+            Xác nhận mã PIN mới
+          </label>
           <input
             id="confirm-pin-input"
             type="password"
@@ -147,7 +159,9 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
             className="field-underline"
             placeholder="••••••"
             value={confirmPin}
-            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) =>
+              setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             disabled={busy}
             required
           />
@@ -161,7 +175,12 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
 
         <Button
           loading={busy}
-          disabled={busy || otp.length !== 6 || newPin.length !== 6 || confirmPin.length !== 6}
+          disabled={
+            busy ||
+            otp.length !== 6 ||
+            newPin.length !== 6 ||
+            confirmPin.length !== 6
+          }
         >
           Xác nhận đặt lại PIN
         </Button>
@@ -187,12 +206,15 @@ export function ForgotPinForm({ classCode }: { classCode: string }) {
     <form onSubmit={(e) => void handleRequestOtp(e)} className="form-stack">
       <div className="form-notice" role="note">
         <p>
-          Nhập MSSV của bạn. Hệ thống sẽ gửi mã OTP 6 chữ số tới email trường để giúp bạn đặt lại mã PIN.
+          Nhập MSSV của bạn. Hệ thống sẽ gửi mã OTP 6 chữ số tới email trường để
+          giúp bạn đặt lại mã PIN.
         </p>
       </div>
 
       <div className="form-field">
-        <label className="form-label" htmlFor="forgot-mssv">Mã số sinh viên (MSSV)</label>
+        <label className="form-label" htmlFor="forgot-mssv">
+          Mã số sinh viên (MSSV)
+        </label>
         <input
           id="forgot-mssv"
           type="text"

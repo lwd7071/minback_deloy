@@ -86,9 +86,7 @@ describe("Student Auth Schemas Validation", () => {
   describe("credentialsUpdateSchema", () => {
     it("requires at least one field and validates optional fields", () => {
       expect(() => credentialsUpdateSchema.parse({})).toThrow();
-      expect(
-        credentialsUpdateSchema.parse({ nickname: "new_nick" }),
-      ).toEqual({
+      expect(credentialsUpdateSchema.parse({ nickname: "new_nick" })).toEqual({
         nickname: "new_nick",
       });
       expect(credentialsUpdateSchema.parse({ pin: "999888" })).toEqual({

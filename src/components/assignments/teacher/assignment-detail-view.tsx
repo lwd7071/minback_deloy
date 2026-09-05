@@ -39,7 +39,10 @@ export function AssignmentDetailView({
 
   function toDatetimeLocal(val: string | Date): string {
     if (!val) return "";
-    const d = typeof val === "string" ? new Date(val.includes("T") ? val : `${val}T23:59:00+07:00`) : val;
+    const d =
+      typeof val === "string"
+        ? new Date(val.includes("T") ? val : `${val}T23:59:00+07:00`)
+        : val;
     if (Number.isNaN(d.getTime())) return "";
     const pad = (n: number) => String(n).padStart(2, "0");
     const year = d.getFullYear();
@@ -85,6 +88,8 @@ export function AssignmentDetailView({
     return () => {
       active = false;
     };
+    // applyAssignment only updates local form state; assignmentId is the fetch lifecycle key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignmentId]);
 
   async function updateAssignment(event: React.FormEvent<HTMLFormElement>) {
@@ -183,7 +188,11 @@ export function AssignmentDetailView({
 
   return (
     <div className="settings-stack">
-      <form className="form-stack" onSubmit={updateAssignment} autoComplete="off">
+      <form
+        className="form-stack"
+        onSubmit={updateAssignment}
+        autoComplete="off"
+      >
         <label className="form-field">
           <span className="form-label">Tên bài tập</span>
           <input
@@ -194,36 +203,7 @@ export function AssignmentDetailView({
             autoComplete="off"
           />
         </label>
-        <label className="form-field">
-          <span className="form-label">Mô tả</span>
-          <textarea
-            className="form-input"
-            rows={3}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
-        </label>
         <div className="grid">
-          <label className="form-field">
-            <span className="form-label">Ngày giao</span>
-            <input
-              className="form-input"
-              type="datetime-local"
-              value={assignedDate}
-              onChange={(event) => setAssignedDate(event.target.value)}
-              required
-            />
-          </label>
-          <label className="form-field">
-            <span className="form-label">Hạn nộp</span>
-            <input
-              className="form-input"
-              type="datetime-local"
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-              required
-            />
-          </label>
           <label className="form-field">
             <span className="form-label">Điểm tối đa</span>
             <input
@@ -255,13 +235,34 @@ export function AssignmentDetailView({
           </label>
         </div>
 
-        {error && <p className="form-error" role="alert">{error}</p>}
-        {successMsg && <p className="form-success" role="status">{successMsg}</p>}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        {successMsg && (
+          <p className="form-success" role="status">
+            {successMsg}
+          </p>
+        )}
 
         {confirmDelete ? (
-          <div className="form-notice" style={{ borderColor: "var(--danger)", background: "rgba(180, 40, 40, 0.05)" }}>
-            <p style={{ color: "var(--danger)", margin: 0, fontSize: "0.88rem" }}>
-              <strong>Xác nhận:</strong> Bạn có chắc chắn muốn xóa bài tập này? (Chỉ xóa được nếu chưa có sinh viên nộp bài).
+          <div
+            className="form-notice"
+            style={{
+              borderColor: "var(--color-error)",
+              background: "var(--color-error-soft)",
+            }}
+          >
+            <p
+              style={{
+                color: "var(--color-error)",
+                margin: 0,
+                fontSize: "0.88rem",
+              }}
+            >
+              <strong>Xác nhận:</strong> Bạn có chắc chắn muốn xóa bài tập này?
+              (Chỉ xóa được nếu chưa có sinh viên nộp bài).
             </p>
             <div className="cluster" style={{ marginTop: "10px" }}>
               <button

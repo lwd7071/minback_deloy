@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Alert } from "@/components/ui/alert";
+import { OtpInput } from "@/components/ui/otp-input";
 
 type Session = {
   student: { mssv: string; fullName: string; nickname: string };
@@ -122,17 +124,15 @@ export function ChangeCredentialsForm({ classCode }: { classCode: string }) {
       className="login-form"
       noValidate
     >
-      <div className="form-notice" role="note">
-        <p>
-          Để bảo mật tài khoản, bạn cần{" "}
-          {needNickname && needPin
-            ? "đặt Nickname mới và PIN mới"
-            : needNickname
-              ? "đặt Nickname mới"
-              : "đặt PIN mới"}{" "}
-          trước khi vào hồ sơ học tập.
-        </p>
-      </div>
+      <Alert variant="info">
+        Để bảo mật tài khoản, bạn cần{" "}
+        {needNickname && needPin
+          ? "đặt Nickname mới và PIN mới"
+          : needNickname
+            ? "đặt Nickname mới"
+            : "đặt PIN mới"}{" "}
+        trước khi vào hồ sơ học tập.
+      </Alert>
 
       {needNickname && (
         <div className="form-field">
@@ -164,51 +164,23 @@ export function ChangeCredentialsForm({ classCode }: { classCode: string }) {
             <label htmlFor="new-pin" className="form-label">
               PIN mới (6 chữ số)
             </label>
-            <input
-              id="new-pin"
-              type="password"
-              className="form-input"
-              placeholder="••••••"
-              inputMode="numeric"
-              autoComplete="new-password"
-              maxLength={6}
-              required
-              disabled={busy}
-              value={pin}
-              onChange={(e) =>
-                setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-            />
+            <OtpInput value={pin} onChange={setPin} disabled={busy} />
           </div>
 
           <div className="form-field">
             <label htmlFor="confirm-pin" className="form-label">
               Xác nhận PIN mới
             </label>
-            <input
-              id="confirm-pin"
-              type="password"
-              className="form-input"
-              placeholder="••••••"
-              inputMode="numeric"
-              autoComplete="new-password"
-              maxLength={6}
-              required
-              disabled={busy}
+            <OtpInput
               value={pinConfirm}
-              onChange={(e) =>
-                setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
+              onChange={setPinConfirm}
+              disabled={busy}
             />
           </div>
         </>
       )}
 
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {error ? <Alert variant="error">{error}</Alert> : null}
 
       <button
         id="change-credentials-submit"

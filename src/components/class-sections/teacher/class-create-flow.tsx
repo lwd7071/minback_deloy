@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { classSectionCreateSchema } from "@/schemas/class-section";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import type { ClassSectionSetupDto } from "@/types/class-section";
 import type { ImportPreviewDto } from "@/types/frontend-rebuild";
 
@@ -22,8 +23,6 @@ const STEPS: Array<{ id: CreateClassStep; label: string }> = [
 function stepIndex(step: CreateClassStep): number {
   return STEPS.findIndex((item) => item.id === step);
 }
-
-
 
 export function ClassCreateFlow() {
   const router = useRouter();
@@ -383,12 +382,10 @@ export function ClassCreateFlow() {
               </Button>
             </section>
           </div>
-          <div className="form-notice">
-            <p>
-              Lớp và sinh viên chỉ được ghi vào hệ thống sau khi bạn xác nhận
-              bên dưới.
-            </p>
-          </div>
+          <Alert variant="info">
+            Lớp và sinh viên chỉ được ghi vào hệ thống sau khi bạn xác nhận bên
+            dưới. Sinh viên mới dùng MSSV và PIN mặc định 111111.
+          </Alert>
           <div className="class-create-actions is-split">
             <Button
               variant="ghost"
@@ -429,11 +426,12 @@ export function ClassCreateFlow() {
             </p>
           )}
           {(result.import?.summary.created ?? 0) > 0 ? (
-            <div className="form-notice">
+            <Alert variant="info">
               <p>
-                Sinh viên có thể đăng nhập bằng <strong>MSSV</strong> và mã PIN mặc định <strong>111111</strong> trong lần đầu tiên.
+                Sinh viên có thể đăng nhập bằng <strong>MSSV</strong> và mã PIN
+                mặc định <strong>111111</strong> trong lần đầu tiên.
               </p>
-            </div>
+            </Alert>
           ) : null}
           <div className="class-create-actions">
             <Button

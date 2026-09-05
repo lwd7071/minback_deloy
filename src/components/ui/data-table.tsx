@@ -20,7 +20,16 @@ export function DataTable<T>({
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key}>{column.header}</th>
+              <th
+                className={
+                  column.key === columns[0]?.key
+                    ? "table-sticky-col"
+                    : undefined
+                }
+                key={column.key}
+              >
+                {column.header}
+              </th>
             ))}
           </tr>
         </thead>
@@ -28,7 +37,16 @@ export function DataTable<T>({
           {data.map((row) => (
             <tr key={getKey(row)}>
               {columns.map((column) => (
-                <td key={column.key}>{column.render(row)}</td>
+                <td
+                  className={
+                    column.key === columns[0]?.key
+                      ? "table-sticky-col"
+                      : undefined
+                  }
+                  key={column.key}
+                >
+                  {column.render(row)}
+                </td>
               ))}
             </tr>
           ))}

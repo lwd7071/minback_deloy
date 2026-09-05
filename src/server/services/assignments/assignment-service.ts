@@ -51,7 +51,9 @@ function assertAllowedStatusTransition(
 
 function assertValidDates(assignedDate: string, dueDate: string): void {
   const assignedTime = new Date(
-    assignedDate.includes("T") ? assignedDate : `${assignedDate}T00:00:00+07:00`,
+    assignedDate.includes("T")
+      ? assignedDate
+      : `${assignedDate}T00:00:00+07:00`,
   ).getTime();
   const dueTime = new Date(
     dueDate.includes("T") ? dueDate : `${dueDate}T23:59:59.999+07:00`,

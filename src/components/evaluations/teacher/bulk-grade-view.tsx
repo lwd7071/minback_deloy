@@ -246,7 +246,15 @@ export function BulkGradeView({
   return (
     <div className="teacher-dash grade-workspace">
       {/* Top Breadcrumb & Header Actions */}
-      <div className="split" style={{ alignItems: "center", marginBottom: "12px", gap: "12px", flexWrap: "wrap" }}>
+      <div
+        className="split"
+        style={{
+          alignItems: "center",
+          marginBottom: "12px",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
         <Link
           href={`/admin/classes/${classSectionId}/assignments`}
           className="btn btn-ghost btn-sm"
@@ -255,15 +263,6 @@ export function BulkGradeView({
           ← Quay lại danh sách bài tập
         </Link>
         <div className="cluster" style={{ gap: "8px" }}>
-          <a
-            href={`/api/v1/teacher/assignments/${assignment.id}/evaluations/import-template`}
-            className="btn btn-secondary btn-sm"
-            download
-            style={{ gap: "6px" }}
-          >
-            <AppIcon name="download" size={14} />
-            Tải file mẫu Excel
-          </a>
           <Button
             type="button"
             variant="secondary"
@@ -287,18 +286,10 @@ export function BulkGradeView({
               {assignment.status}
             </span>
             <span className="muted" style={{ fontSize: "0.86rem" }}>
-              Hạn nộp: {assignment.dueDate} · Điểm tối đa: {assignment.maxScore}
+              Điểm tối đa: {assignment.maxScore}
             </span>
           </div>
           <h1 style={{ margin: "6px 0 0" }}>{assignment.title}</h1>
-          {assignment.description ? (
-            <p
-              className="muted"
-              style={{ margin: "4px 0 0", fontSize: "0.92rem" }}
-            >
-              {assignment.description}
-            </p>
-          ) : null}
         </div>
 
         {/* Quick KPI Strip */}
@@ -308,308 +299,338 @@ export function BulkGradeView({
             <strong>{students.length}</strong>
           </div>
           <div className="grade-kpi-item">
-            <span className="muted">Đã nộp bài</span>
-            <strong className="text-info">{metrics.submitted}</strong>
-          </div>
-          <div className="grade-kpi-item">
-            <span className="muted">Cần chấm</span>
-            <strong className="text-warning">{metrics.pending}</strong>
-          </div>
-          <div className="grade-kpi-item">
-            <span className="muted">Đã chấm xong</span>
+            <span className="muted">Đã có kết quả</span>
             <strong className="text-success">{metrics.graded}</strong>
+          </div>
+          <div className="grade-kpi-item">
+            <span className="muted">Chưa công bố</span>
+            <strong className="text-warning">
+              {students.length - metrics.graded}
+            </strong>
           </div>
         </div>
       </header>
 
-      {/* Filter Tabs & Search Bar */}
-      <div className="grade-controls-bar">
-        <div className="grade-filter-tabs">
-          <button
+      <section
+        className="grade-import-primary card card-highlighted"
+        aria-labelledby="grade-import-title"
+      >
+        <div className="split">
+          <div>
+            <span className="eyebrow">Luồng chấm điểm</span>
+            <h2 id="grade-import-title">Import điểm và feedback</h2>
+            <p className="muted">
+              Tải một file CSV/XLSX gồm MSSV, Họ tên, Điểm và Feedback để xem
+              trước, lưu bản chấm hoặc công bố kết quả.
+            </p>
+          </div>
+          <Button
             type="button"
-            className={`grade-tab-btn ${activeTab === "all" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("all")}
+            variant="primary"
+            onClick={() => setImportModalOpen(true)}
           >
-            Tất cả ({students.length})
-          </button>
-          <button
-            type="button"
-            className={`grade-tab-btn ${activeTab === "pending" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("pending")}
-          >
-            Cần chấm ({metrics.pending})
-          </button>
-          <button
-            type="button"
-            className={`grade-tab-btn ${activeTab === "graded" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("graded")}
-          >
-            Đã chấm ({metrics.graded})
-          </button>
-          <button
-            type="button"
-            className={`grade-tab-btn ${activeTab === "unsubmitted" ? "is-active" : ""}`}
-            onClick={() => setActiveTab("unsubmitted")}
-          >
-            Chưa nộp ({metrics.unsubmitted})
-          </button>
+            <AppIcon name="upload" size={16} /> Nhập file điểm
+          </Button>
+        </div>
+      </section>
+
+      <div className="grade-import-supporting-editor" aria-hidden="true">
+        {/* Filter Tabs & Search Bar */}
+        <div className="grade-controls-bar">
+          <div className="grade-filter-tabs">
+            <button
+              type="button"
+              className={`grade-tab-btn ${activeTab === "all" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("all")}
+            >
+              Tất cả ({students.length})
+            </button>
+            <button
+              type="button"
+              className={`grade-tab-btn ${activeTab === "pending" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("pending")}
+            >
+              Cần chấm ({metrics.pending})
+            </button>
+            <button
+              type="button"
+              className={`grade-tab-btn ${activeTab === "graded" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("graded")}
+            >
+              Đã chấm ({metrics.graded})
+            </button>
+            <button
+              type="button"
+              className={`grade-tab-btn ${activeTab === "unsubmitted" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("unsubmitted")}
+            >
+              Chưa nộp ({metrics.unsubmitted})
+            </button>
+          </div>
+
+          <div className="grade-search-box">
+            <AppIcon name="search" size={16} />
+            <input
+              type="text"
+              placeholder="Tìm theo MSSV, Họ tên…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="grade-search-input"
+            />
+          </div>
         </div>
 
-        <div className="grade-search-box">
-          <AppIcon name="search" size={16} />
-          <input
-            type="text"
-            placeholder="Tìm theo MSSV, Họ tên…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="grade-search-input"
-          />
-        </div>
-      </div>
-
-      {pages > 1 ? (
-        <nav
-          className="pagination-summary cluster"
-          aria-label="Phân trang sinh viên"
-        >
-          <Link
-            href={pageHref(Math.max(1, studentMeta.page - 1))}
-            aria-disabled={studentMeta.page === 1}
-            onClick={confirmNavigation}
+        {pages > 1 ? (
+          <nav
+            className="pagination-summary cluster"
+            aria-label="Phân trang sinh viên"
           >
-            Trang trước
-          </Link>
-          <span>
-            {studentMeta.page} / {pages}
-          </span>
-          <Link
-            href={pageHref(Math.min(pages, studentMeta.page + 1))}
-            aria-disabled={studentMeta.page === pages}
-            onClick={confirmNavigation}
-          >
-            Trang sau
-          </Link>
-        </nav>
-      ) : null}
+            <Link
+              href={pageHref(Math.max(1, studentMeta.page - 1))}
+              aria-disabled={studentMeta.page === 1}
+              onClick={confirmNavigation}
+            >
+              Trang trước
+            </Link>
+            <span>
+              {studentMeta.page} / {pages}
+            </span>
+            <Link
+              href={pageHref(Math.min(pages, studentMeta.page + 1))}
+              aria-disabled={studentMeta.page === pages}
+              onClick={confirmNavigation}
+            >
+              Trang sau
+            </Link>
+          </nav>
+        ) : null}
 
-      {/* Spreadsheet / Table View */}
-      <div className="data-table-wrap" style={{ overflowX: "auto" }}>
-        <table className="data-table grade-table">
-          <thead>
-            <tr>
-              <th style={{ width: "22%" }}>Sinh viên</th>
-              <th style={{ width: "25%" }}>Bài nộp & Tệp tin</th>
-              <th style={{ width: "13%" }}>Điểm (/{assignment.maxScore})</th>
-              <th style={{ width: "16%" }}>Trạng thái</th>
-              <th style={{ width: "24%" }}>Phản hồi / Nhận xét</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => {
-                const draft = drafts[student.id];
-                const sub = submissions[student.id];
-                const hasSub = (sub?.attemptCount ?? 0) > 0;
-                if (!draft) return null;
+        {/* Spreadsheet / Table View */}
+        <div className="data-table-wrap" style={{ overflowX: "auto" }}>
+          <table className="data-table grade-table">
+            <thead>
+              <tr>
+                <th style={{ width: "22%" }}>Sinh viên</th>
+                <th style={{ width: "25%" }}>Bài nộp & Tệp tin</th>
+                <th style={{ width: "13%" }}>Điểm (/{assignment.maxScore})</th>
+                <th style={{ width: "16%" }}>Trạng thái</th>
+                <th style={{ width: "24%" }}>Phản hồi / Nhận xét</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map((student) => {
+                  const draft = drafts[student.id];
+                  const sub = submissions[student.id];
+                  const hasSub = (sub?.attemptCount ?? 0) > 0;
+                  if (!draft) return null;
 
-                return (
-                  <tr
-                    key={student.id}
-                    className={hasSub ? "" : "is-unsubmitted"}
-                  >
-                    {/* Cột 1: Thông tin sinh viên */}
-                    <td>
-                      <div className="grade-student-cell">
-                        <div className="grade-student-avatar">
-                          {student.fullName.slice(0, 1)}
-                        </div>
-                        <div>
-                          <strong>{student.fullName}</strong>
-                          <span className="muted grade-student-mssv">
-                            {student.mssv}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Cột 2: Bài nộp & File đính kèm */}
-                    <td>
-                      {hasSub ? (
-                        <div className="stack" style={{ gap: "6px" }}>
-                          <div className="cluster" style={{ gap: "6px" }}>
-                            <span className="badge badge-success">
-                              Lần #{sub?.attemptCount}
+                  return (
+                    <tr
+                      key={student.id}
+                      className={hasSub ? "" : "is-unsubmitted"}
+                    >
+                      {/* Cột 1: Thông tin sinh viên */}
+                      <td>
+                        <div className="grade-student-cell">
+                          <div className="grade-student-avatar">
+                            {student.fullName.slice(0, 1)}
+                          </div>
+                          <div>
+                            <strong>{student.fullName}</strong>
+                            <span className="muted grade-student-mssv">
+                              {student.mssv}
                             </span>
-                            {sub?.latestAttempt?.isLate && (
-                              <span className="badge badge-warning">
-                                Nộp trễ
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Cột 2: Bài nộp & File đính kèm */}
+                      <td>
+                        {hasSub ? (
+                          <div className="stack" style={{ gap: "6px" }}>
+                            <div className="cluster" style={{ gap: "6px" }}>
+                              <span className="badge badge-success">
+                                Lần #{sub?.attemptCount}
+                              </span>
+                              {sub?.latestAttempt?.isLate && (
+                                <span className="badge badge-warning">
+                                  Nộp trễ
+                                </span>
+                              )}
+                            </div>
+                            {sub?.latestAttempt?.files?.length ? (
+                              <div
+                                className="cluster"
+                                style={{ gap: "6px", flexWrap: "wrap" }}
+                              >
+                                {sub.latestAttempt.files.map((file) => (
+                                  <a
+                                    key={file.id}
+                                    href={file.downloadUrl}
+                                    className="btn btn-secondary btn-sm"
+                                    style={{
+                                      fontSize: "0.78rem",
+                                      padding: "3px 8px",
+                                      gap: "4px",
+                                    }}
+                                    title={file.originalName}
+                                  >
+                                    <AppIcon name="upload" size={12} />
+                                    <span
+                                      style={{
+                                        maxWidth: "130px",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {file.originalName}
+                                    </span>
+                                  </a>
+                                ))}
+                              </div>
+                            ) : (
+                              <span
+                                className="muted"
+                                style={{ fontSize: "0.82rem" }}
+                              >
+                                Chưa tải file
                               </span>
                             )}
                           </div>
-                          {sub?.latestAttempt?.files?.length ? (
-                            <div
-                              className="cluster"
-                              style={{ gap: "6px", flexWrap: "wrap" }}
-                            >
-                              {sub.latestAttempt.files.map((file) => (
-                                <a
-                                  key={file.id}
-                                  href={file.downloadUrl}
-                                  className="btn btn-secondary btn-sm"
-                                  style={{
-                                    fontSize: "0.78rem",
-                                    padding: "3px 8px",
-                                    gap: "4px",
-                                  }}
-                                  title={file.originalName}
-                                >
-                                  <AppIcon name="upload" size={12} />
-                                  <span
-                                    style={{
-                                      maxWidth: "130px",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
-                                    {file.originalName}
-                                  </span>
-                                </a>
-                              ))}
-                            </div>
-                          ) : (
-                            <span
-                              className="muted"
-                              style={{ fontSize: "0.82rem" }}
-                            >
-                              Chưa tải file
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="muted" style={{ fontSize: "0.84rem" }}>
-                          Chưa nộp bài
-                        </span>
-                      )}
-                    </td>
+                        ) : (
+                          <span
+                            className="muted"
+                            style={{ fontSize: "0.84rem" }}
+                          >
+                            Chưa nộp bài
+                          </span>
+                        )}
+                      </td>
 
-                    {/* Cột 3: Ô nhập điểm số */}
-                    <td>
-                      <input
-                        type="number"
-                        min="0"
-                        max={assignment.maxScore}
-                        step="0.1"
-                        placeholder="0.0"
-                        className="form-input grade-score-input"
-                        value={draft.score}
-                        onChange={(event) =>
-                          update(student.id, { score: event.target.value })
-                        }
-                      />
-                    </td>
+                      {/* Cột 3: Ô nhập điểm số */}
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          max={assignment.maxScore}
+                          step="0.1"
+                          placeholder="0.0"
+                          className="form-input grade-score-input"
+                          value={draft.score}
+                          onChange={(event) =>
+                            update(student.id, { score: event.target.value })
+                          }
+                        />
+                      </td>
 
-                    {/* Cột 4: Trạng thái chấm bài */}
-                    <td>
-                      <select
-                        className="form-input grade-status-select"
-                        value={draft.status}
-                        onChange={(event) =>
-                          update(student.id, {
-                            status: event.target.value as EvaluationStatus,
-                          })
-                        }
-                      >
-                        <option value="pending">Chờ chấm (pending)</option>
-                        <option value="graded">Đã chấm (graded)</option>
-                        <option value="returned">Đã trả bài (returned)</option>
-                      </select>
-                    </td>
+                      {/* Cột 4: Trạng thái chấm bài */}
+                      <td>
+                        <select
+                          className="form-input grade-status-select"
+                          value={draft.status}
+                          onChange={(event) =>
+                            update(student.id, {
+                              status: event.target.value as EvaluationStatus,
+                            })
+                          }
+                        >
+                          <option value="pending">Chờ chấm (pending)</option>
+                          <option value="graded">Đã chấm (graded)</option>
+                          <option value="returned">
+                            Đã trả bài (returned)
+                          </option>
+                        </select>
+                      </td>
 
-                    {/* Cột 5: Nhận xét phản hồi */}
-                    <td>
-                      <input
-                        type="text"
-                        placeholder="Nhận xét cho sinh viên…"
-                        className="form-input grade-feedback-input"
-                        value={draft.feedback}
-                        onChange={(event) =>
-                          update(student.id, { feedback: event.target.value })
-                        }
-                      />
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan={5}
-                  style={{ textAlign: "center", padding: "40px" }}
-                >
-                  <p className="muted">Không tìm thấy sinh viên nào phù hợp.</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Sticky Bottom Action Bar */}
-      <aside
-        className="sticky-grade-bar"
-        aria-label="Thanh điều khiển chấm điểm"
-      >
-        <div className="sticky-grade-content">
-          <div className="grade-progress-info">
-            <div
-              className="cluster"
-              style={{ gap: "12px", alignItems: "center" }}
-            >
-              <span className="grade-progress-title">
-                Tiến độ chấm:{" "}
-                <strong>
-                  {metrics.graded} / {metrics.submitted} bài nộp
-                </strong>{" "}
-                ({metrics.percentage}%)
-              </span>
-            </div>
-            <div style={{ width: "160px" }}>
-              <ProgressBar
-                value={metrics.graded}
-                max={Math.max(1, metrics.submitted)}
-              />
-            </div>
-          </div>
-
-          <div className="grade-action-group">
-            {message ? (
-              <span
-                className={
-                  message.startsWith("Đã") ? "form-success" : "form-error"
-                }
-                style={{ fontSize: "0.86rem", fontWeight: 600 }}
-              >
-                {message}
-              </span>
-            ) : hasChanges ? (
-              <span className="muted" style={{ fontSize: "0.84rem" }}>
-                Có thay đổi chưa lưu
-              </span>
-            ) : null}
-
-            <Button
-              className="btn btn-primary"
-              loading={busy}
-              onClick={() => void save()}
-              style={{ minWidth: "140px" }}
-            >
-              <AppIcon name="check" size={16} />
-              Lưu bảng điểm
-            </Button>
-          </div>
+                      {/* Cột 5: Nhận xét phản hồi */}
+                      <td>
+                        <input
+                          type="text"
+                          placeholder="Nhận xét cho sinh viên…"
+                          className="form-input grade-feedback-input"
+                          value={draft.feedback}
+                          onChange={(event) =>
+                            update(student.id, { feedback: event.target.value })
+                          }
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan={5}
+                    style={{ textAlign: "center", padding: "40px" }}
+                  >
+                    <p className="muted">
+                      Không tìm thấy sinh viên nào phù hợp.
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </aside>
+
+        {/* Sticky Bottom Action Bar */}
+        <aside
+          className="sticky-grade-bar"
+          aria-label="Thanh điều khiển chấm điểm"
+        >
+          <div className="sticky-grade-content">
+            <div className="grade-progress-info">
+              <div
+                className="cluster"
+                style={{ gap: "12px", alignItems: "center" }}
+              >
+                <span className="grade-progress-title">
+                  Tiến độ chấm:{" "}
+                  <strong>
+                    {metrics.graded} / {metrics.submitted} bài nộp
+                  </strong>{" "}
+                  ({metrics.percentage}%)
+                </span>
+              </div>
+              <div style={{ width: "160px" }}>
+                <ProgressBar
+                  value={metrics.graded}
+                  max={Math.max(1, metrics.submitted)}
+                />
+              </div>
+            </div>
+
+            <div className="grade-action-group">
+              {message ? (
+                <span
+                  className={
+                    message.startsWith("Đã") ? "form-success" : "form-error"
+                  }
+                  style={{ fontSize: "0.86rem", fontWeight: 600 }}
+                >
+                  {message}
+                </span>
+              ) : hasChanges ? (
+                <span className="muted" style={{ fontSize: "0.84rem" }}>
+                  Có thay đổi chưa lưu
+                </span>
+              ) : null}
+
+              <Button
+                className="btn btn-primary"
+                loading={busy}
+                onClick={() => void save()}
+                style={{ minWidth: "140px" }}
+              >
+                <AppIcon name="check" size={16} />
+                Lưu bảng điểm
+              </Button>
+            </div>
+          </div>
+        </aside>
+      </div>
 
       <GradeImportModal
         open={importModalOpen}

@@ -87,28 +87,29 @@ export async function findStudentProfileData(
   const supabase = createAdminClient();
 
   // Đợt 1: Chạy song song 3 truy vấn độc lập (Student, Lớp học phần, và Danh sách bài tập)
-  const [studentResult, classSectionResult, assignmentResult] = await Promise.all([
-    supabase
-      .from("students")
-      .select("id, class_section_id, mssv, full_name, nickname")
-      .eq("id", studentId)
-      .eq("class_section_id", classSectionId)
-      .maybeSingle(),
-    supabase
-      .from("class_sections")
-      .select("id, code, name")
-      .eq("id", classSectionId)
-      .maybeSingle(),
-    supabase
-      .from("assignments")
-      .select(
-        "id, class_section_id, title, description, assigned_date, due_date, status, max_score, created_at, updated_at",
-      )
-      .eq("class_section_id", classSectionId)
-      .in("status", ["published", "closed"])
-      .order("assigned_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-  ]);
+  const [studentResult, classSectionResult, assignmentResult] =
+    await Promise.all([
+      supabase
+        .from("students")
+        .select("id, class_section_id, mssv, full_name, nickname")
+        .eq("id", studentId)
+        .eq("class_section_id", classSectionId)
+        .maybeSingle(),
+      supabase
+        .from("class_sections")
+        .select("id, code, name")
+        .eq("id", classSectionId)
+        .maybeSingle(),
+      supabase
+        .from("assignments")
+        .select(
+          "id, class_section_id, title, description, assigned_date, due_date, status, max_score, created_at, updated_at",
+        )
+        .eq("class_section_id", classSectionId)
+        .in("status", ["published", "closed"])
+        .order("assigned_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+    ]);
 
   if (studentResult.error) throw new Error("STUDENT_PROFILE_STUDENT_FAILED");
   if (classSectionResult.error)
@@ -118,7 +119,9 @@ export async function findStudentProfileData(
 
   if (!studentResult.data || !classSectionResult.data) return null;
 
-  const assignments = (assignmentResult.data as AssignmentRow[]).map(toAssignmentDto);
+  const assignments = (assignmentResult.data as AssignmentRow[]).map(
+    toAssignmentDto,
+  );
   if (assignments.length === 0) {
     return {
       student: studentResult.data as StudentRow,
@@ -142,7 +145,8 @@ export async function findStudentProfileData(
     listStudentSubmissionSummaries(studentId, assignmentIds),
   ]);
 
-  if (evaluationResult.error) throw new Error("STUDENT_PROFILE_EVALUATIONS_FAILED");
+  if (evaluationResult.error)
+    throw new Error("STUDENT_PROFILE_EVALUATIONS_FAILED");
 
   const evaluationsByAssignment = new Map(
     (evaluationResult.data as EvaluationRow[]).map((row) => {

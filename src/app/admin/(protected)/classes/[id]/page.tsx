@@ -22,5 +22,11 @@ export default async function AdminClassPage({
     redirect("/admin/classes");
   }
 
-  return <ClassOverviewView classSectionId={id} code={section.code} name={section.name} />;
+  return (
+    <ClassOverviewView
+      classSectionId={id}
+      code={section.code}
+      name={section.name}
+    />
+  );
 }

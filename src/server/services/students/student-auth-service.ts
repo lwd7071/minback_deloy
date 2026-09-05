@@ -28,7 +28,6 @@ import {
   findClassSectionIdByCode,
   findStudentByIdentifierAndClass,
   findStudentByMssvAndClass,
-  findStudentByNicknameAndClass,
   findStudentRowById,
   resetStudentFailedLogin,
   updateStudentNickname,
@@ -152,7 +151,10 @@ export async function loginStudent(
     );
   }
 
-  const student = await findStudentByIdentifierAndClass(identifier, classSectionId);
+  const student = await findStudentByIdentifierAndClass(
+    identifier,
+    classSectionId,
+  );
 
   if (!student) {
     await incrementBothBuckets(ipHash, identifierHash);
@@ -388,12 +390,16 @@ export async function requestForgotPinOtp(
   const classSectionId = await findClassSectionIdByCode(classCode);
   if (!classSectionId) {
     // Không tiết lộ thông tin sự tồn tại của lớp/MSSV
-    return { message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn." };
+    return {
+      message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn.",
+    };
   }
 
   const student = await findStudentByMssvAndClass(mssv, classSectionId);
   if (!student) {
-    return { message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn." };
+    return {
+      message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn.",
+    };
   }
 
   // Tạo OTP và gửi email
@@ -408,7 +414,9 @@ export async function requestForgotPinOtp(
     sendForgotPinOtpEmail(recipientEmail, student.full_name, otp),
   );
 
-  return { message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn." };
+  return {
+    message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn.",
+  };
 }
 
 /**
@@ -438,12 +446,20 @@ export async function confirmForgotPinOtp(
 
   const classSectionId = await findClassSectionIdByCode(classCode);
   if (!classSectionId) {
-    throw new ApiError(400, API_ERROR_CODES.validation, "Mã OTP không hợp lệ hoặc đã hết hạn");
+    throw new ApiError(
+      400,
+      API_ERROR_CODES.validation,
+      "Mã OTP không hợp lệ hoặc đã hết hạn",
+    );
   }
 
   const student = await findStudentByMssvAndClass(mssv, classSectionId);
   if (!student) {
-    throw new ApiError(400, API_ERROR_CODES.validation, "Mã OTP không hợp lệ hoặc đã hết hạn");
+    throw new ApiError(
+      400,
+      API_ERROR_CODES.validation,
+      "Mã OTP không hợp lệ hoặc đã hết hạn",
+    );
   }
 
   const verifyResult = await verifyForgotPinOtp(student.id, otp);
@@ -455,8 +471,8 @@ export async function confirmForgotPinOtp(
       verifyResult.reason === "EXPIRED"
         ? "Mã OTP đã hết hạn (chỉ có hiệu lực trong 10 phút)"
         : verifyResult.reason === "TOO_MANY_ATTEMPTS"
-        ? "Bạn đã nhập sai OTP quá 5 lần. Vui lòng yêu cầu mã mới."
-        : "Mã OTP không chính xác",
+          ? "Bạn đã nhập sai OTP quá 5 lần. Vui lòng yêu cầu mã mới."
+          : "Mã OTP không chính xác",
     );
   }
 
@@ -468,5 +484,7 @@ export async function confirmForgotPinOtp(
   // Reset rate limit identifier bucket
   await resetIdentifierBucket(identifierHash);
 
-  return { message: "Đặt lại mã PIN thành công. Bạn có thể đăng nhập bằng mã PIN mới." };
+  return {
+    message: "Đặt lại mã PIN thành công. Bạn có thể đăng nhập bằng mã PIN mới.",
+  };
 }

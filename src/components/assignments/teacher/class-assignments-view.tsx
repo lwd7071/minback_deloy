@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { formatDeadlineInfo } from "@/lib/deadline-utils";
 import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
 import { AssignmentDetailView } from "./assignment-detail-view";
 
@@ -45,7 +44,9 @@ export function ClassAssignmentsView({
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
+    string | null
+  >(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const [draft, setDraft] = useState({
@@ -169,51 +170,7 @@ export function ClassAssignmentsView({
               />
             </label>
 
-            <label className="form-field">
-              <span>Mô tả</span>
-              <textarea
-                rows={4}
-                value={draft.description}
-                onChange={(event) =>
-                  setDraft((value) => ({
-                    ...value,
-                    description: event.target.value,
-                  }))
-                }
-              />
-            </label>
-
             <div className="grid">
-              <label className="form-field">
-                <span>Ngày giao</span>
-                <input
-                  required
-                  type="datetime-local"
-                  value={draft.assignedDate}
-                  onChange={(event) =>
-                    setDraft((value) => ({
-                      ...value,
-                      assignedDate: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Hạn nộp</span>
-                <input
-                  required
-                  type="datetime-local"
-                  value={draft.dueDate}
-                  onChange={(event) =>
-                    setDraft((value) => ({
-                      ...value,
-                      dueDate: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-
               <label className="form-field">
                 <span>Điểm tối đa</span>
                 <input
@@ -232,7 +189,14 @@ export function ClassAssignmentsView({
               </label>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                marginTop: "12px",
+              }}
+            >
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -247,7 +211,11 @@ export function ClassAssignmentsView({
       ) : null}
 
       {/* Bộ lọc Tabs: Tất cả / Đã phát hành / Bản nháp / Đã đóng */}
-      <div className="assignment-status-tabs" role="tablist" aria-label="Lọc bài tập theo trạng thái">
+      <div
+        className="assignment-status-tabs"
+        role="tablist"
+        aria-label="Lọc bài tập theo trạng thái"
+      >
         <button
           type="button"
           role="tab"
@@ -264,7 +232,8 @@ export function ClassAssignmentsView({
           className={`assignment-tab-btn ${statusFilter === "published" ? "is-active" : ""}`}
           onClick={() => setStatusFilter("published")}
         >
-          Đã phát hành <span className="tab-count-badge">{counts.published}</span>
+          Đã phát hành{" "}
+          <span className="tab-count-badge">{counts.published}</span>
         </button>
         <button
           type="button"
@@ -289,17 +258,12 @@ export function ClassAssignmentsView({
       {/* Danh sách bài tập */}
       <div className="grid">
         {filteredRows.map((row) => {
-          const deadline = formatDeadlineInfo(row.dueDate);
           return (
             <Card hover className="stack" key={row.id}>
               <div className="split">
                 <Badge variant={row.status}>{row.status}</Badge>
-                <span className="muted" style={{ fontSize: "0.85rem", fontWeight: 500 }}>
-                  Hạn: <strong style={{ color: "var(--navy-900)" }}>{deadline.formattedShort}</strong>
-                </span>
               </div>
               <h3>{row.title}</h3>
-              <p className="muted">{row.description || "Chưa có mô tả."}</p>
               <div className="cluster">
                 <button
                   className="btn btn-secondary"
@@ -311,7 +275,7 @@ export function ClassAssignmentsView({
                   className="btn btn-primary"
                   href={`/admin/classes/${classSectionId}/assignments/${row.id}/grade`}
                 >
-                  Chấm bài
+                  Nhập điểm & feedback
                 </Link>
               </div>
             </Card>
@@ -323,10 +287,10 @@ export function ClassAssignmentsView({
               {statusFilter === "all"
                 ? "Chưa có bài tập nào trong lớp."
                 : statusFilter === "published"
-                ? "Không có bài tập nào đã phát hành."
-                : statusFilter === "draft"
-                ? "Không có bài tập nháp nào."
-                : "Không có bài tập nào đã đóng."}
+                  ? "Không có bài tập nào đã phát hành."
+                  : statusFilter === "draft"
+                    ? "Không có bài tập nháp nào."
+                    : "Không có bài tập nào đã đóng."}
             </p>
           </Card>
         ) : null}

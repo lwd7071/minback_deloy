@@ -65,7 +65,10 @@ export async function createEvaluationNotification(
     });
 
   if (notificationError) {
-    console.error("[Notification] Lỗi tạo in-app notification:", notificationError);
+    console.error(
+      "[Notification] Lỗi tạo in-app notification:",
+      notificationError,
+    );
     throw new ApiError(
       500,
       API_ERROR_CODES.internal,
@@ -76,7 +79,10 @@ export async function createEvaluationNotification(
   const student = context.students;
   const classSection = context.assignments?.class_sections;
   if (!student || !classSection) {
-    console.warn("[Notification] Thiếu thông tin Student hoặc ClassSection:", { student, classSection });
+    console.warn("[Notification] Thiếu thông tin Student hoặc ClassSection:", {
+      student,
+      classSection,
+    });
     return { emailSent: false };
   }
 
@@ -105,7 +111,8 @@ export async function createEvaluationNotification(
       .order("changed_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    latestOldStatus = (history?.old_status as "pending" | "graded" | "returned") ?? null;
+    latestOldStatus =
+      (history?.old_status as "pending" | "graded" | "returned") ?? null;
   }
 
   const shouldSend = shouldAttemptEvaluationEmail({
@@ -140,11 +147,15 @@ export async function createEvaluationNotification(
         classCode: classSection.code,
         className: classSection.name,
       });
-      console.log(`[Notification] Đã gửi email thành công tới ${student.email}, Brevo messageId: ${result.messageId}`);
+      console.log(
+        `[Notification] Đã gửi email thành công tới ${student.email}, Brevo messageId: ${result.messageId}`,
+      );
       return result;
     },
     (code) => {
-      console.error(`[Notification] Gửi email thất bại (${code}) tới ${student.email}`);
+      console.error(
+        `[Notification] Gửi email thất bại (${code}) tới ${student.email}`,
+      );
     },
   );
   return { emailSent };
