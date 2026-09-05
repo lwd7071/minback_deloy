@@ -50,6 +50,16 @@ function matchColumnIndex(
 
 export function resolveEvaluationColumns(headerCells: string[]) {
   const keys = headerCells.map(normalizeHeaderKey);
+  const semanticAliases = [
+    ["mssv", "masv", "masinhvien", "studentcode", "studentid", "ma"],
+    ["hoten", "hovaten", "fullname", "name", "sinhvien"],
+    ["diem", "diemso", "score", "grade", "point", "points"],
+    ["feedback", "nhanxet", "ghichu", "comment", "comments", "danhgia"],
+  ];
+  for (const aliases of semanticAliases) {
+    const matches = keys.filter((key) => aliases.some((alias) => normalizeHeaderKey(alias) === key));
+    if (matches.length > 1) validationError("Tệp không được có tiêu đề semantic bị trùng.");
+  }
   const mssvIndex = matchColumnIndex(keys, ["mssv", "masv", "masinhvien", "studentcode", "studentid", "ma"]);
   const nameIndex = matchColumnIndex(keys, ["hoten", "hovaten", "fullname", "name", "sinhvien"]);
   const scoreIndex = matchColumnIndex(keys, ["diem", "diemso", "score", "grade", "point", "points"]);
@@ -190,6 +200,10 @@ export async function previewEvaluationFile(
   }
 
   const { mssvIndex, nameIndex, scoreIndex, feedbackIndex } = resolveEvaluationColumns(headerRow.cells);
+  const semanticIndexes = new Set([mssvIndex, nameIndex, scoreIndex, feedbackIndex]);
+  const extraHeaderIndexes = headerRow.cells
+    .map((_, index) => index)
+    .filter((index) => !semanticIndexes.has(index));
 
   // Fetch all students in the class section
   const { data: students, error: studentError } = await supabase
@@ -230,6 +244,9 @@ export async function previewEvaluationFile(
     const rawFeedback = feedbackIndex !== undefined ? (row.cells[feedbackIndex] ?? "").trim() : "";
 
     const errors: Array<{ field: string; message: string }> = [];
+    const warnings = extraHeaderIndexes.some((index) => (row.cells[index] ?? "").trim() !== "")
+      ? [{ field: "columns", message: "Cột thừa đã được bỏ qua" }]
+      : undefined;
 
     if (!rawMssv) {
       parsedRows.push({
@@ -324,6 +341,7 @@ export async function previewEvaluationFile(
         feedback: parsedFeedback,
         status: "valid",
         action,
+        warnings,
       });
     }
   }

@@ -49,5 +49,6 @@ describe("Evaluation Import Service - parseEvaluationCsv", () => {
       feedbackIndex: 3,
     });
     expect(() => resolveEvaluationColumns(["MSSV", "Điểm"])).toThrow();
+    expect(() => resolveEvaluationColumns(["MSSV", "Họ tên", "Điểm", "Feedback", "Score"])).toThrow();
   });
 });
