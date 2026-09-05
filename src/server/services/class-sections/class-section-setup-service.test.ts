@@ -82,8 +82,8 @@ describe("createTeacherClassSectionSetup", () => {
       status: "created",
       studentId: students[0].studentId,
       initialNickname: "SV01",
-      initialPin: expect.stringMatching(/^\d{6}$/),
     });
+    expect(result.data.import?.rows[0]).not.toHaveProperty("initialPin");
     expect(result.data.import?.rows.slice(1)).toEqual([
       expect.not.objectContaining({ initialPin: expect.anything() }),
       expect.not.objectContaining({ initialPin: expect.anything() }),
