@@ -338,7 +338,7 @@ export async function resetStudentPinToDefault(
 
   await revokeAllSessionsByStudentId(studentId);
   await updateStudentPinHash(studentId, newPinHash);
-  revokeForgotPinChallenge(studentId);
+  await revokeForgotPinChallenge(studentId);
 
   return { studentId, mustChangePin: true };
 }

@@ -41,7 +41,7 @@ describe("bulkUpsertTeacherEvaluations", () => {
       createdAt: "2026-08-31T00:00:00.000Z",
       updatedAt: "2026-08-31T00:00:00.000Z",
     });
-    vi.mocked(createEvaluationNotification).mockResolvedValue(undefined);
+    vi.mocked(createEvaluationNotification).mockResolvedValue({ emailSent: false });
   });
 
   it("authenticates before rejecting a malformed batch", async () => {

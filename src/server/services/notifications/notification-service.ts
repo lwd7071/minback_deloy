@@ -27,7 +27,7 @@ type EvaluationContext = {
 
 export async function createEvaluationNotification(
   input: EvaluationNotificationInput,
-): Promise<void> {
+): Promise<{ emailSent: boolean }> {
   const supabase = await createClient();
 
   // Truy vấn evaluation, student và assignment/class_section
@@ -52,7 +52,7 @@ export async function createEvaluationNotification(
   const context = evaluation as unknown as EvaluationContext;
 
   // Nếu bài tập vẫn đang ở trạng thái pending, không phát sinh thông báo
-  if (context.status === "pending") return;
+  if (context.status === "pending") return { emailSent: false };
 
   const message = `Kết quả bài tập "${input.assignmentTitle}" đã được cập nhật.`;
   const { error: notificationError } = await supabase
@@ -77,7 +77,7 @@ export async function createEvaluationNotification(
   const classSection = context.assignments?.class_sections;
   if (!student || !classSection) {
     console.warn("[Notification] Thiếu thông tin Student hoặc ClassSection:", { student, classSection });
-    return;
+    return { emailSent: false };
   }
 
   // Lấy trạng thái bật/tắt email của giáo viên sở hữu lớp học phần
@@ -128,10 +128,10 @@ export async function createEvaluationNotification(
   });
 
   if (!shouldSend) {
-    return;
+    return { emailSent: false };
   }
 
-  await deliverEmailSafely(
+  const emailSent = await deliverEmailSafely(
     async () => {
       const result = await sendEvaluationEmail({
         recipientEmail: student.email!,
@@ -147,4 +147,5 @@ export async function createEvaluationNotification(
       console.error(`[Notification] Gửi email thất bại (${code}) tới ${student.email}`);
     },
   );
+  return { emailSent };
 }

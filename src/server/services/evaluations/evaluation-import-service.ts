@@ -382,10 +382,12 @@ export async function executeEvaluationImport(
 
   let notificationSent = 0;
   let notificationFailed = 0;
+  let emailSent = 0;
+  let emailFailed = 0;
   if (input.mode === "publish") {
     const deliveries = await Promise.allSettled(
       changed.map(async (row) => {
-        await createEvaluationNotification({
+        return createEvaluationNotification({
           studentId: row.student_id,
           evaluationId: row.id,
           type:
@@ -398,6 +400,8 @@ export async function executeEvaluationImport(
     );
     notificationSent = deliveries.filter((item) => item.status === "fulfilled").length;
     notificationFailed = deliveries.length - notificationSent;
+    emailSent = deliveries.filter((item) => item.status === "fulfilled" && item.value.emailSent).length;
+    emailFailed = deliveries.filter((item) => item.status === "fulfilled" && !item.value.emailSent).length;
   }
 
   return {
@@ -415,7 +419,7 @@ export async function executeEvaluationImport(
       updated: changed.filter((row) => row.change_type === "updated").length,
       unchanged: Math.max(0, rowsToUpsert.length - changed.length),
       notifications: { sent: notificationSent, failed: notificationFailed },
-      emails: { sent: 0, failed: 0 },
+      emails: { sent: emailSent, failed: emailFailed },
     },
   };
 }
