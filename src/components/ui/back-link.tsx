@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 export function BackLink({
   fallbackHref,
@@ -17,11 +18,20 @@ export function BackLink({
 }) {
   const label = ariaLabel ?? "Quay lại";
 
+  if (forceFallback) {
+    return (
+      <Link
+        href={fallbackHref}
+        className={`back-link${className ? ` ${className}` : ""}`}
+        aria-label={label}
+        title={title ?? label}
+      >
+        <ChevronLeft size={16} aria-hidden="true" />
+      </Link>
+    );
+  }
+
   function goBack() {
-    if (forceFallback) {
-      window.location.assign(fallbackHref);
-      return;
-    }
     const referrer = typeof document === "undefined" ? "" : document.referrer;
     if (
       referrer.startsWith(window.location.origin) &&

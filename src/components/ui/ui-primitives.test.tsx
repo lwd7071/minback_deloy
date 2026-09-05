@@ -96,4 +96,18 @@ describe("BackLink", () => {
     expect(button).toHaveAttribute("title", "Quay lại trang cha");
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
+
+  it("uses a direct home link when fallback navigation is forced", () => {
+    render(
+      <BackLink
+        fallbackHref="/"
+        ariaLabel="Quay lại trang chủ"
+        forceFallback
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Quay lại trang chủ" }),
+    ).toHaveAttribute("href", "/");
+  });
 });

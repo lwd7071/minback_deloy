@@ -35,7 +35,11 @@ export function PublicClassView({ code }: { code: string }) {
   if (error)
     return (
       <AuthCard
-        back={{ fallbackHref: "/", ariaLabel: "Quay lại" }}
+        back={{
+          fallbackHref: "/",
+          ariaLabel: "Quay lại trang chủ",
+          forceFallback: true,
+        }}
         title="Mã lớp chưa đúng"
         context={<span className="form-error">{error}</span>}
       />
@@ -43,13 +47,21 @@ export function PublicClassView({ code }: { code: string }) {
   if (!section)
     return (
       <AuthCard
-        back={{ fallbackHref: "/", ariaLabel: "Quay lại" }}
+        back={{
+          fallbackHref: "/",
+          ariaLabel: "Quay lại trang chủ",
+          forceFallback: true,
+        }}
         title="Đang xác nhận lớp học phần"
       />
     );
   return (
     <AuthCard
-      back={{ fallbackHref: "/", ariaLabel: "Quay lại" }}
+      back={{
+        fallbackHref: "/",
+        ariaLabel: "Quay lại trang chủ",
+        forceFallback: true,
+      }}
       title="Đăng nhập"
       context={
         <span>
