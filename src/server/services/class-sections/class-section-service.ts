@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
   classSectionCreateSchema,
@@ -54,24 +55,24 @@ export async function createTeacherClassSection(
   }
 }
 
-export async function getTeacherClassSection(
-  classSectionId: string,
-): Promise<ClassSectionDto> {
-  const { teacher } = await requireTeacher();
-  try {
-    const section = await findClassSectionById(classSectionId, teacher.id);
-    if (!section) {
-      throw new ApiError(
-        404,
-        API_ERROR_CODES.notFound,
-        "Không tìm thấy lớp học phần",
-      );
+export const getTeacherClassSection = cache(
+  async (classSectionId: string): Promise<ClassSectionDto> => {
+    const { teacher } = await requireTeacher();
+    try {
+      const section = await findClassSectionById(classSectionId, teacher.id);
+      if (!section) {
+        throw new ApiError(
+          404,
+          API_ERROR_CODES.notFound,
+          "Không tìm thấy lớp học phần",
+        );
+      }
+      return section;
+    } catch (error) {
+      return mapUnexpectedError(error);
     }
-    return section;
-  } catch (error) {
-    return mapUnexpectedError(error);
-  }
-}
+  },
+);
 
 export async function updateTeacherClassSection(
   classSectionId: string,

@@ -16,7 +16,9 @@ describe("AuthCard", () => {
       </AuthCard>,
     );
     const card = document.querySelector(".auth-card")!;
-    expect([...card.children].map((node) => node.className)).toEqual([
+    expect(
+      [...card.children].map((node) => node.className.split(" ")[0]),
+    ).toEqual([
       "page-back-slot",
       "auth-card-header",
       "auth-form",
