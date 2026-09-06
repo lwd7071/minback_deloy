@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -79,6 +80,12 @@ async function resolveAuthenticatedTeacher(): Promise<AuthenticatedTeacherContex
   return { supabase, teacher };
 }
 
+/**
+ * Module-level memoized resolver for the current React Server Component request.
+ * Does not cache across requests.
+ */
+const getCachedAuthenticatedTeacher = cache(resolveAuthenticatedTeacher);
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -133,7 +140,7 @@ export async function loginTeacher(
  * Used by /me endpoint and login page session check.
  */
 export async function getCurrentTeacher(): Promise<TeacherDto> {
-  const { teacher } = await resolveAuthenticatedTeacher();
+  const { teacher } = await getCachedAuthenticatedTeacher();
   return teacher;
 }
 
@@ -155,5 +162,5 @@ export async function logoutTeacher(): Promise<void> {
  * Only authenticates and throws — does NOT redirect.
  */
 export async function requireTeacher(): Promise<AuthenticatedTeacherContext> {
-  return resolveAuthenticatedTeacher();
+  return getCachedAuthenticatedTeacher();
 }

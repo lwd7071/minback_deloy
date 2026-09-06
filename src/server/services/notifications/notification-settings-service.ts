@@ -26,23 +26,8 @@ function toDto(emailEnabled: boolean): NotificationSettingsDto {
 }
 
 export async function getNotificationSettings(): Promise<NotificationSettingsDto> {
-  const { supabase, teacher } = await requireTeacher();
-  const { data, error } = await supabase
-    .from("teachers")
-    .select("email_notification_enabled")
-    .eq("id", teacher.id)
-    .single();
-
-  if (error || !data) {
-    // requireTeacher already verified the teacher exists; this is unexpected
-    throw new ApiError(
-      500,
-      API_ERROR_CODES.internal,
-      "Không thể tải cài đặt thông báo",
-    );
-  }
-
-  return toDto(Boolean(data.email_notification_enabled));
+  const { teacher } = await requireTeacher();
+  return toDto(teacher.emailNotificationEnabled);
 }
 
 export async function updateNotificationSettings(

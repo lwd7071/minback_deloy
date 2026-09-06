@@ -1,19 +1,15 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export default function AdminLoading() {
   return (
     <div
-      className="teacher-dash"
+      className="admin-loading"
       aria-busy="true"
       aria-label="Đang tải dữ liệu"
     >
-      <div className="teacher-metrics-grid">
-        {Array.from({ length: 4 }, (_, index) => (
-          <div className="stat-card skeleton" key={index} />
-        ))}
-      </div>
-      <div className="teacher-class-grid">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div className="teacher-class-card skeleton" key={index} />
-        ))}
+      <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <Skeleton width="200px" height="28px" />
+        <Skeleton width="100%" height="120px" />
       </div>
     </div>
   );
