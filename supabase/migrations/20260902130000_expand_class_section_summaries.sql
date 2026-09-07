@@ -2,8 +2,9 @@
 -- The search term is escaped before ILIKE so %, _, and \ remain literal text.
 
 drop function if exists public.list_class_section_summaries(uuid, integer, integer);
+drop function if exists public.list_class_section_summaries(uuid, integer, integer, text);
 
-create function public.list_class_section_summaries(
+create or replace function public.list_class_section_summaries(
   p_teacher_id uuid,
   p_offset integer,
   p_limit integer,

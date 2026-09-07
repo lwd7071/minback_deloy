@@ -39,11 +39,18 @@ export function ClassCreateFlow() {
   const [result, setResult] = useState<ClassSectionSetupDto | null>(null);
   const [previewBusy, setPreviewBusy] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => previewControllerRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    if (step === "complete" && result?.classSection?.id) {
+      router?.prefetch?.(`/admin/classes/${result.classSection.id}`);
+    }
+  }, [step, result, router]);
 
   function continueDetails(event: React.FormEvent) {
     event.preventDefault();
@@ -436,9 +443,11 @@ export function ClassCreateFlow() {
           <div className="class-create-actions">
             <Button
               type="button"
-              onClick={() =>
-                router.push(`/admin/classes/${result.classSection.id}`)
-              }
+              loading={navigating}
+              onClick={() => {
+                setNavigating(true);
+                router.push(`/admin/classes/${result.classSection.id}`);
+              }}
             >
               Đi tới lớp
             </Button>
