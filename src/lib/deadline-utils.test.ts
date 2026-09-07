@@ -9,12 +9,8 @@ describe("deadline-utils", () => {
   it("parses YYYY-MM-DD as 23:59:59.999 in ICT (+07:00)", () => {
     const timestamp = parseDeadlineTimestamp("2026-09-10");
     const date = new Date(timestamp);
-    expect(date.getFullYear()).toBe(2026);
-    expect(date.getMonth()).toBe(8); // September is month 8 (0-indexed)
-    expect(date.getDate()).toBe(10);
-    expect(date.getHours()).toBe(23);
-    expect(date.getMinutes()).toBe(59);
-    expect(date.getSeconds()).toBe(59);
+    // In UTC (+00:00), 23:59:59.999 ICT (+07:00) is exactly 16:59:59.999Z
+    expect(date.toISOString()).toBe("2026-09-10T16:59:59.999Z");
   });
 
   it("determines period labels correctly", () => {

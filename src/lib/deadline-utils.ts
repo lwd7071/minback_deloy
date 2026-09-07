@@ -66,13 +66,28 @@ export function formatDeadlineInfo(
     };
   }
 
-  // Extract date components
-  const day = String(deadlineDate.getDate()).padStart(2, "0");
-  const month = String(deadlineDate.getMonth() + 1).padStart(2, "0");
-  const year = deadlineDate.getFullYear();
-  const hours = deadlineDate.getHours();
-  const minutes = String(deadlineDate.getMinutes()).padStart(2, "0");
-  const seconds = String(deadlineDate.getSeconds()).padStart(2, "0");
+  // Extract date components in Asia/Ho_Chi_Minh timezone
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = Object.fromEntries(
+    formatter.formatToParts(deadlineDate).map((p) => [p.type, p.value]),
+  );
+
+  const day = parts.day;
+  const month = parts.month;
+  const year = parts.year;
+  const hours = parseInt(parts.hour, 10);
+  const minutes = parts.minute;
+  const seconds = parts.second;
 
   const formattedDate = `${day}/${month}/${year}`;
   const formattedTime = `${String(hours).padStart(2, "0")}:${minutes}:${seconds}`;
