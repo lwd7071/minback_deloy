@@ -15,7 +15,6 @@ const LOCAL_ENV = {
   APP_URL: BASE_URL,
   PORT: String(PORT),
 };
-const CLASS_ID = "f1000000-0000-0000-0000-000000000001";
 const ITERATIONS = 20;
 const outputIndex = process.argv.indexOf("--output");
 const OUTPUT_PATH =
@@ -98,22 +97,36 @@ async function login(context) {
     );
 }
 
-async function navigate(page, href, expectedHeading) {
+async function navigate(page, href, expectedHeading, forbiddenSelector) {
   const before = await page.evaluate(() => performance.now());
-  await page.locator(`a[href="${href}"]`).first().click();
+  await page.locator(`a[href="${href}"]:visible`).first().click();
+  const showedWrongLoading = forbiddenSelector
+    ? await page
+        .locator(forbiddenSelector)
+        .isVisible()
+        .catch(() => false)
+    : false;
   await page
     .getByRole("heading", { name: expectedHeading })
     .waitFor({ state: "visible", timeout: 10_000 });
   const after = await page.evaluate(() => performance.now());
-  return after - before;
+  return { durationMs: after - before, showedWrongLoading };
+}
+
+function summarize(values) {
+  return {
+    samples: values.length,
+    p50Ms: percentile(values, 0.5),
+    p75Ms: percentile(values, 0.75),
+    p95Ms: percentile(values, 0.95),
+  };
 }
 
 const server = await startServer();
 try {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    isMobile: true,
+    viewport: { width: 1280, height: 800 },
   });
   const requests = [];
   context.on("response", async (response) => {
@@ -135,32 +148,42 @@ try {
   });
   await login(context);
   const page = await context.newPage();
-  await page.goto(`${BASE_URL}/admin/dashboard`, { waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Tổng quan" }).waitFor();
+  await page.goto(`${BASE_URL}/admin/classes`, { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Lớp học phần" }).waitFor();
   const coldNavigation = await page.evaluate(() => {
     const entry = performance.getEntriesByType("navigation")[0];
     return entry
       ? { durationMs: entry.duration, ttfbMs: entry.responseStart }
       : null;
   });
-  const warmMs = [];
+  const classesToSettingsMs = [];
+  const settingsToClassesMs = [];
+  let wrongLoadingCount = 0;
   for (let index = 0; index < ITERATIONS; index += 1) {
-    warmMs.push(await navigate(page, "/admin/classes", "Lớp học phần"));
-    warmMs.push(await navigate(page, "/admin/dashboard", "Tổng quan"));
+    const toSettings = await navigate(
+      page,
+      "/admin/settings",
+      "Thông báo",
+      ".teacher-class-card.skeleton",
+    );
+    classesToSettingsMs.push(toSettings.durationMs);
+    if (toSettings.showedWrongLoading) wrongLoadingCount += 1;
+
+    const toClasses = await navigate(page, "/admin/classes", "Lớp học phần");
+    settingsToClassesMs.push(toClasses.durationMs);
   }
   const output = {
     generatedAt: new Date().toISOString(),
     environment: {
       baseUrl: BASE_URL,
-      viewport: "mobile-390x844",
+      viewport: "desktop-1280x800",
       iterations: ITERATIONS,
     },
     coldDocument: coldNavigation,
     warmNavigation: {
-      samples: warmMs.length,
-      p50Ms: percentile(warmMs, 0.5),
-      p75Ms: percentile(warmMs, 0.75),
-      p95Ms: percentile(warmMs, 0.95),
+      classesToSettings: summarize(classesToSettingsMs),
+      settingsToClasses: summarize(settingsToClassesMs),
+      wrongLoadingCount,
     },
     network: {
       documentRequests: requests.filter((entry) => entry.type === "document")

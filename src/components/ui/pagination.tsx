@@ -75,8 +75,8 @@ export function Pagination({
         <div className="pagination-info">
           {showSummary && (
             <span>
-              Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong> trên
-              tổng số <strong>{total}</strong> sinh viên
+              Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong>{" "}
+              trên tổng số <strong>{total}</strong> sinh viên
             </span>
           )}
 

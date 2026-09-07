@@ -1,5 +1,7 @@
 ﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 vi.mock("server-only", () => ({}));
 vi.mock("@/server/auth/teacher-auth", () => ({
   requireTeacher: vi.fn(),
@@ -33,7 +35,7 @@ describe("Notification Settings Service", () => {
   describe("getNotificationSettings", () => {
     it("returns emailEnabled directly from Teacher DTO and Brevo public config", async () => {
       vi.mocked(requireTeacher).mockResolvedValue({
-        supabase: mockSupabase as any,
+        supabase: mockSupabase as unknown as SupabaseClient,
         teacher: {
           id: "teacher-123",
           displayName: "Teacher Test",
@@ -62,7 +64,7 @@ describe("Notification Settings Service", () => {
 
     it("returns emailEnabled = false when teacher has email notifications disabled", async () => {
       vi.mocked(requireTeacher).mockResolvedValue({
-        supabase: mockSupabase as any,
+        supabase: mockSupabase as unknown as SupabaseClient,
         teacher: {
           id: "teacher-123",
           displayName: "Teacher Test",
@@ -113,7 +115,7 @@ describe("Notification Settings Service", () => {
       };
 
       vi.mocked(requireTeacher).mockResolvedValue({
-        supabase: customSupabase as any,
+        supabase: customSupabase as unknown as SupabaseClient,
         teacher: {
           id: "teacher-123",
           displayName: "Teacher Test",
@@ -131,7 +133,9 @@ describe("Notification Settings Service", () => {
 
       expect(assertBrevoConfigured).toHaveBeenCalled();
       expect(customSupabase.from).toHaveBeenCalledWith("teachers");
-      expect(mockUpdate).toHaveBeenCalledWith({ email_notification_enabled: true });
+      expect(mockUpdate).toHaveBeenCalledWith({
+        email_notification_enabled: true,
+      });
       expect(mockEq).toHaveBeenCalledWith("id", "teacher-123");
       expect(result.emailEnabled).toBe(true);
     });

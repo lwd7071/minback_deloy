@@ -82,6 +82,7 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
               ? `/class/${encodeURIComponent(classCode)}/profile`
               : "/admin/classes"
           }
+          prefetch={role === "teacher" ? true : null}
         >
           <span className="wordmark-mark">
             <GraduationCap size={18} />
@@ -94,6 +95,7 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
               className={`workspace-nav-link ${pathname === href || (href === "/admin/classes" && pathname.startsWith("/admin/classes")) ? "is-active" : ""}`}
               href={href}
               key={href}
+              prefetch={role === "teacher" ? true : null}
             >
               <Icon aria-hidden="true" size={16} />
               {label}
@@ -135,6 +137,7 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
                 href={href}
                 key={href}
                 onClick={() => setOpen(false)}
+                prefetch={role === "teacher" ? true : null}
               >
                 <Icon aria-hidden="true" size={18} />
                 {label}

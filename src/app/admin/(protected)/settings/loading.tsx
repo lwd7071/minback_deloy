@@ -2,11 +2,7 @@
 
 export default function SettingsLoading() {
   return (
-    <div
-      className="stack"
-      aria-busy="true"
-      aria-label="Đang tải cài đặt"
-    >
+    <div className="stack" aria-busy="true" aria-label="Đang tải cài đặt">
       <div className="page-head">
         <Skeleton width="160px" height="32px" />
         <div style={{ marginTop: "6px" }}>
