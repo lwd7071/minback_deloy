@@ -1,13 +1,42 @@
-<h2>Bạn được mời tham gia MinBack</h2>
-
-<p>Nhấn nút bên dưới để thiết lập mật khẩu cho tài khoản giảng viên:</p>
-
-<p>
-  <a
-    href="{{ .SiteURL }}/admin/set-password?token_hash={{ .TokenHash }}&type=invite"
-  >
-    Thiết lập mật khẩu
-  </a>
-</p>
-
-<p>Liên kết này có thời hạn theo cấu hình Email OTP của dự án.</p>
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lời mời tham gia MinBack</title>
+  </head>
+  <body style="margin:0;background:#f4f7f8;font-family:Arial,Helvetica,sans-serif;color:#183042;">
+    <div style="padding:40px 16px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e4eaed;border-radius:16px;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 36px;background:#183042;">
+            <div style="font-size:24px;font-weight:700;letter-spacing:.2px;color:#ffffff;">MinBack</div>
+            <div style="margin-top:6px;font-size:13px;color:#c9d7df;">Nền tảng quản lý lớp học</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px 36px 32px;">
+            <div style="display:inline-block;padding:7px 12px;border-radius:999px;background:#fff4d6;color:#8a5a00;font-size:12px;font-weight:700;">LỜI MỜI GIẢNG VIÊN</div>
+            <h1 style="margin:22px 0 12px;font-size:28px;line-height:1.25;color:#183042;">Chào mừng bạn đến với MinBack</h1>
+            <p style="margin:0;font-size:16px;line-height:1.7;color:#506575;">Quản trị viên đã mời bạn tham gia MinBack với tư cách giảng viên. Hãy thiết lập mật khẩu để hoàn tất tài khoản của bạn.</p>
+            <table role="presentation" cellspacing="0" cellpadding="0" style="margin:30px 0 26px;">
+              <tr>
+                <td style="border-radius:8px;background:#f5b400;">
+                  <a href="{{ .SiteURL }}/admin/set-password?token_hash={{ .TokenHash }}&amp;type=invite" style="display:inline-block;padding:14px 24px;border-radius:8px;color:#183042;text-decoration:none;font-size:16px;font-weight:700;">Thiết lập mật khẩu</a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0;font-size:13px;line-height:1.6;color:#718391;">Liên kết này chỉ dùng một lần và có thời hạn theo cấu hình bảo mật của hệ thống.</p>
+            <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#718391;">Nếu nút phía trên không hoạt động, hãy sao chép đường dẫn này vào trình duyệt:<br /><a href="{{ .SiteURL }}/admin/set-password?token_hash={{ .TokenHash }}&amp;type=invite" style="color:#26718a;word-break:break-all;">{{ .SiteURL }}/admin/set-password?token_hash={{ .TokenHash }}&amp;type=invite</a></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 36px;background:#f8fafb;border-top:1px solid #e4eaed;">
+            <p style="margin:0;font-size:12px;line-height:1.6;color:#7b8b95;">Bạn nhận được email này vì quản trị viên đã tạo lời mời MinBack cho địa chỉ email này. Nếu bạn không mong đợi lời mời, có thể bỏ qua email này.</p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:18px auto 0;max-width:600px;text-align:center;font-size:12px;color:#95a2aa;">© MinBack · Quản lý lớp học rõ ràng hơn</p>
+    </div>
+  </body>
+</html>
