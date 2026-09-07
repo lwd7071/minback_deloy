@@ -35,7 +35,7 @@ insert into auth.users (
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{}'::jsonb,
+    '{"display_name":"Demo Teacher A"}'::jsonb,
     now(),
     now()
   ),
@@ -55,7 +55,7 @@ insert into auth.users (
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{}'::jsonb,
+    '{"display_name":"Demo Teacher B"}'::jsonb,
     now(),
     now()
   );
@@ -79,10 +79,6 @@ insert into auth.identities (id, provider_id, user_id, identity_data, provider, 
     now(),
     now()
   );
-
-insert into public.teachers (id, display_name) values
-  ('f0000000-0000-0000-0000-000000000001', 'Demo Teacher A'),
-  ('f0000000-0000-0000-0000-000000000002', 'Demo Teacher B');
 
 insert into public.class_sections (id, code, name, teacher_id) values
   ('f1000000-0000-0000-0000-000000000001', 'DEMO_A', 'Demo Class A', 'f0000000-0000-0000-0000-000000000001'),

@@ -1,6 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
 
 import { CookieJar, fetchApi } from "./setup";
+import { createClient } from "@supabase/supabase-js";
+
+const ADMIN_SUPABASE_URL = "http://127.0.0.1:54321";
+const ADMIN_SUPABASE_KEY = "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
 
 // ---------------------------------------------------------------------------
 // Seed accounts from supabase/seed.sql
@@ -22,6 +26,7 @@ const TEACHER_B = {
 const LOGIN_PATH = "/api/v1/teacher/auth/login";
 const ME_PATH = "/api/v1/teacher/auth/me";
 const LOGOUT_PATH = "/api/v1/teacher/auth/logout";
+const SET_PASSWORD_PATH = "/api/v1/teacher/auth/set-password";
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -32,6 +37,170 @@ describe("Teacher Auth API", () => {
 
   beforeEach(() => {
     jar = new CookieJar();
+  });
+
+  it("maps a newly created Auth user to a Teacher", async () => {
+    const admin = createClient(ADMIN_SUPABASE_URL, ADMIN_SUPABASE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const email = `trigger-${crypto.randomUUID()}@minback.local`;
+    const password = "TriggerTeacher123!";
+    const created = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { display_name: "Triggered Teacher" },
+    });
+    expect(created.error).toBeNull();
+    const userId = created.data.user?.id;
+    expect(userId).toBeTruthy();
+
+    const loginRes = await fetchApi(
+      LOGIN_PATH,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      },
+      jar,
+    );
+    expect(loginRes.status).toBe(200);
+
+    const meRes = await fetchApi(ME_PATH, { method: "GET" }, jar);
+    const body = await meRes.json();
+    expect(meRes.status).toBe(200);
+    expect(body.data.teacher).toEqual({
+      id: userId,
+      displayName: "Triggered Teacher",
+      emailNotificationEnabled: false,
+    });
+
+    if (userId) await admin.auth.admin.deleteUser(userId);
+  });
+
+  it("accepts an invite token, sets a password, and keeps the Teacher session", async () => {
+    const admin = createClient(ADMIN_SUPABASE_URL, ADMIN_SUPABASE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const email = `invite-${crypto.randomUUID()}@minback.local`;
+    const password = "InviteTeacher123!";
+    const generated = await admin.auth.admin.generateLink({
+      type: "invite",
+      email,
+      options: { data: { display_name: "Invited Teacher" } },
+    });
+    expect(generated.error).toBeNull();
+    const userId = generated.data.user?.id;
+    const tokenHash = generated.data.properties?.hashed_token;
+    expect(userId).toBeTruthy();
+    expect(tokenHash).toBeTruthy();
+
+    const setPasswordRes = await fetchApi(
+      SET_PASSWORD_PATH,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokenHash,
+          password,
+          passwordConfirmation: password,
+        }),
+      },
+      jar,
+    );
+    const setPasswordBody = await setPasswordRes.json();
+    expect(setPasswordRes.status).toBe(200);
+    expect(setPasswordBody.data.teacher.displayName).toBe("Invited Teacher");
+
+    const meRes = await fetchApi(ME_PATH, { method: "GET" }, jar);
+    expect(meRes.status).toBe(200);
+
+    await fetchApi(LOGOUT_PATH, { method: "POST" }, jar);
+    const loginRes = await fetchApi(
+      LOGIN_PATH,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      },
+      jar,
+    );
+    expect(loginRes.status).toBe(200);
+
+    if (userId) await admin.auth.admin.deleteUser(userId);
+  });
+
+  describe("POST /set-password", () => {
+    it("rejects a missing token before contacting Auth", async () => {
+      const res = await fetchApi(SET_PASSWORD_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokenHash: "",
+          password: "Invite123",
+          passwordConfirmation: "Invite123",
+        }),
+      });
+
+      const body = await res.json();
+      expect(res.status).toBe(400);
+      expect(body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects mismatched passwords before consuming an invite", async () => {
+      const res = await fetchApi(SET_PASSWORD_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokenHash: "invite-token",
+          password: "Invite123",
+          passwordConfirmation: "Different123",
+        }),
+      });
+
+      const body = await res.json();
+      expect(res.status).toBe(400);
+      expect(body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects a cross-origin request", async () => {
+      const res = await fetchApi(SET_PASSWORD_PATH, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          origin: "https://evil.example",
+        },
+        body: JSON.stringify({
+          tokenHash: "invite-token",
+          password: "Invite123",
+          passwordConfirmation: "Invite123",
+        }),
+      });
+
+      const body = await res.json();
+      expect(res.status).toBe(403);
+      expect(body.error.code).toBe("FORBIDDEN");
+    });
+
+    it("rejects an invalid invite token without exposing Auth details", async () => {
+      const res = await fetchApi(SET_PASSWORD_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokenHash: "invalid-token",
+          password: "Invite123",
+          passwordConfirmation: "Invite123",
+        }),
+      });
+
+      const body = await res.json();
+      expect(res.status).toBe(401);
+      expect(body.error.code).toBe("INVALID_CREDENTIALS");
+      expect(body.error.message).toBe(
+        "Liên kết mời không hợp lệ hoặc đã hết hạn",
+      );
+      expect(JSON.stringify(body)).not.toContain("AuthRetryableFetchError");
+    });
   });
 
   // --- Login ---

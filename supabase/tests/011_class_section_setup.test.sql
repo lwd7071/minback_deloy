@@ -29,10 +29,6 @@ select ok(
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-000000000091', 'setup-a@example.test'),
   ('00000000-0000-0000-0000-000000000092', 'setup-b@example.test');
-insert into public.teachers (id, display_name) values
-  ('00000000-0000-0000-0000-000000000091', 'Setup Teacher A'),
-  ('00000000-0000-0000-0000-000000000092', 'Setup Teacher B');
-
 set local role authenticated;
 set local request.jwt.claim.sub = '00000000-0000-0000-0000-000000000091';
 

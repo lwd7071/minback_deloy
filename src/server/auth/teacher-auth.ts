@@ -157,6 +157,51 @@ export async function logoutTeacher(): Promise<void> {
 }
 
 /**
+ * Consume a Supabase invite token and set the first password for its Teacher.
+ * The SSR client writes the verified session cookies on the route response.
+ */
+export async function completeTeacherInvitation(input: {
+  tokenHash: string;
+  password: string;
+}): Promise<{ id: string; displayName: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    token_hash: input.tokenHash,
+    type: "invite",
+  });
+
+  if (error || !data.user) {
+    throw new ApiError(
+      401,
+      API_ERROR_CODES.invalidCredentials,
+      "Liên kết mời không hợp lệ hoặc đã hết hạn",
+    );
+  }
+
+  const teacher = await fetchTeacherByAuthId(supabase, data.user.id);
+  if (!teacher) {
+    throw new ApiError(
+      500,
+      API_ERROR_CODES.internal,
+      "Không thể hoàn tất tài khoản giảng viên",
+    );
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: input.password,
+  });
+  if (updateError) {
+    throw new ApiError(
+      400,
+      API_ERROR_CODES.validation,
+      "Mật khẩu không đáp ứng yêu cầu",
+    );
+  }
+
+  return { id: teacher.id, displayName: teacher.displayName };
+}
+
+/**
  * Authenticate and return full context for downstream services.
  * The returned supabase client carries auth.uid() for RLS queries.
  * Only authenticates and throws — does NOT redirect.

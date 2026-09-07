@@ -5,9 +5,6 @@ select plan(1);
 insert into auth.users (id, email)
 values ('00000000-0000-0000-0000-000000000001', 'teacher-a@example.test');
 
-insert into public.teachers (id, display_name)
-values ('00000000-0000-0000-0000-000000000001', 'Teacher A');
-
 select pg_sleep(0.01);
 
 update public.teachers

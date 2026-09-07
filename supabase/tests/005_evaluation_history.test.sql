@@ -4,8 +4,6 @@ select plan(2);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-000000000001', 'teacher-a@example.test');
-insert into public.teachers (id, display_name) values
-  ('00000000-0000-0000-0000-000000000001', 'Teacher A');
 insert into public.class_sections (id, code, name, teacher_id) values
   ('10000000-0000-0000-0000-000000000001', 'CLASS_A', 'Class A', '00000000-0000-0000-0000-000000000001');
 insert into public.students (id, class_section_id, mssv, full_name, nickname, pin_hash) values

@@ -6,3 +6,16 @@ export const teacherLoginSchema = z.object({
 });
 
 export type TeacherLoginInput = z.infer<typeof teacherLoginSchema>;
+
+export const teacherSetPasswordSchema = z
+  .object({
+    tokenHash: z.string().trim().min(1),
+    password: z.string().min(6),
+    passwordConfirmation: z.string().min(6),
+  })
+  .refine((input) => input.password === input.passwordConfirmation, {
+    path: ["passwordConfirmation"],
+    message: "Mật khẩu xác nhận không khớp",
+  });
+
+export type TeacherSetPasswordInput = z.infer<typeof teacherSetPasswordSchema>;
