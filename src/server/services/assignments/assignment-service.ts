@@ -5,8 +5,7 @@ import {
   assignmentCreateSchema,
   assignmentUpdateSchema,
 } from "@/schemas/assignment";
-import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findClassSectionById } from "@/server/repositories/class-section-repository";
+import { findClassSectionById } from "@/server/repositories/classes/class-section-repository";
 import {
   createAssignment,
   deleteDraftAssignment,
@@ -14,14 +13,12 @@ import {
   hasEvaluations,
   listAssignmentsByClassSection,
   updateAssignment,
-} from "@/server/repositories/assignment-repository";
+} from "@/server/repositories/assignments/assignment-repository";
 import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
 
 function unexpected(error: unknown): never {
-  if (error instanceof Error && error.message.startsWith("ASSIGNMENT_")) {
-    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
-  }
-  throw error;
+  if (error instanceof ApiError) throw error;
+  throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
 }
 
 export function isAllowedAssignmentStatusTransition(
@@ -83,10 +80,10 @@ async function requireOwnedClassSection(
 
 export async function listTeacherAssignments(
   classSectionId: string,
+  teacherId: string,
 ): Promise<AssignmentDto[]> {
   try {
-    const { teacher } = await requireTeacher();
-    await requireOwnedClassSection(classSectionId, teacher.id);
+    await requireOwnedClassSection(classSectionId, teacherId);
     return await listAssignmentsByClassSection(classSectionId);
   } catch (error) {
     return unexpected(error);
@@ -96,10 +93,10 @@ export async function listTeacherAssignments(
 export async function createTeacherAssignment(
   classSectionId: string,
   input: unknown,
+  teacherId: string,
 ): Promise<AssignmentDto> {
   try {
-    const { teacher } = await requireTeacher();
-    await requireOwnedClassSection(classSectionId, teacher.id);
+    await requireOwnedClassSection(classSectionId, teacherId);
     const parsed = assignmentCreateSchema.safeParse(input);
     if (!parsed.success) {
       throw new ApiError(
@@ -116,10 +113,10 @@ export async function createTeacherAssignment(
 
 export async function getTeacherAssignment(
   assignmentId: string,
+  teacherId: string,
 ): Promise<AssignmentDto> {
-  const { teacher } = await requireTeacher();
   try {
-    const assignment = await findAssignmentById(assignmentId, teacher.id);
+    const assignment = await findAssignmentById(assignmentId, teacherId);
     if (!assignment) {
       throw new ApiError(
         404,
@@ -136,10 +133,10 @@ export async function getTeacherAssignment(
 export async function updateTeacherAssignment(
   assignmentId: string,
   input: unknown,
+  teacherId: string,
 ): Promise<AssignmentDto> {
-  const { teacher } = await requireTeacher();
   try {
-    const current = await findAssignmentById(assignmentId, teacher.id);
+    const current = await findAssignmentById(assignmentId, teacherId);
     if (!current) {
       throw new ApiError(
         404,
@@ -170,10 +167,10 @@ export async function updateTeacherAssignment(
 
 export async function deleteTeacherAssignment(
   assignmentId: string,
+  teacherId: string,
 ): Promise<void> {
-  const { teacher } = await requireTeacher();
   try {
-    const assignment = await findAssignmentById(assignmentId, teacher.id);
+    const assignment = await findAssignmentById(assignmentId, teacherId);
     if (!assignment) {
       throw new ApiError(
         404,

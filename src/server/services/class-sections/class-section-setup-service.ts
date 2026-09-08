@@ -9,7 +9,7 @@ import {
   type ClassSectionCreateInput,
 } from "@/schemas/class-section";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { createClassSectionWithStudents } from "@/server/repositories/class-section-repository";
+import { createClassSectionWithStudents } from "@/server/repositories/classes/class-section-repository";
 import {
   buildImportPreview,
   generateInitialPin,

@@ -1,35 +1,40 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import { requireTeacher } from "@/server/auth/teacher-auth";
 import { evaluationInputSchema } from "@/schemas/evaluation";
-import { findAssignmentById } from "@/server/repositories/assignment-repository";
+import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import {
   findEvaluationByPair,
   insertEvaluation,
   listEvaluationsWithStudents,
   updateEvaluation,
-} from "@/server/repositories/evaluation-repository";
-import { findStudentById } from "@/server/repositories/student-repository";
+} from "@/server/repositories/evaluations/evaluation-repository";
+import { findStudentById } from "@/server/repositories/students/student-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 import type {
   EvaluationDto,
   EvaluationWithStudentDto,
 } from "@/types/evaluation";
 
+export interface TeacherEvaluationContext {
+  teacherId: string;
+  supabase: SupabaseClient;
+}
+
 function unexpected(error: unknown): never {
-  if (error instanceof Error && error.message.startsWith("EVALUATION_")) {
-    throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
-  }
-  throw error;
+  if (error instanceof ApiError) throw error;
+  throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
 }
 
 export async function listTeacherEvaluations(
   assignmentId: string,
+  context: TeacherEvaluationContext,
 ): Promise<EvaluationWithStudentDto[]> {
-  const { supabase, teacher } = await requireTeacher();
+  const { supabase, teacherId } = context;
   try {
-    const assignment = await findAssignmentById(assignmentId, teacher.id);
+    const assignment = await findAssignmentById(assignmentId, teacherId);
     if (!assignment) {
       throw new ApiError(
         404,
@@ -47,10 +52,11 @@ export async function upsertTeacherEvaluation(
   assignmentId: string,
   studentId: string,
   input: unknown,
+  context: TeacherEvaluationContext,
 ): Promise<EvaluationDto> {
-  const { supabase, teacher } = await requireTeacher();
+  const { supabase, teacherId } = context;
   try {
-    const assignment = await findAssignmentById(assignmentId, teacher.id);
+    const assignment = await findAssignmentById(assignmentId, teacherId);
     if (!assignment) {
       throw new ApiError(
         404,

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
-vi.mock("@/server/repositories/student-repository", () => ({
+vi.mock("@/server/repositories/students/student-repository", () => ({
   findStudentById: vi.fn(),
   listStudentsByClassSection: vi.fn(),
   updateStudentByTeacher: vi.fn(),
@@ -10,13 +10,13 @@ vi.mock("@/server/repositories/student-repository", () => ({
 vi.mock("@/server/services/students/student-auth-service", () => ({
   resetStudentPin: vi.fn(),
 }));
-vi.mock("@/server/repositories/evaluation-history-repository", () => ({
+vi.mock("@/server/repositories/evaluations/evaluation-history-repository", () => ({
   findEvaluationOwnerTeacherId: vi.fn(),
   listEvaluationHistoryRows: vi.fn(),
 }));
 
 import { createClient } from "@/lib/supabase/server";
-import { findEvaluationOwnerTeacherId } from "@/server/repositories/evaluation-history-repository";
+import { findEvaluationOwnerTeacherId } from "@/server/repositories/evaluations/evaluation-history-repository";
 import { getEvaluationHistory } from "./evaluation-history-service";
 import { getStudentInClass } from "@/server/services/students/student-management-service";
 

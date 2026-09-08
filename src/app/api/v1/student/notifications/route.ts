@@ -14,7 +14,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { notificationListQuerySchema } from "@/schemas/student-auth";
 import { requireFullStudentSession } from "@/server/auth/student-session";
-import { listNotificationsByStudentId } from "@/server/repositories/notification-repository";
+import { listNotificationsByStudentId } from "@/server/repositories/notifications/notification-repository";
 import { ApiError } from "@/lib/api/errors";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {

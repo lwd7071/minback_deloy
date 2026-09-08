@@ -4,12 +4,12 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
   findStudentByIdForSession,
   updateStudentEmail,
-} from "@/server/repositories/student-repository";
+} from "@/server/repositories/students/student-repository";
 import {
   createEmailChangeChallenge,
   verifyEmailChangeOtp,
   revokeEmailChangeChallenge,
-} from "@/server/repositories/password-reset-challenge-repository";
+} from "@/server/repositories/students/password-reset-challenge-repository";
 import { deliverEmailSafely } from "@/server/services/notifications/email/safe-email-delivery";
 import { sendForgotPinOtpEmail } from "@/server/services/notifications/email/brevo-email-service";
 

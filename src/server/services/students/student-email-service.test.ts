@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/server/repositories/student-repository", () => ({
+vi.mock("@/server/repositories/students/student-repository", () => ({
   findStudentByIdForSession: vi.fn(),
   updateStudentEmail: vi.fn(),
 }));
@@ -18,7 +18,7 @@ vi.mock("@/server/services/notifications/email/brevo-email-service", () => ({
 import {
   findStudentByIdForSession,
   updateStudentEmail,
-} from "@/server/repositories/student-repository";
+} from "@/server/repositories/students/student-repository";
 import {
   requestStudentEmailChange,
   confirmStudentEmailChange,

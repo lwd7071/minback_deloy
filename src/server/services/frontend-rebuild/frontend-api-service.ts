@@ -4,14 +4,14 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { classSectionListQuerySchema } from "@/schemas/class-section";
 import { gradebookQuerySchema } from "@/schemas/frontend-rebuild";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { hashRateLimitKey } from "@/server/repositories/login-rate-limit-repository";
+import { hashRateLimitKey } from "@/server/repositories/students/login-rate-limit-repository";
 import {
   consumePublicLookupRateLimit,
+  findClassSectionById,
   findPublicClassSectionByCode,
-  getGradebookRows,
   listClassSectionSummaries,
-} from "@/server/repositories/frontend-rebuild-repository";
-import { findClassSectionById } from "@/server/repositories/class-section-repository";
+} from "@/server/repositories/classes/class-section-repository";
+import { getGradebookRows } from "@/server/repositories/evaluations/gradebook-repository";
 import { normalizePublicClassCode } from "@/server/services/frontend-rebuild/frontend-rebuild-service";
 import { normalizeIp } from "@/server/services/students/student-auth-service";
 

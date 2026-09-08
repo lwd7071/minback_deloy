@@ -30,7 +30,7 @@ export async function PUT(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher, supabase } = await requireTeacher();
     assertSameOrigin(request);
     const { assignmentId, studentId } = await params;
     let body: unknown;
@@ -48,6 +48,7 @@ export async function PUT(
         parseId(assignmentId, "Assignment"),
         parseId(studentId, "Student"),
         body,
+        { teacherId: teacher.id, supabase },
       ),
       { headers: { "Cache-Control": "no-store" } },
     );

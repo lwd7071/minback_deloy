@@ -2,7 +2,7 @@ import { ChangeCredentialsForm } from "@/components/auth/student/change-credenti
 import { AuthCard } from "@/components/auth/auth-card";
 import { redirect } from "next/navigation";
 import { requireAnyStudentSession } from "@/server/auth/student-session";
-import { findClassSectionCodeById } from "@/server/repositories/student-repository";
+import { findClassSectionCodeById } from "@/server/repositories/students/student-repository";
 import { ApiError } from "@/lib/api/errors";
 
 export default async function OnboardingPage({

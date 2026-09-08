@@ -16,12 +16,14 @@ export function shouldAttemptEvaluationEmail(input: {
   latestOldStatus: EvaluationStatus | null;
   emailEnabled: boolean;
   studentEmail: string | null;
-  brevoConfigured: boolean;
+  emailConfigured?: boolean;
+  brevoConfigured?: boolean;
 }): boolean {
+  const isConfigured = input.emailConfigured ?? input.brevoConfigured ?? false;
   return (
     input.emailEnabled &&
     Boolean(input.studentEmail) &&
-    input.brevoConfigured &&
+    isConfigured &&
     shouldSendEvaluationEmail(input)
   );
 }

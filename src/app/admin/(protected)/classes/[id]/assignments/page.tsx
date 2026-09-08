@@ -1,5 +1,6 @@
 import { ClassAssignmentsView } from "@/components/assignments/teacher/class-assignments-view";
 import { handleTeacherPageError } from "@/server/navigation/page-errors";
+import { requireTeacher } from "@/server/auth/teacher-auth";
 import { listTeacherAssignments } from "@/server/services/assignments/assignment-service";
 
 export default async function ClassAssignmentsPage({
@@ -10,7 +11,8 @@ export default async function ClassAssignmentsPage({
   const { id } = await params;
   let assignments: Awaited<ReturnType<typeof listTeacherAssignments>>;
   try {
-    assignments = await listTeacherAssignments(id);
+    const { teacher } = await requireTeacher();
+    assignments = await listTeacherAssignments(id, teacher.id);
   } catch (error) {
     return handleTeacherPageError(error);
   }

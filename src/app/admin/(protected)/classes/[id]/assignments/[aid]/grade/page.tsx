@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BulkGradeView } from "@/components/evaluations/teacher/bulk-grade-view";
 import { handleTeacherPageError } from "@/server/navigation/page-errors";
+import { requireTeacher } from "@/server/auth/teacher-auth";
 import { getTeacherAssignment } from "@/server/services/assignments/assignment-service";
 import { listTeacherEvaluations } from "@/server/services/evaluations/evaluation-service";
 import { listStudentsInClass } from "@/server/services/students/student-management-service";
@@ -40,7 +41,8 @@ async function BulkGradeData({
   let studentResult: Awaited<ReturnType<typeof listStudentsInClass>>;
   let evaluations: Awaited<ReturnType<typeof listTeacherEvaluations>>;
   try {
-    assignment = await getTeacherAssignment(assignmentId);
+    const { teacher, supabase } = await requireTeacher();
+    assignment = await getTeacherAssignment(assignmentId, teacher.id);
     if (assignment.classSectionId !== classSectionId) {
       notFound();
     }
@@ -50,7 +52,10 @@ async function BulkGradeData({
         pageSize: 100,
         search: search || undefined,
       }),
-      listTeacherEvaluations(assignmentId),
+      listTeacherEvaluations(assignmentId, {
+        teacherId: teacher.id,
+        supabase,
+      }),
     ]);
   } catch (error) {
     return handleTeacherPageError(error);

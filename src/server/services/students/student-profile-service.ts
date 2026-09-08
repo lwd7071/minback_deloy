@@ -1,7 +1,7 @@
 import "server-only";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import { findStudentProfileData } from "@/server/repositories/student-profile-repository";
+import { findStudentProfileData } from "@/server/repositories/students/student-profile-repository";
 import type { EvaluationStatus } from "@/types/evaluation";
 import type { VerifiedStudentSession } from "@/types/student";
 import type { StudentProfileDto } from "@/types/student-profile";

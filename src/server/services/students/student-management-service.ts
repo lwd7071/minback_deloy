@@ -13,7 +13,7 @@ import {
   findStudentById,
   listStudentsByClassSection,
   updateStudentByTeacher,
-} from "@/server/repositories/student-repository";
+} from "@/server/repositories/students/student-repository";
 import { resetStudentPinToDefault } from "@/server/services/students/student-auth-service";
 import type { StudentAdminDto } from "@/types/student";
 import type {

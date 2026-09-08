@@ -34,3 +34,19 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+/**
+ * Lớp lỗi hạ tầng cho tầng CSDL / Repository.
+ * Đóng gói mã lỗi nội bộ (code) và nguyên nhân gốc rễ (cause) để phục vụ logging nội bộ server,
+ * KHÔNG làm lộ thông điệp kỹ thuật của PostgreSQL driver cho Client.
+ */
+export class RepositoryError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string = "Thao tác cơ sở dữ liệu thất bại",
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "RepositoryError";
+  }
+}

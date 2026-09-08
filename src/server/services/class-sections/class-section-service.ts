@@ -16,7 +16,7 @@ import {
   findClassSectionById,
   listClassSectionsByTeacher,
   updateClassSection,
-} from "@/server/repositories/class-section-repository";
+} from "@/server/repositories/classes/class-section-repository";
 import type { ClassSectionDto } from "@/types/class-section";
 
 function mapUnexpectedError(error: unknown): never {

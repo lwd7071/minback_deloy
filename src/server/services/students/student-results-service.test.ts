@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/server/repositories/student-results-repository", () => ({
+vi.mock("@/server/repositories/students/student-results-repository", () => ({
   listStudentResults: vi.fn(),
 }));
 
-import { listStudentResults } from "@/server/repositories/student-results-repository";
+import { listStudentResults } from "@/server/repositories/students/student-results-repository";
 import { getStudentResults } from "./student-results-service";
 
 describe("student results service", () => {
