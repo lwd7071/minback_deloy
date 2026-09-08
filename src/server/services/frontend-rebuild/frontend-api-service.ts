@@ -59,6 +59,7 @@ export async function getTeacherClassSectionSummaries(input: unknown) {
     data: result.rows,
     meta: { page: query.page, pageSize: query.pageSize, total: result.total },
     metrics: result.metrics,
+    filterCounts: result.filterCounts,
   };
 }
 

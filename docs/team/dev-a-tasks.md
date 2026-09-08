@@ -410,3 +410,12 @@ Sprint 6 closes measurable engineering gaps only. Do not add post-MVP Rubric/Aca
 - Build route manifest contains only the new UI families `/admin/*` and `/class/[code]/*`; the old `/teacher/*` and `/student/*` UI routes have no pages or redirects. Evaluation emails now link to the canonical class login URL.
 - Audit is clean: 0 vulnerabilities across 664 dependencies. Repository-wide Prettier remains red only for generated baseline `AGENTS.md`; all changed source and handoff files are formatted.
 - Database and integration verification is intentionally open because the new migration has not run against local Supabase: Docker remained unavailable after the already exhausted three-attempt environment diagnosis. Responsive browser verification is also open because the in-app browser runtime could not create its kernel assets directory.
+
+### Teacher class list upgrade — 2026-09-08
+
+- [x] Add canonical progress/sort query contracts, teacher-scoped list/facets RPC migration, repository/service/API wiring and search-scoped filter counts.
+- [x] Add right-aligned responsive toolbar, progress tabs, semantic KPI details, success progress ring and teacher display-name/avatar header.
+- [x] Add schema, dashboard/ring, header, CSS contract, API integration and pgTAP coverage for the new behavior.
+- [x] Verify TypeScript, ESLint, 160/160 unit tests across 42 files and the production build.
+- [ ] VERIFY: run `npm run test:setup`, pgTAP and the full integration suite once Docker Desktop is available; the 2026-09-08 attempt stopped before reset because the local Docker engine was not running.
+- [ ] VERIFY: complete responsive and keyboard browser QA at 390/800/1440 after the migration is applied locally.

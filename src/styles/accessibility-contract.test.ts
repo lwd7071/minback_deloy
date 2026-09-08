@@ -23,6 +23,10 @@ describe("UI accessibility contract", () => {
     expect(css).toContain("--color-focus-ring");
     expect(css).toContain("outline-offset: 2px");
     expect(css).toContain("min-height: 44px");
+    expect(css).toContain(".teacher-mini-ring-value");
+    expect(css).toContain("stroke: var(--color-success)");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(css).toContain(".class-filter-tab.is-active");
   });
 
   it("keeps primary text and surface contrast at WCAG AA level", () => {

@@ -31,12 +31,30 @@ export const classSectionUpdateSchema = z
     message: "Phải cung cấp code hoặc name để cập nhật",
   });
 
+export const classProgressFilterSchema = z.enum([
+  "all",
+  "urgent",
+  "good",
+  "complete",
+]);
+
+export const classSummarySortSchema = z.enum([
+  "newest",
+  "progress_asc",
+  "students_desc",
+  "name_asc",
+]);
+
 export const classSectionListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().trim().max(100).optional(),
+  progress: classProgressFilterSchema.default("all"),
+  sort: classSummarySortSchema.default("newest"),
 });
 
 export type ClassSectionCreateInput = z.infer<typeof classSectionCreateSchema>;
 export type ClassSectionUpdateInput = z.infer<typeof classSectionUpdateSchema>;
 export type ClassSectionListQuery = z.infer<typeof classSectionListQuerySchema>;
+export type ClassProgressFilter = z.infer<typeof classProgressFilterSchema>;
+export type ClassSummarySort = z.infer<typeof classSummarySortSchema>;

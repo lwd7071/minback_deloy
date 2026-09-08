@@ -12,6 +12,13 @@ export type ClassSectionSummaryDto = {
   gradingProgress: { completed: number; total: number; percentage: number };
 };
 
+export type ClassSummaryFilterCounts = {
+  all: number;
+  urgent: number;
+  good: number;
+  complete: number;
+};
+
 export type GradebookDto = {
   students: Array<{
     id: string;

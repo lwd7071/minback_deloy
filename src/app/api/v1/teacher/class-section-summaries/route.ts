@@ -9,9 +9,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const result = await getTeacherClassSectionSummaries({
       page: params.get("page") ?? undefined,
       pageSize: params.get("pageSize") ?? undefined,
-      search: params.get("search") ?? undefined,
+      search: params.get("q") ?? params.get("search") ?? undefined,
+      progress: params.get("progress") ?? undefined,
+      sort: params.get("sort") ?? undefined,
     });
-    return successResponse(result.data, undefined, result.meta);
+    return successResponse(result.data, undefined, {
+      ...result.meta,
+      filterCounts: result.filterCounts,
+    });
   } catch (error) {
     return errorResponse(error);
   }

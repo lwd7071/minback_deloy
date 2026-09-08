@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useNotificationPolling } from "@/components/notifications/student/use-notification-polling";
+import { Avatar } from "@/components/ui/avatar";
 
-type WorkspaceHeaderProps = {
-  role: "student" | "teacher";
-  classCode?: string;
-};
+type WorkspaceHeaderProps =
+  | { role: "teacher"; displayName: string; classCode?: never }
+  | { role: "student"; classCode: string; displayName?: never };
 
 type NavItem = { href: string; label: string; icon: typeof BookOpen };
 
@@ -41,7 +41,11 @@ export function makeItems(
   ];
 }
 
-export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
+export function WorkspaceHeader({
+  role,
+  classCode,
+  displayName,
+}: WorkspaceHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -106,9 +110,17 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
           {role === "student" && classCode ? (
             <StudentNotificationBell classCode={classCode} />
           ) : null}
-          <span className="workspace-role-label">
-            {role === "student" ? classCode : "Giảng viên"}
-          </span>
+          {role === "teacher" ? (
+            <div className="workspace-teacher-identity">
+              <span className="workspace-teacher-copy">
+                <strong>Giảng viên</strong>
+                <small title={displayName}>{displayName}</small>
+              </span>
+              <Avatar name={displayName} size={38} />
+            </div>
+          ) : (
+            <span className="workspace-role-label">{classCode}</span>
+          )}
           <button
             className="header-logout"
             onClick={() => void logout()}
@@ -130,6 +142,15 @@ export function WorkspaceHeader({ role, classCode }: WorkspaceHeaderProps) {
       </div>
       {open ? (
         <div className="workspace-mobile-panel">
+          {role === "teacher" ? (
+            <div className="workspace-mobile-identity">
+              <Avatar name={displayName} size={40} />
+              <span className="workspace-teacher-copy">
+                <strong>Giảng viên</strong>
+                <small>{displayName}</small>
+              </span>
+            </div>
+          ) : null}
           <nav aria-label="Điều hướng di động">
             {items.map(({ href, label, icon: Icon }) => (
               <Link

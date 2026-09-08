@@ -361,8 +361,8 @@ createPortal(
 
 ### 2.15. StatCard
 - **File:** `src/components/ui/stat-card.tsx`
-- **Props:** `value: ReactNode`, `label: string`, `children?: ReactNode`.
-- **Visual:** Card chứa số liệu in đậm lớn `<strong>`, nhãn mô tả xám `.muted` ở dưới.
+- **Props:** `value: ReactNode`, `label: string`, `children?: ReactNode`, `tone?: "accent" | "info" | "warning" | "success"`, `detail?: ReactNode`.
+- **Visual:** Card chứa số liệu in đậm lớn `<strong>`, nhãn mô tả xám `.muted`, detail tùy chọn và viền/icon tile theo semantic token của tone.
 
 ### 2.16. Tabs
 - **File:** `src/components/ui/tabs.tsx`
@@ -383,7 +383,7 @@ createPortal(
 - **Cấu trúc:**
   ```tsx
   <div className="workspace-page teacher-workspace">
-    <WorkspaceHeader role="teacher" />
+    <WorkspaceHeader role="teacher" displayName={teacher.displayName} />
     <main className="workspace-main">{children}</main>
   </div>
   ```
@@ -396,10 +396,11 @@ createPortal(
     2. **Lớp học** (`/admin/classes` - Icon `Users`, giữ active nếu pathname bắt đầu bằng `/admin/classes`)
     3. **Cài đặt** (`/admin/settings` - Icon `Settings`)
   - Bên phải:
-    - Nhãn role: `"Giảng viên"` (chữ mono in hoa).
+    - Cụm danh tính hai dòng: `"Giảng viên"` + tên thật, dùng Be Vietnam Pro và avatar initials từ `teachers.display_name`.
+    - Không có caret hoặc dropdown tài khoản giả.
     - Nút Đăng xuất: gọi `POST /api/v1/teacher/auth/logout` rồi điều hướng về `/admin/login`.
     - Nút Hamburger Toggle: hiện khi màn hình `<= 800px`.
-- **Mobile Navigation Drawer (`<= 800px`):** Panel nền `--navy-900` trượt xuống ngay dưới header, bo góc 12px, chứa 3 link điều hướng lớn và nút đăng xuất. Nhấn phím `Escape` hoặc click vào link sẽ tự động đóng.
+- **Mobile Navigation Drawer (`<= 800px`):** Header chỉ giữ wordmark và hamburger. Panel nền `--navy-900` trượt xuống ngay dưới header, bo góc 12px, mở đầu bằng avatar/danh tính giảng viên, tiếp theo là 3 link điều hướng lớn và nút đăng xuất. Nhấn phím `Escape` hoặc click vào link sẽ tự động đóng.
 
 ### 3.2. Teacher Class Sub-Layout (Ngữ cảnh Lớp học phần)
 - **File:** `src/app/admin/(protected)/classes/[id]/layout.tsx`
@@ -520,24 +521,29 @@ createPortal(
 ---
 
 ### 4. Danh sách Lớp học phần — `/admin/classes`
-- **File:** `src/app/admin/(protected)/classes/page.tsx`
-- **Mục đích:** Danh sách thẻ lớp học phần của giảng viên, hỗ trợ tìm kiếm theo mã/tên lớp và phân trang.
+- **File:** `src/app/admin/(protected)/classes/(list)/page.tsx`
+- **Mục đích:** Danh sách thẻ lớp học phần của giảng viên, hỗ trợ tìm kiếm, lọc tiến độ, sắp xếp và phân trang.
 - **Trạng thái hiện tại:** Đã implement UI hoàn chỉnh.
 - **Bố cục:**
   - Tiêu đề "Lớp học phần" có eyebrow "Quản lý lớp học".
-  - Dải 4 chỉ số metric tổng quan: Tổng số lớp, tổng sinh viên, tổng bài tập mở, tỷ lệ đã chấm trung bình.
-  - Thanh công cụ: Ô tìm kiếm `SearchInput` (max-width 400px) bên trái và nút `+ Tạo lớp mới` (`.btn.btn-primary`) bên phải.
-  - Lưới thẻ lớp học: `<div className="teacher-class-grid">` hiển thị danh sách `teacher-class-card` (mã lớp badge info, vòng tròn tiến độ MiniProgressRing, tên lớp, số lượng SV & bài tập, thanh ProgressBar).
+  - Dải 4 chỉ số toàn tài khoản: Lớp, Sinh viên, Bài tập, Đã chấm. KPI Đã chấm có detail `X / Y bài đã chấm`; KPI không đổi theo search/filter.
+  - Thanh công cụ desktop căn phải theo thứ tự: tìm kiếm (360–400px), dropdown sắp xếp, `+ Tạo lớp mới`. Mobile xếp dọc full-width.
+  - Hàng filter pill cuộn ngang trên mobile: Tất cả, Cần chấm gấp (1–29%), Đang tốt (30–99%), Hoàn thành (100%). Lớp `0/0` chỉ thuộc Tất cả; count chỉ phụ thuộc search.
+  - Dropdown sort: mới tạo gần nhất, % đã chấm thấp → cao, nhiều sinh viên nhất, tên A → Z.
+  - Lưới thẻ lớp học: `<div className="teacher-class-grid">` hiển thị mã lớp, tên, số sinh viên/bài tập, thanh tiến độ và vòng `MiniProgressRing`. Track trung tính, cung `--color-success` bắt đầu từ 12 giờ và dùng đúng tỷ lệ nguyên từ DTO.
   - Phân trang ở chân trang: Nút "Trang trước", summary `X / Y`, "Trang sau".
 - **Component con sử dụng:**
   - `ClassSummaryDashboard` (`src/components/class-sections/teacher/class-summary-dashboard.tsx`)
   - `SearchInput`, `Card`, `ProgressBar`, `AppIcon`
 - **API & Tương tác:**
-  - Server load: `getTeacherClassSectionSummaries({ page, pageSize: 6, search })`.
-  - Tìm kiếm client debounce 300ms, tự động cập nhật URL `?q=...`.
+  - Server load: `getTeacherClassSectionSummaries({ page, pageSize: 6, search, progress, sort })`.
+  - Canonical URL hỗ trợ `q`, `page`, `progress`, `sort`; bỏ `page=1`, `progress=all`, `sort=newest` và `q` rỗng.
+  - Tìm kiếm debounce 300ms; search/filter/sort reset về trang 1 và bảo toàn các state còn lại.
+  - API `GET /api/v1/teacher/class-section-summaries` nhận `q` (ưu tiên) hoặc alias `search`, `progress`, `sort`; trả `meta.filterCounts`.
 - **Empty state:**
-  - Khi không tìm thấy lớp: Thẻ `.teacher-empty-state` chứa icon classes màu xanh và text `"Chưa có lớp phù hợp. Tạo lớp đầu tiên để bắt đầu."`.
-- **Responsive:** Lưới thẻ lớp chuyển từ 2 cột sang 1 cột khi `<= 800px`.
+  - Tài khoản chưa có lớp: hướng dẫn tạo lớp đầu tiên.
+  - Search/filter không khớp: `"Không có lớp phù hợp với bộ lọc này."`.
+- **Responsive:** Khi `<= 800px`, KPI còn 2 cột, toolbar xếp dọc và lưới thẻ còn 1 cột; chỉ hàng filter được phép cuộn ngang.
 
 ---
 

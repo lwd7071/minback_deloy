@@ -10,17 +10,50 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Toolbar } from "@/components/layout/toolbar";
 import { AppIcon } from "@/components/ui/app-icon";
 import { StatCard } from "@/components/ui/stat-card";
-import type { ClassSectionSummaryDto } from "@/types/frontend-rebuild";
+import type {
+  ClassSectionSummaryDto,
+  ClassSummaryFilterCounts,
+} from "@/types/frontend-rebuild";
+import type {
+  ClassProgressFilter,
+  ClassSummarySort,
+} from "@/schemas/class-section";
+
+type ClassListQuery = {
+  search: string;
+  progress: ClassProgressFilter;
+  sort: ClassSummarySort;
+};
+
+export function buildClassListHref(
+  query: ClassListQuery & { page?: number },
+): string {
+  const params = new URLSearchParams();
+  if (query.search.trim()) params.set("q", query.search.trim());
+  if (query.progress !== "all") params.set("progress", query.progress);
+  if (query.sort !== "newest") params.set("sort", query.sort);
+  if (query.page && query.page > 1) params.set("page", String(query.page));
+  return `/admin/classes${params.size ? `?${params}` : ""}`;
+}
 
 export function MiniProgressRing({ percentage }: { percentage: number }) {
+  const normalizedPercentage = Math.min(100, Math.max(0, percentage));
   const size = 38;
   const radius = 14;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - percentage / 100);
+  const offset = circumference * (1 - normalizedPercentage / 100);
 
   return (
-    <div className="teacher-mini-ring" aria-label={`${percentage}% đã chấm`}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <div
+      className="teacher-mini-ring"
+      aria-label={`${normalizedPercentage}% đã chấm`}
+    >
+      <svg
+        aria-hidden="true"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+      >
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -41,7 +74,7 @@ export function MiniProgressRing({ percentage }: { percentage: number }) {
           strokeDashoffset={offset}
         />
       </svg>
-      <span>{percentage}%</span>
+      <span>{normalizedPercentage}%</span>
     </div>
   );
 }
@@ -50,6 +83,7 @@ export function ClassSummaryDashboard({
   rows,
   meta,
   metrics,
+  filterCounts,
   query,
 }: {
   rows: ClassSectionSummaryDto[];
@@ -59,8 +93,11 @@ export function ClassSummaryDashboard({
     studentCount: number;
     assignmentCount: number;
     gradingPercentage: number;
+    completedCount: number;
+    gradingTotal: number;
   };
-  query: { search: string };
+  filterCounts: ClassSummaryFilterCounts;
+  query: ClassListQuery;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(query.search);
@@ -71,32 +108,51 @@ export function ClassSummaryDashboard({
     const timer = window.setTimeout(() => {
       const params = new URLSearchParams();
       if (search.trim()) params.set("q", search.trim());
-      router.replace(`/admin/classes${params.size ? `?${params}` : ""}`);
+      router.replace(
+        buildClassListHref({
+          search,
+          progress: query.progress,
+          sort: query.sort,
+        }),
+      );
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [query.search, router, search]);
+  }, [query.progress, query.search, query.sort, router, search]);
 
-  const pageHref = (page: number) => {
-    const params = new URLSearchParams();
-    if (query.search) params.set("q", query.search);
-    if (page > 1) params.set("page", String(page));
-    return `/admin/classes${params.size ? `?${params}` : ""}`;
-  };
+  const pageHref = (page: number) => buildClassListHref({ ...query, page });
+  const filters: Array<{
+    value: ClassProgressFilter;
+    label: string;
+  }> = [
+    { value: "all", label: "Tất cả" },
+    { value: "urgent", label: "Cần chấm gấp" },
+    { value: "good", label: "Đang tốt" },
+    { value: "complete", label: "Hoàn thành" },
+  ];
   return (
     <div className="teacher-dash">
       <h1 className="sr-only">Lớp học</h1>
 
       <div className="teacher-metrics-grid" aria-label="Tổng quan lớp học">
-        <StatCard label="Lớp" value={metrics.classCount}>
+        <StatCard label="Lớp" value={metrics.classCount} tone="accent">
           <AppIcon name="classes" size={19} />
         </StatCard>
-        <StatCard label="Sinh viên" value={metrics.studentCount}>
+        <StatCard label="Sinh viên" value={metrics.studentCount} tone="info">
           <AppIcon name="students" size={19} />
         </StatCard>
-        <StatCard label="Bài tập" value={metrics.assignmentCount}>
+        <StatCard
+          label="Bài tập"
+          value={metrics.assignmentCount}
+          tone="warning"
+        >
           <AppIcon name="book" size={19} />
         </StatCard>
-        <StatCard label="Đã chấm" value={`${metrics.gradingPercentage}%`}>
+        <StatCard
+          detail={`${metrics.completedCount} / ${metrics.gradingTotal} bài đã chấm`}
+          label="Đã chấm"
+          tone="success"
+          value={`${metrics.gradingPercentage}%`}
+        >
           <AppIcon name="check" size={19} />
         </StatCard>
       </div>
@@ -110,20 +166,55 @@ export function ClassSummaryDashboard({
           />
         }
         actions={
-          <Link className="btn btn-primary" href="/admin/classes/new">
-            + Tạo lớp mới
-          </Link>
+          <>
+            <label className="sr-only" htmlFor="class-sort">
+              Sắp xếp lớp học
+            </label>
+            <select
+              className="form-input class-sort-select"
+              id="class-sort"
+              onChange={(event) =>
+                router.replace(
+                  buildClassListHref({
+                    ...query,
+                    sort: event.target.value as ClassSummarySort,
+                  }),
+                )
+              }
+              value={query.sort}
+            >
+              <option value="newest">Sắp xếp: Mới tạo gần nhất</option>
+              <option value="progress_asc">
+                Sắp xếp: % đã chấm (thấp → cao)
+              </option>
+              <option value="students_desc">
+                Sắp xếp: Nhiều sinh viên nhất
+              </option>
+              <option value="name_asc">Sắp xếp: Tên A → Z</option>
+            </select>
+            <Link className="btn btn-primary" href="/admin/classes/new">
+              + Tạo lớp mới
+            </Link>
+          </>
         }
       />
 
+      <nav aria-label="Lọc lớp theo tiến độ" className="class-filter-tabs">
+        {filters.map((filter) => (
+          <Link
+            aria-current={query.progress === filter.value ? "page" : undefined}
+            className={`class-filter-tab ${query.progress === filter.value ? "is-active" : ""}`}
+            href={buildClassListHref({ ...query, progress: filter.value })}
+            key={filter.value}
+          >
+            {filter.label} ({filterCounts[filter.value]})
+          </Link>
+        ))}
+      </nav>
+
       <div className="teacher-class-grid">
         {rows.map((row) => {
-          const pct = row.gradingProgress.total
-            ? Math.round(
-                (row.gradingProgress.completed / row.gradingProgress.total) *
-                  100,
-              )
-            : 0;
+          const pct = row.gradingProgress.percentage;
           return (
             <Link
               className="class-link"
@@ -144,8 +235,12 @@ export function ClassSummaryDashboard({
                 <ProgressBar
                   value={row.gradingProgress.completed}
                   max={row.gradingProgress.total}
-                  showLabel
                 />
+                <small className="class-grading-caption muted">
+                  {row.gradingProgress.total > 0
+                    ? `${row.gradingProgress.completed} / ${row.gradingProgress.total} bài đã chấm`
+                    : "Chưa có nội dung cần chấm"}
+                </small>
               </Card>
             </Link>
           );
@@ -166,7 +261,11 @@ export function ClassSummaryDashboard({
         <EmptyState
           icon="classes"
           title="Chưa có lớp phù hợp"
-          description="Tạo lớp đầu tiên để bắt đầu quản lý phản hồi."
+          description={
+            metrics.classCount === 0
+              ? "Tạo lớp đầu tiên để bắt đầu quản lý phản hồi."
+              : "Không có lớp phù hợp với bộ lọc này."
+          }
         />
       ) : null}
     </div>

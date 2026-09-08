@@ -18,6 +18,8 @@ export async function getTeacherDashboardOverview(input?: {
     listClassSectionSummaries(supabase, teacher.id, {
       page: classPage,
       pageSize: classPageSize,
+      progress: "all",
+      sort: "newest",
     }),
     listPendingGradingItems(supabase, teacher.id, 6),
     listRecentActivity(supabase, teacher.id, 15),

@@ -8,8 +8,10 @@ export default async function ProtectedAdminLayout({
 }: {
   children: ReactNode;
 }) {
+  let displayName: string;
   try {
-    await requireTeacher();
+    const { teacher } = await requireTeacher();
+    displayName = teacher.displayName;
   } catch (error) {
     if (error instanceof ApiError && error.code === "UNAUTHENTICATED")
       redirect("/admin/login");
@@ -17,7 +19,7 @@ export default async function ProtectedAdminLayout({
   }
   return (
     <div className="workspace-page teacher-workspace">
-      <WorkspaceHeader role="teacher" />
+      <WorkspaceHeader role="teacher" displayName={displayName} />
       <main className="workspace-main">{children}</main>
     </div>
   );

@@ -7,6 +7,7 @@ import type { GradebookQuery } from "@/schemas/frontend-rebuild";
 import type { ClassSectionListQuery } from "@/schemas/class-section";
 import type {
   ClassSectionSummaryDto,
+  ClassSummaryFilterCounts,
   GradebookDto,
   PublicClassSectionDto,
 } from "@/types/frontend-rebuild";
@@ -49,93 +50,47 @@ export async function listClassSectionSummaries(
     gradingTotal: number;
     gradingPercentage: number;
   };
+  filterCounts: ClassSummaryFilterCounts;
 }> {
-  const fetchPage = async (offset: number, limit: number) =>
+  const fetchPage = (offset: number, limit: number) =>
     supabase.rpc("list_class_section_summaries", {
       p_teacher_id: teacherId,
       p_offset: offset,
       p_limit: limit,
       p_search: query.search || null,
+      p_progress: query.progress,
+      p_sort: query.sort,
     });
-  const initialPage = await fetchPage(
-    (query.page - 1) * query.pageSize,
-    query.pageSize,
-  );
-  if (initialPage.error) {
-    console.error(
-      "[listClassSectionSummaries] RPC error:",
-      initialPage.error.message ??
-        initialPage.error.code ??
-        JSON.stringify(initialPage.error),
-    );
-
-    // Graceful fallback nếu RPC chưa được tạo trong DB (hoặc Docker/migration chưa chạy)
-    const {
-      data: classes,
-      count,
-      error: tableError,
-    } = await supabase
-      .from("class_sections")
-      .select("id, code, name", { count: "exact" })
-      .order("created_at", { ascending: false });
-
-    if (tableError || !classes) {
+  const [pageResult, facetsResult] = await Promise.all([
+    fetchPage((query.page - 1) * query.pageSize, query.pageSize),
+    supabase.rpc("get_class_section_summary_facets", {
+      p_teacher_id: teacherId,
+      p_search: query.search || null,
+    }),
+  ]);
+  if (pageResult.error || facetsResult.error) {
+    throw new Error("CLASS_SECTION_SUMMARY_LIST_FAILED");
+  }
+  const pageRecords = (pageResult.data ?? []) as Array<Record<string, unknown>>;
+  const facets = (
+    (facetsResult.data ?? []) as Array<Record<string, unknown>>
+  )[0];
+  let total = Number(pageRecords[0]?.total_count ?? 0);
+  if (pageRecords.length === 0 && query.page > 1) {
+    const firstPageResult = await fetchPage(0, 1);
+    if (firstPageResult.error) {
       throw new Error("CLASS_SECTION_SUMMARY_LIST_FAILED");
     }
-
-    const rows = await Promise.all(
-      classes.map(async (c) => {
-        const [{ count: studentCount }, { count: assignmentCount }] =
-          await Promise.all([
-            supabase
-              .from("students")
-              .select("id", { count: "exact", head: true })
-              .eq("class_section_id", c.id),
-            supabase
-              .from("assignments")
-              .select("id", { count: "exact", head: true })
-              .eq("class_section_id", c.id),
-          ]);
-        return {
-          id: String(c.id),
-          code: String(c.code),
-          name: String(c.name),
-          studentCount: Number(studentCount ?? 0),
-          assignmentCount: Number(assignmentCount ?? 0),
-          gradingProgress: { completed: 0, total: 0, percentage: 0 },
-        };
-      }),
-    );
-
-    const total = count ?? classes.length;
-    return {
-      total,
-      rows,
-      metrics: {
-        classCount: total,
-        studentCount: rows.reduce((acc, r) => acc + r.studentCount, 0),
-        assignmentCount: rows.reduce((acc, r) => acc + r.assignmentCount, 0),
-        completedCount: 0,
-        gradingTotal: 0,
-        gradingPercentage: 0,
-      },
-    };
+    const firstRecord = (
+      (firstPageResult.data ?? []) as Array<Record<string, unknown>>
+    )[0];
+    total = Number(firstRecord?.total_count ?? 0);
   }
-  let pageData = initialPage.data;
-  let records = (pageData ?? []) as Array<Record<string, unknown>>;
-  if (records.length === 0 && query.page > 1) {
-    const fallback = await fetchPage(0, 1);
-    if (fallback.error) throw new Error("CLASS_SECTION_SUMMARY_LIST_FAILED");
-    records = (fallback.data ?? []) as Array<Record<string, unknown>>;
-    pageData = [];
-  }
-  const summary = records[0];
-  const total = Number(summary?.total_count ?? 0);
-  const completedCount = Number(summary?.total_completed_count ?? 0);
-  const gradingTotal = Number(summary?.total_grading_total ?? 0);
+  const completedCount = Number(facets?.completed_count ?? 0);
+  const gradingTotal = Number(facets?.grading_total ?? 0);
   return {
     total,
-    rows: ((pageData ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    rows: pageRecords.map((row) => ({
       id: String(row.id),
       code: String(row.code),
       name: String(row.name),
@@ -148,15 +103,21 @@ export async function listClassSectionSummaries(
       },
     })),
     metrics: {
-      classCount: total,
-      studentCount: Number(summary?.total_student_count ?? 0),
-      assignmentCount: Number(summary?.total_assignment_count ?? 0),
+      classCount: Number(facets?.class_count ?? 0),
+      studentCount: Number(facets?.student_count ?? 0),
+      assignmentCount: Number(facets?.assignment_count ?? 0),
       completedCount,
       gradingTotal,
       gradingPercentage:
         gradingTotal === 0
           ? 0
           : Math.round((completedCount / gradingTotal) * 100),
+    },
+    filterCounts: {
+      all: Number(facets?.all_count ?? 0),
+      urgent: Number(facets?.urgent_count ?? 0),
+      good: Number(facets?.good_count ?? 0),
+      complete: Number(facets?.complete_count ?? 0),
     },
   };
 }
