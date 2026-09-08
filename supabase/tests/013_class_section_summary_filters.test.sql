@@ -33,9 +33,9 @@ insert into public.evaluations (id, student_id, assignment_id, score, status) va
   ('f4100000-0000-0000-0000-000000000001', 'f2100000-0000-0000-0000-000000000001', 'f3100000-0000-0000-0000-000000000001', 8, 'graded');
 
 insert into public.class_sections (id, code, name, teacher_id, created_at) values
-  ('f1100000-0000-0000-0000-000000000029', 'P29_A', 'Progress 29', 'f0000000-0000-0000-0000-000000000001', '2026-09-03'),
-  ('f1100000-0000-0000-0000-000000000030', 'P30_A', 'Progress 30', 'f0000000-0000-0000-0000-000000000001', '2026-09-04'),
-  ('f1100000-0000-0000-0000-000000000099', 'P99_A', 'Progress 99', 'f0000000-0000-0000-0000-000000000001', '2026-09-05');
+  ('f1100000-0000-0000-0000-000000000029', 'P29_A', 'ZZFILTER 29', 'f0000000-0000-0000-0000-000000000001', '2026-09-03'),
+  ('f1100000-0000-0000-0000-000000000030', 'P30_A', 'ZZFILTER 30', 'f0000000-0000-0000-0000-000000000001', '2026-09-04'),
+  ('f1100000-0000-0000-0000-000000000099', 'P99_A', 'ZZFILTER 99', 'f0000000-0000-0000-0000-000000000001', '2026-09-05');
 
 insert into public.students (class_section_id, mssv, full_name, nickname, pin_hash)
 select
@@ -133,7 +133,7 @@ select is(
 select results_eq(
   $$select all_count, urgent_count, good_count, complete_count
     from public.get_class_section_summary_facets(
-      'f0000000-0000-0000-0000-000000000001', 'P'
+      'f0000000-0000-0000-0000-000000000001', 'ZZFILTER '
     )$$,
   $$values (3::bigint, 1::bigint, 2::bigint, 0::bigint)$$,
   'facet counts follow search before progress filtering'
