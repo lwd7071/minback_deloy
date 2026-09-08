@@ -1,31 +1,39 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, Hash } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import styles from "@/app/home.module.css";
 
 export function ClassLookupForm() {
   const router = useRouter();
   const [code, setCode] = useState("");
   return (
     <form
-      className="class-lookup"
+      className={styles.form}
       onSubmit={(event) => {
         event.preventDefault();
         const value = code.trim().toUpperCase();
         if (value) router.push(`/class/${encodeURIComponent(value)}`);
       }}
     >
-      <Hash aria-hidden="true" size={18} />
+      <label htmlFor="home-class-code">Mã lớp học phần</label>
       <input
-        aria-label="Mã lớp học phần"
+        id="home-class-code"
+        className={styles.input}
+        aria-describedby="home-class-hint"
+        autoComplete="off"
+        spellCheck={false}
         autoCapitalize="characters"
-        placeholder="Nhập mã lớp học phần, ví dụ: SWE201_02"
+        placeholder="Ví dụ: SWE201_02"
         value={code}
         onChange={(event) => setCode(event.target.value.toUpperCase())}
       />
-      <button className="btn btn-primary" type="submit" disabled={!code.trim()}>
+      <button className={styles.submit} type="submit" disabled={!code.trim()}>
         Vào lớp <ArrowRight aria-hidden="true" size={16} />
       </button>
+      <p id="home-class-hint" className={styles.hint}>
+        Dùng mã lớp do giảng viên cung cấp.
+      </p>
     </form>
   );
 }

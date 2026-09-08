@@ -1,90 +1,44 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  LockKeyhole,
-  MessagesSquare,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { ClassLookupForm } from "@/components/auth/student/class-lookup-form";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import styles from "./home.module.css";
+
+export const metadata: Metadata = {
+  title: "MinBack — Lớp học của bạn",
+  description:
+    "Xem bài tập, điểm số và phản hồi trong lớp học của bạn cùng MinBack.",
+};
 
 export default function HomePage() {
   return (
-    <main className="landing-page">
-      <header className="public-header">
-        <Link className="wordmark" href="/">
-          <span className="wordmark-mark">
-            <BookOpen size={18} />
-          </span>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <Link className={styles.brand} href="/">
           MinBack
         </Link>
-        <Link className="btn btn-secondary" href="/admin/login">
-          Dành cho giảng viên <ArrowRight size={16} />
+        <Link className={styles.teacher} href="/admin/login">
+          Dành cho giảng viên <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
       </header>
-      <section className="lp-hero">
-        <div>
-          <Badge variant="info">Hồ sơ học tập theo từng lớp học phần</Badge>
-          <h1>
-            Một nơi rõ ràng
+      <main className={styles.main}>
+        <div className={styles.content}>
+          <h1 className={styles.title}>
+            Lớp học của bạn.
             <br />
-            cho từng tiến bộ.
+            Mọi tiến bộ, ở đây.
           </h1>
-          <p className="lead">
-            Xem bài tập, điểm số và phản hồi của giảng viên trong đúng hồ sơ học
-            tập của bạn.
+          <p className={styles.description}>
+            Xem bài tập, điểm số và phản hồi
+            <br />
+            trong lớp học của bạn.
           </p>
           <ClassLookupForm />
-          <p className="hero-note">
-            <LockKeyhole size={15} /> Truy cập riêng tư bằng mã lớp, nickname và
-            PIN.
-          </p>
         </div>
-        <div aria-label="Xem trước hồ sơ học tập">
-          <Card variant="highlighted" className="landing-preview">
-            <div>
-              <span>Lớp học phần</span>
-              <strong>SWE201</strong>
-            </div>
-            <div>
-              <span>Bài tập đã chấm</span>
-              <strong>7 / 9</strong>
-            </div>
-            <div>
-              <span>Điểm gần nhất</span>
-              <strong>8.5</strong>
-            </div>
-            <div>
-              <span>Nhận xét mới</span>
-              <strong>2 thông báo</strong>
-            </div>
-          </Card>
-        </div>
-      </section>
-      <section className="landing-principles">
-        <Card variant="compact">
-          <BookOpen size={22} />
-          <h2>Một hồ sơ, một lớp</h2>
-          <p>
-            Mỗi lượt ghi danh có tiến độ và phản hồi riêng, không lẫn với lớp
-            khác.
-          </p>
-        </Card>
-        <Card variant="compact">
-          <MessagesSquare size={22} />
-          <h2>Phản hồi có ngữ cảnh</h2>
-          <p>
-            Điểm số, nhận xét và trạng thái bài tập nằm cạnh nhau để dễ theo
-            dõi.
-          </p>
-        </Card>
-        <Card variant="compact">
-          <LockKeyhole size={22} />
-          <h2>Thiết kế riêng tư</h2>
-          <p>Sinh viên chỉ xem dữ liệu thuộc đúng phiên học tập của mình.</p>
-        </Card>
-      </section>
-    </main>
+      </main>
+      <footer className={styles.footer}>
+        MinBack · Không gian học tập riêng tư
+      </footer>
+    </div>
   );
 }
