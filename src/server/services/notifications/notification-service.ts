@@ -3,10 +3,8 @@ import "server-only";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { createClient } from "@/lib/supabase/server";
 import { shouldAttemptEvaluationEmail } from "@/server/services/notifications/email-notification-policy";
-import {
-  getBrevoPublicConfig,
-  sendEvaluationEmail,
-} from "@/server/services/notifications/email/brevo-email-service";
+import type { EmailNotificationAdapter } from "@/server/services/notifications/contracts/notification-adapter";
+import { defaultEmailAdapter } from "@/server/services/notifications/adapters/brevo-email-adapter";
 import { deliverEmailSafely } from "@/server/services/notifications/email/safe-email-delivery";
 
 type EvaluationNotificationInput = {
@@ -14,6 +12,10 @@ type EvaluationNotificationInput = {
   evaluationId: string;
   type: "evaluation_created" | "evaluation_updated";
   assignmentTitle: string;
+};
+
+export type EvaluationNotificationOptions = {
+  emailAdapter?: EmailNotificationAdapter;
 };
 
 type EvaluationContext = {
@@ -27,7 +29,10 @@ type EvaluationContext = {
 
 export async function createEvaluationNotification(
   input: EvaluationNotificationInput,
+  options?: EvaluationNotificationOptions,
 ): Promise<{ emailSent: boolean }> {
+  // Dependency Inversion: Sử dụng adapter trừu tượng được inject hoặc dùng default adapter
+  const emailAdapter = options?.emailAdapter ?? defaultEmailAdapter;
   const supabase = await createClient();
 
   // Truy vấn evaluation, student và assignment/class_section
@@ -121,7 +126,7 @@ export async function createEvaluationNotification(
     latestOldStatus,
     emailEnabled,
     studentEmail: student.email,
-    brevoConfigured: getBrevoPublicConfig().configured,
+    emailConfigured: emailAdapter.isConfigured(),
   });
 
   console.log("[Notification] Kiểm tra điều kiện gửi email:", {
@@ -130,7 +135,8 @@ export async function createEvaluationNotification(
     latestOldStatus,
     emailEnabled,
     studentEmail: student.email,
-    brevoConfigured: getBrevoPublicConfig().configured,
+    emailConfigured: emailAdapter.isConfigured(),
+    adapterId: emailAdapter.id,
     shouldSend,
   });
 
@@ -140,15 +146,20 @@ export async function createEvaluationNotification(
 
   const emailSent = await deliverEmailSafely(
     async () => {
-      const result = await sendEvaluationEmail({
+      const result = await emailAdapter.sendEvaluationEmail({
         recipientEmail: student.email!,
         studentFullName: student.full_name,
         assignmentTitle: context.assignments?.title ?? input.assignmentTitle,
         classCode: classSection.code,
         className: classSection.name,
       });
+
+      if (!result.success) {
+        throw new Error(result.error ?? "EMAIL_DELIVERY_FAILED");
+      }
+
       console.log(
-        `[Notification] Đã gửi email thành công tới ${student.email}, Brevo messageId: ${result.messageId}`,
+        `[Notification] Đã gửi email thành công tới ${student.email}, provider (${emailAdapter.id}) messageId: ${result.messageId}`,
       );
       return result;
     },

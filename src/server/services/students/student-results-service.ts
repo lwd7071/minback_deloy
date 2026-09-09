@@ -1,7 +1,7 @@
 import "server-only";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import { listStudentResults } from "@/server/repositories/student-results-repository";
+import { listStudentResults } from "@/server/repositories/students/student-results-repository";
 import type { VerifiedStudentSession } from "@/types/student";
 import type { StudentResultsResponseDto } from "@/types/student-results";
 

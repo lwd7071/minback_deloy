@@ -20,7 +20,7 @@ import {
   findStudentAssignmentContext,
   getSubmissionAttemptCount,
   getStudentSubmissionHistory as getStudentSubmissionHistoryFromRepository,
-} from "@/server/repositories/submission-repository";
+} from "@/server/repositories/assignments/submission-repository";
 import type { UploadSignatureDto } from "@/types/file-assets";
 import type { SubmissionHistoryDto } from "@/types/submission";
 

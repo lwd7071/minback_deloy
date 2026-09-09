@@ -1,26 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
+import type { AssignmentDto } from "@/types/assignment";
 import { AssignmentDetailView } from "./assignment-detail-view";
+import { useClassAssignments } from "./use-class-assignments";
 
-function toDatetimeLocal(d: Date = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const year = d.getFullYear();
-  const month = pad(d.getMonth() + 1);
-  const day = pad(d.getDate());
-  const hours = pad(d.getHours());
-  const minutes = pad(d.getMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
-type StatusFilter = "all" | AssignmentStatus;
-
+/**
+ * Presentational Component cho màn hình quản lý bài tập của lớp học phần.
+ * 
+ * Tuân thủ Single Responsibility Principle (SRP):
+ * - View chỉ đảm nhận duy nhất việc biểu diễn giao diện người dùng (Presentational View).
+ * - Toàn bộ state management, network calls, validation và modal lifecycle 
+ *   được ủy nhiệm cho hook `useClassAssignments`.
+ */
 export function ClassAssignmentsView({
   classSectionId,
   initialAssignments,
@@ -28,99 +24,24 @@ export function ClassAssignmentsView({
   classSectionId: string;
   initialAssignments: AssignmentDto[];
 }) {
-  const [rows, setRows] = useState<AssignmentDto[]>(initialAssignments);
-  const [error, setError] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
-    string | null
-  >(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-
-  const [draft, setDraft] = useState({
-    title: "",
-  });
-
-  useEffect(() => {
-    let active = true;
-    void fetch(`/api/v1/teacher/class-sections/${classSectionId}/assignments`, {
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok || !body.data)
-          throw new Error(body.error?.message ?? "Không thể tải bài tập");
-        return body.data as AssignmentDto[];
-      })
-      .then((data) => {
-        if (active) setRows(data);
-      })
-      .catch((cause) => {
-        if (active)
-          setError(
-            cause instanceof Error ? cause.message : "Không thể tải bài tập",
-          );
-      });
-    return () => {
-      active = false;
-    };
-  }, [classSectionId, refreshKey]);
-
-  async function create(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/v1/teacher/class-sections/${classSectionId}/assignments`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            title: draft.title,
-            description: "",
-            assignedDate: toDatetimeLocal(new Date()),
-            dueDate: toDatetimeLocal(new Date()),
-            status: "published",
-            maxScore: 10,
-          }),
-        },
-      );
-      const body = await response.json();
-      if (!response.ok || !body.data)
-        throw new Error(body.error?.message ?? "Không thể tạo bài tập");
-
-      const created = body.data as AssignmentDto;
-      // Đưa bài tập mới tạo lên vị trí đầu tiên
-      setRows((prev) => [created, ...prev.filter((r) => r.id !== created.id)]);
-      setShowCreate(false);
-      setDraft({
-        title: "",
-      });
-      setRefreshKey((value) => value + 1);
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Không thể tạo bài tập",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // Đếm số lượng theo trạng thái
-  const counts = useMemo(() => {
-    const published = rows.filter((r) => r.status === "published").length;
-    const draftCount = rows.filter((r) => r.status === "draft").length;
-    const closed = rows.filter((r) => r.status === "closed").length;
-    return { all: rows.length, published, draft: draftCount, closed };
-  }, [rows]);
-
-  // Lọc danh sách hiển thị
-  const filteredRows = useMemo(() => {
-    if (statusFilter === "all") return rows;
-    return rows.filter((r) => r.status === statusFilter);
-  }, [rows, statusFilter]);
+  const {
+    rows,
+    filteredRows,
+    counts,
+    statusFilter,
+    setStatusFilter,
+    error,
+    showCreate,
+    setShowCreate,
+    busy,
+    draft,
+    setDraftTitle,
+    createAssignment,
+    selectedAssignmentId,
+    setSelectedAssignmentId,
+    handleAssignmentSaved,
+    handleAssignmentDeleted,
+  } = useClassAssignments({ classSectionId, initialAssignments });
 
   return (
     <div className="stack">
@@ -140,7 +61,7 @@ export function ClassAssignmentsView({
         <Card>
           <form
             className="form-stack"
-            onSubmit={(event) => void create(event)}
+            onSubmit={(event) => void createAssignment(event)}
             autoComplete="off"
           >
             <label className="form-field">
@@ -150,9 +71,7 @@ export function ClassAssignmentsView({
                 required
                 autoComplete="off"
                 value={draft.title}
-                onChange={(event) =>
-                  setDraft((value) => ({ ...value, title: event.target.value }))
-                }
+                onChange={(event) => setDraftTitle(event.target.value)}
               />
             </label>
 
@@ -275,16 +194,9 @@ export function ClassAssignmentsView({
         {selectedAssignmentId ? (
           <AssignmentDetailView
             assignmentId={selectedAssignmentId}
-            onSaved={(updated) => {
-              setRows((prev) =>
-                prev.map((row) => (row.id === updated.id ? updated : row)),
-              );
-            }}
+            onSaved={handleAssignmentSaved}
             onDeleted={() => {
-              setRows((prev) =>
-                prev.filter((row) => row.id !== selectedAssignmentId),
-              );
-              setSelectedAssignmentId(null);
+              handleAssignmentDeleted(selectedAssignmentId);
             }}
             onClose={() => setSelectedAssignmentId(null)}
           />

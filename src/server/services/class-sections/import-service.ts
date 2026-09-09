@@ -6,12 +6,12 @@ import { z } from "zod";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findClassSectionById } from "@/server/repositories/class-section-repository";
+import { findClassSectionById } from "@/server/repositories/classes/class-section-repository";
 import {
   createImportedStudents,
   findImportedStudentsByMssv,
   updateImportedStudent,
-} from "@/server/repositories/import-repository";
+} from "@/server/repositories/classes/import-repository";
 import type { ImportResultDto, ImportRowDto } from "@/types/import";
 import type { ImportPreviewDto } from "@/types/frontend-rebuild";
 

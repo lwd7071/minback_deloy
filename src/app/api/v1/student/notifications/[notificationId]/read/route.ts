@@ -15,7 +15,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireFullStudentSession } from "@/server/auth/student-session";
-import { markNotificationAsRead } from "@/server/repositories/notification-repository";
+import { markNotificationAsRead } from "@/server/repositories/notifications/notification-repository";
 import { assertSameOrigin } from "@/lib/api/origin";
 
 type RouteParams = { params: Promise<{ notificationId: string }> };

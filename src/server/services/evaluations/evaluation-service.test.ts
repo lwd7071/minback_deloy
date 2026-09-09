@@ -2,14 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/server/auth/teacher-auth", () => ({ requireTeacher: vi.fn() }));
-vi.mock("@/server/repositories/assignment-repository", () => ({
+vi.mock("@/server/repositories/assignments/assignment-repository", () => ({
   findAssignmentById: vi.fn(),
 }));
-vi.mock("@/server/repositories/student-repository", () => ({
+vi.mock("@/server/repositories/students/student-repository", () => ({
   findStudentById: vi.fn(),
 }));
-vi.mock("@/server/repositories/evaluation-repository", () => ({
+vi.mock("@/server/repositories/evaluations/evaluation-repository", () => ({
   findEvaluationByPair: vi.fn(),
   insertEvaluation: vi.fn(),
   listEvaluationsWithStudents: vi.fn(),
@@ -19,16 +18,18 @@ vi.mock("@/server/services/notifications/notification-service", () => ({
   createEvaluationNotification: vi.fn(),
 }));
 
-import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findAssignmentById } from "@/server/repositories/assignment-repository";
+import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import {
   findEvaluationByPair,
   insertEvaluation,
   updateEvaluation,
-} from "@/server/repositories/evaluation-repository";
-import { findStudentById } from "@/server/repositories/student-repository";
+} from "@/server/repositories/evaluations/evaluation-repository";
+import { findStudentById } from "@/server/repositories/students/student-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
-import { upsertTeacherEvaluation } from "./evaluation-service";
+import {
+  upsertTeacherEvaluation,
+  type TeacherEvaluationContext,
+} from "./evaluation-service";
 
 const assignment = {
   id: "30000000-0000-0000-0000-000000000001",
@@ -68,17 +69,14 @@ const saved = {
   updatedAt: "2026-08-01T00:00:00Z",
 };
 
+const teacherContext: TeacherEvaluationContext = {
+  teacherId: "teacher-a",
+  supabase: {} as SupabaseClient,
+};
+
 describe("upsertTeacherEvaluation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(requireTeacher).mockResolvedValue({
-      supabase: {} as SupabaseClient,
-      teacher: {
-        id: "teacher-a",
-        displayName: "Teacher A",
-        emailNotificationEnabled: false,
-      },
-    });
     vi.mocked(findAssignmentById).mockResolvedValue(assignment);
     vi.mocked(findStudentById).mockResolvedValue(student);
   });
@@ -91,11 +89,16 @@ describe("upsertTeacherEvaluation", () => {
     );
 
     await expect(
-      upsertTeacherEvaluation(assignment.id, student.id, {
-        score: 8,
-        feedback: "Good",
-        status: "graded",
-      }),
+      upsertTeacherEvaluation(
+        assignment.id,
+        student.id,
+        {
+          score: 8,
+          feedback: "Good",
+          status: "graded",
+        },
+        teacherContext,
+      ),
     ).resolves.toEqual(saved);
     expect(insertEvaluation).toHaveBeenCalledOnce();
     expect(createEvaluationNotification).toHaveBeenCalledOnce();
@@ -110,11 +113,16 @@ describe("upsertTeacherEvaluation", () => {
     vi.mocked(findEvaluationByPair).mockResolvedValue(saved);
 
     await expect(
-      upsertTeacherEvaluation(assignment.id, student.id, {
-        score: 8,
-        feedback: "Good",
-        status: "graded",
-      }),
+      upsertTeacherEvaluation(
+        assignment.id,
+        student.id,
+        {
+          score: 8,
+          feedback: "Good",
+          status: "graded",
+        },
+        teacherContext,
+      ),
     ).resolves.toEqual(saved);
     expect(updateEvaluation).not.toHaveBeenCalled();
     expect(createEvaluationNotification).not.toHaveBeenCalled();
@@ -127,11 +135,16 @@ describe("upsertTeacherEvaluation", () => {
     );
 
     await expect(
-      upsertTeacherEvaluation(assignment.id, student.id, {
-        score: 8,
-        feedback: "Good",
-        status: "graded",
-      }),
+      upsertTeacherEvaluation(
+        assignment.id,
+        student.id,
+        {
+          score: 8,
+          feedback: "Good",
+          status: "graded",
+        },
+        teacherContext,
+      ),
     ).rejects.toMatchObject({ status: 500, code: "INTERNAL_ERROR" });
     expect(createEvaluationNotification).not.toHaveBeenCalled();
   });

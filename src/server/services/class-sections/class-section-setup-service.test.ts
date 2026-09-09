@@ -10,11 +10,11 @@ vi.mock("@/server/auth/teacher-auth", () => ({
     teacher: { id: "teacher-1" },
   })),
 }));
-vi.mock("@/server/repositories/class-section-repository", () => ({
+vi.mock("@/server/repositories/classes/class-section-repository", () => ({
   createClassSectionWithStudents: vi.fn(),
 }));
 
-import { createClassSectionWithStudents } from "@/server/repositories/class-section-repository";
+import { createClassSectionWithStudents } from "@/server/repositories/classes/class-section-repository";
 import { createTeacherClassSectionSetup } from "./class-section-setup-service";
 
 const createdClass = {

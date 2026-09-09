@@ -39,35 +39,14 @@ export type StudentSessionRow = {
   created_at: string;
 };
 
-export type LoginRateLimitRow = {
-  id: string;
-  scope: "identifier" | "ip";
-  key_hash: string; // HMAC-SHA256 hex của IP hoặc "classCode:nickname"
-  attempt_count: number;
-  window_started_at: string;
-  blocked_until: string | null;
-  updated_at: string;
-};
-
-export type NotificationRow = {
-  id: string;
-  student_id: string;
-  evaluation_id: string | null;
-  type: "evaluation_created" | "evaluation_updated";
-  message: string;
-  created_at: string;
-  read_at: string | null;
-};
-
-export type EvaluationHistoryRow = {
-  id: string;
-  evaluation_id: string;
-  old_score: number | null;
-  old_feedback: string;
-  old_status: "pending" | "graded" | "returned";
-  changed_at: string;
-  changed_by: string; // teacher_id
-};
+// ─── Re-exports for Backward Compatibility ──────────────────────────────────
+// Đảm bảo không làm gãy các import hiện có trong codebase.
+export type { NotificationDto, NotificationRow } from "./notification";
+export type { LoginRateLimitRow } from "./rate-limit";
+export type {
+  EvaluationHistoryDto,
+  EvaluationHistoryRow,
+} from "./evaluation";
 
 // ─── API DTOs (camelCase, expose ra ngoài API) ────────────────────────────────
 // Đây là các type được dùng trong response body của API.
@@ -99,28 +78,6 @@ export type StudentAdminDto = {
   lockedUntil: string | null;
   createdAt: string;
   updatedAt: string;
-};
-
-export type NotificationDto = {
-  id: string;
-  type: "evaluation_created" | "evaluation_updated";
-  message: string;
-  evaluationId: string | null;
-  createdAt: string;
-  readAt: string | null;
-};
-
-export type EvaluationHistoryDto = {
-  id: string;
-  evaluationId: string;
-  oldScore: number | null;
-  oldFeedback: string;
-  oldStatus: "pending" | "graded" | "returned";
-  changedAt: string;
-  changedBy: {
-    id: string;
-    displayName: string;
-  };
 };
 
 // ─── Internal types dùng trong service layer ──────────────────────────────────

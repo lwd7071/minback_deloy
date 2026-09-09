@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/server/auth/teacher-auth", () => ({ requireTeacher: vi.fn() }));
-vi.mock("@/server/repositories/assignment-repository", () => ({
+vi.mock("@/server/repositories/assignments/assignment-repository", () => ({
   findAssignmentById: vi.fn(),
 }));
 vi.mock("@/server/services/notifications/notification-service", () => ({
@@ -10,7 +10,7 @@ vi.mock("@/server/services/notifications/notification-service", () => ({
 }));
 
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findAssignmentById } from "@/server/repositories/assignment-repository";
+import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 
 import { bulkUpsertTeacherEvaluations } from "./bulk-evaluation-service";

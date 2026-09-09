@@ -73,7 +73,7 @@ export async function loadClassAssignments(classSectionId: string) {
     cacheTags.classSection(classSectionId),
     cacheTags.classAssignments(classSectionId),
   );
-  return listTeacherAssignments(classSectionId);
+  return listTeacherAssignments(classSectionId, teacher.id);
 }
 
 export async function loadGradebook(classSectionId: string, input: unknown) {
@@ -105,7 +105,7 @@ export async function loadBulkGrade(
 ) {
   "use cache: private";
   privateNavigationLife();
-  const { teacher } = await requireTeacher();
+  const { teacher, supabase } = await requireTeacher();
   cacheTag(
     cacheTags.teacher(teacher.id),
     cacheTags.classStudents(classSectionId),
@@ -113,9 +113,12 @@ export async function loadBulkGrade(
     cacheTags.assignmentGrading(assignmentId),
   );
   const [assignment, students, evaluations, submissions] = await Promise.all([
-    getTeacherAssignment(assignmentId),
+    getTeacherAssignment(assignmentId, teacher.id),
     listStudentsInClass(classSectionId, { page: 1, pageSize: 100 }),
-    listTeacherEvaluations(assignmentId),
+    listTeacherEvaluations(assignmentId, {
+      teacherId: teacher.id,
+      supabase,
+    }),
     listTeacherSubmissions(assignmentId),
   ]);
   return { assignment, students: students.students, evaluations, submissions };

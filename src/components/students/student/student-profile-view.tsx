@@ -1,80 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-
 import { Avatar } from "@/components/ui/avatar";
 import { AppIcon, type AppIconName } from "@/components/ui/app-icon";
 import { NotificationBell } from "@/components/ui/notification-bell";
-
 import { StudentAssignmentModal } from "@/components/assignments/student/student-assignment-modal";
-import { useNotificationPolling } from "@/components/notifications/student/use-notification-polling";
+import {
+  useStudentProfile,
+  type StudentProfileAssignment,
+} from "./use-student-profile";
 
-export type StudentProfileAssignment = {
-  id: string;
-  classSectionId: string;
-  title: string;
-  description: string;
-  assignedDate: string;
-  dueDate: string;
-  status: "draft" | "published" | "closed";
-  maxScore: number;
-  createdAt: string;
-  updatedAt: string;
-  attachments: Array<{
-    id: string;
-    originalName: string;
-    bytes: number;
-    format: string;
-    uploadedAt: string;
-    downloadUrl: string;
-  }>;
-  submission: {
-    attemptCount: number;
-    latestAttempt: {
-      id: string;
-      attemptNumber: number;
-      submittedAt: string;
-      isLate: boolean;
-      files: Array<{
-        id: string;
-        originalName: string;
-        bytes: number;
-        format: string;
-        uploadedAt: string;
-        downloadUrl: string;
-      }>;
-    } | null;
-  };
-  evaluation: {
-    id: string;
-    studentId: string;
-    assignmentId: string;
-    score: number | null;
-    feedback: string;
-    status: "pending" | "graded" | "returned";
-    createdAt: string;
-    updatedAt: string;
-  } | null;
-};
-
-type StudentProfileDto = {
-  student: { mssv: string; fullName: string; nickname: string };
-  classSection: { id: string; code: string; name: string };
-  progress: { completed: number; total: number; percentage: number };
-  submissionProgress: { completed: number; total: number; percentage: number };
-  assignments: StudentProfileAssignment[];
-};
-
-type ApiResult<T> = { data: T } | { error: { message: string } };
-
-type RecentActivity = {
-  id: string;
-  icon: AppIconName;
-  tone: "blue" | "green";
-  label: string;
-  occurredAt: string;
-};
+export type { StudentProfileAssignment };
 
 const dateTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
   day: "2-digit",
@@ -167,155 +102,27 @@ function DashboardMetric({
   );
 }
 
+/**
+ * Presentational View cho hồ sơ học tập của sinh viên.
+ * 
+ * Tuân thủ Single Responsibility Principle (SRP):
+ * - View chỉ biểu diễn các thành phần giao diện (Avatar, Metrics, Table, Timeline).
+ * - Toàn bộ Data fetching, Polling, Routing sync, Logout và Dashboard Calculations
+ *   được đảm nhiệm bởi hook `useStudentProfile`.
+ */
 export function StudentProfileView({ classCode }: { classCode: string }) {
-  const router = useRouter();
-  const [profile, setProfile] = useState<StudentProfileDto | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
-    string | null
-  >(null);
-  const [referenceTime] = useState(() => Date.now());
-  const notificationState = useNotificationPolling();
-
-  useEffect(() => {
-    let active = true;
-
-    fetch("/api/v1/student/profile", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) {
-          let message = "Không thể tải hồ sơ học tập";
-          try {
-            const body = (await response.json()) as {
-              error?: { message?: string };
-            };
-            if (body.error?.message) message = body.error.message;
-          } catch {
-            // The fallback above is intentionally used for non-JSON responses.
-          }
-          throw new Error(message);
-        }
-        const body = (await response.json()) as ApiResult<StudentProfileDto>;
-        if (!("data" in body)) throw new Error("Dữ liệu không hợp lệ");
-        return body.data;
-      })
-      .then((data) => {
-        if (!active) return;
-        if (classCode && data.classSection.code !== classCode.toUpperCase()) {
-          router.replace(
-            `/class/${encodeURIComponent(data.classSection.code)}/profile`,
-          );
-          return;
-        }
-        setProfile(data);
-      })
-      .catch((fetchError: unknown) => {
-        if (active) {
-          setError(
-            fetchError instanceof Error ? fetchError.message : "Lỗi kết nối",
-          );
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [refreshKey, classCode, router]);
-
-  async function handleLogout() {
-    try {
-      await fetch("/api/v1/student/auth/logout", { method: "POST" });
-    } finally {
-      setProfile(null);
-      router.replace("/");
-      router.refresh();
-    }
-  }
-
-  const dashboard = useMemo(() => {
-    if (!profile) return null;
-    const scores = profile.assignments
-      .filter(
-        (assignment) =>
-          assignment.evaluation?.score !== null &&
-          assignment.evaluation?.score !== undefined &&
-          (assignment.evaluation.status === "graded" ||
-            assignment.evaluation.status === "returned"),
-      )
-      .map(
-        (assignment) =>
-          (assignment.evaluation!.score! / assignment.maxScore) * 100,
-      );
-    const averageScore = scores.length
-      ? Math.round(
-          scores.reduce((sum, score) => sum + score, 0) / scores.length,
-        )
-      : null;
-    const submitted = profile.assignments.filter(
-      (assignment) => assignment.submission.latestAttempt !== null,
-    ).length;
-    const graded = profile.assignments.filter(
-      (assignment) =>
-        assignment.evaluation?.status === "graded" ||
-        assignment.evaluation?.status === "returned",
-    ).length;
-    const upcoming = profile.assignments
-      .filter(
-        (assignment) =>
-          assignment.status === "published" &&
-          !assignment.submission.latestAttempt &&
-          new Date(assignment.dueDate).getTime() > referenceTime,
-      )
-      .sort(
-        (left, right) =>
-          new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime(),
-      )[0];
-    const recentActivities: RecentActivity[] = profile.assignments
-      .flatMap((assignment) => {
-        const activities: RecentActivity[] = [];
-        if (assignment.submission.latestAttempt) {
-          activities.push({
-            id: `submission-${assignment.submission.latestAttempt.id}`,
-            icon: "upload",
-            tone: "blue",
-            label: `Bạn đã nộp bài “${assignment.title}”`,
-            occurredAt: assignment.submission.latestAttempt.submittedAt,
-          });
-        }
-        if (
-          assignment.evaluation?.status === "graded" ||
-          assignment.evaluation?.status === "returned"
-        ) {
-          activities.push({
-            id: `evaluation-${assignment.evaluation.id}`,
-            icon: "fileCheck",
-            tone: "green",
-            label: `Giảng viên đã chấm bài “${assignment.title}”`,
-            occurredAt: assignment.evaluation.updatedAt,
-          });
-        }
-        return activities;
-      })
-      .sort(
-        (left, right) =>
-          new Date(right.occurredAt).getTime() -
-          new Date(left.occurredAt).getTime(),
-      )
-      .slice(0, 4);
-
-    return {
-      averageScore,
-      submitted,
-      graded,
-      notSubmitted: profile.assignments.length - submitted,
-      upcoming,
-      recentActivities,
-    };
-  }, [profile, referenceTime]);
+  const {
+    profile,
+    loading,
+    error,
+    dashboard,
+    referenceTime,
+    notificationState,
+    selectedAssignment,
+    setSelectedAssignmentId,
+    handleLogout,
+    handleAssignmentSubmitted,
+  } = useStudentProfile({ classCode });
 
   if (loading) {
     return (
@@ -650,18 +457,15 @@ export function StudentProfileView({ classCode }: { classCode: string }) {
         </section>
       </div>
 
-      {assignments.map((assignment) => (
+      {selectedAssignment ? (
         <StudentAssignmentModal
-          key={assignment.id}
-          assignment={assignment}
-          open={selectedAssignmentId === assignment.id}
+          key={selectedAssignment.id}
+          assignment={selectedAssignment}
+          open={true}
           onClose={() => setSelectedAssignmentId(null)}
-          onSubmitted={() => {
-            setRefreshKey((value) => value + 1);
-            setSelectedAssignmentId(null);
-          }}
+          onSubmitted={handleAssignmentSubmitted}
         />
-      ))}
+      ) : null}
     </div>
   );
 }

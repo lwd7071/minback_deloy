@@ -3,7 +3,7 @@ import "server-only";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { bulkEvaluationSchema } from "@/schemas/frontend-rebuild";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findAssignmentById } from "@/server/repositories/assignment-repository";
+import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
 
 export async function bulkUpsertTeacherEvaluations(

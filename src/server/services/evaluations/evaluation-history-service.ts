@@ -11,8 +11,8 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
   findEvaluationOwnerTeacherId,
   listEvaluationHistoryRows,
-} from "@/server/repositories/evaluation-history-repository";
-import type { EvaluationHistoryDto } from "@/types/student";
+} from "@/server/repositories/evaluations/evaluation-history-repository";
+import type { EvaluationHistoryDto } from "@/types/evaluation";
 
 /**
  * GET /api/v1/teacher/evaluations/:evaluationId/history

@@ -4,7 +4,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { assertSameOrigin } from "@/lib/api/origin";
 import { errorResponse, successResponse } from "@/lib/api/response";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findClassSectionById } from "@/server/repositories/class-section-repository";
+import { findClassSectionById } from "@/server/repositories/classes/class-section-repository";
 import {
   previewStudentCsv,
   previewStudentXlsx,

@@ -33,8 +33,8 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
   findValidSessionByTokenHash,
   refreshSessionActivity,
-} from "@/server/repositories/student-session-repository";
-import { findStudentRowById } from "@/server/repositories/student-repository";
+} from "@/server/repositories/students/student-session-repository";
+import { findStudentRowById } from "@/server/repositories/students/student-repository";
 import type {
   StudentSessionDto,
   VerifiedStudentSession,

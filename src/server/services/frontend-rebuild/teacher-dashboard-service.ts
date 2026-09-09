@@ -4,8 +4,8 @@ import { requireTeacher } from "@/server/auth/teacher-auth";
 import {
   listPendingGradingItems,
   listRecentActivity,
-} from "@/server/repositories/teacher-dashboard-repository";
-import { listClassSectionSummaries } from "@/server/repositories/frontend-rebuild-repository";
+} from "@/server/repositories/classes/teacher-dashboard-repository";
+import { listClassSectionSummaries } from "@/server/repositories/classes/class-section-repository";
 
 export async function getTeacherDashboardOverview(input?: {
   classPage?: number;

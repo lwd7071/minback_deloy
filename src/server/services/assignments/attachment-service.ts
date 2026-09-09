@@ -16,14 +16,14 @@ import {
   validateUploadFile,
 } from "@/server/files/file-policy";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findAssignmentById } from "@/server/repositories/assignment-repository";
+import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import {
   countActiveAttachments,
   createAttachment,
   findAttachmentForAssignment,
   listActiveAttachments,
   setAttachmentDeletionState,
-} from "@/server/repositories/file-asset-repository";
+} from "@/server/repositories/assignments/file-asset-repository";
 import type { FileAssetDto, UploadSignatureDto } from "@/types/file-assets";
 
 function attachmentDto(

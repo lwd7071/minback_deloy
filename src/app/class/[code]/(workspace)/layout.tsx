@@ -3,7 +3,7 @@ import { Suspense, type ReactNode } from "react";
 
 import { StudentWorkspaceLayout } from "@/components/layout/student/student-workspace";
 import { requireFullStudentSession } from "@/server/auth/student-session";
-import { findClassSectionCodeById } from "@/server/repositories/student-repository";
+import { findClassSectionCodeById } from "@/server/repositories/students/student-repository";
 import { getStudentProfile } from "@/server/services/students/student-profile-service";
 import { handleStudentWorkspaceError } from "@/server/navigation/page-errors";
 

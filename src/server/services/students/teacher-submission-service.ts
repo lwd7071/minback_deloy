@@ -2,12 +2,12 @@ import "server-only";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { findAssignmentById } from "@/server/repositories/assignment-repository";
+import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import {
   findSubmissionFileForAssignment,
   getTeacherStudentSubmissionHistory,
   listTeacherLatestSubmissions,
-} from "@/server/repositories/submission-repository";
+} from "@/server/repositories/assignments/submission-repository";
 import { createPrivateDownloadUrl } from "@/server/files/cloudinary-service";
 import type {
   SubmissionHistoryDto,

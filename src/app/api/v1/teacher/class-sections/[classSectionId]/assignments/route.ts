@@ -31,10 +31,10 @@ export async function GET(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher } = await requireTeacher();
     const { classSectionId } = await params;
     return successResponse(
-      await listTeacherAssignments(parseId(classSectionId)),
+      await listTeacherAssignments(parseId(classSectionId), teacher.id),
     );
   } catch (error) {
     return errorResponse(error);
@@ -46,7 +46,7 @@ export async function POST(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher } = await requireTeacher();
     assertSameOrigin(request);
     const { classSectionId } = await params;
     let body: unknown;
@@ -60,7 +60,7 @@ export async function POST(
       );
     }
     return successResponse(
-      await createTeacherAssignment(parseId(classSectionId), body),
+      await createTeacherAssignment(parseId(classSectionId), body, teacher.id),
       { status: 201 },
     );
   } catch (error) {

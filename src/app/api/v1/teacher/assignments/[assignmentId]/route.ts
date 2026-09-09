@@ -32,9 +32,11 @@ export async function GET(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher } = await requireTeacher();
     const { assignmentId } = await params;
-    return successResponse(await getTeacherAssignment(parseId(assignmentId)));
+    return successResponse(
+      await getTeacherAssignment(parseId(assignmentId), teacher.id),
+    );
   } catch (error) {
     return errorResponse(error);
   }
@@ -45,7 +47,7 @@ export async function PATCH(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher } = await requireTeacher();
     assertSameOrigin(request);
     const { assignmentId } = await params;
     let body: unknown;
@@ -59,7 +61,7 @@ export async function PATCH(
       );
     }
     return successResponse(
-      await updateTeacherAssignment(parseId(assignmentId), body),
+      await updateTeacherAssignment(parseId(assignmentId), body, teacher.id),
     );
   } catch (error) {
     return errorResponse(error);
@@ -71,10 +73,10 @@ export async function DELETE(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher } = await requireTeacher();
     assertSameOrigin(request);
     const { assignmentId } = await params;
-    await deleteTeacherAssignment(parseId(assignmentId));
+    await deleteTeacherAssignment(parseId(assignmentId), teacher.id);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

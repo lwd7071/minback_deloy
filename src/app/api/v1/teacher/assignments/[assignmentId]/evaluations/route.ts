@@ -27,10 +27,13 @@ export async function GET(
   { params }: RouteContext,
 ): Promise<NextResponse> {
   try {
-    await requireTeacher();
+    const { teacher, supabase } = await requireTeacher();
     const { assignmentId } = await params;
     return successResponse(
-      await listTeacherEvaluations(parseId(assignmentId)),
+      await listTeacherEvaluations(parseId(assignmentId), {
+        teacherId: teacher.id,
+        supabase,
+      }),
       {
         headers: { "Cache-Control": "no-store" },
       },

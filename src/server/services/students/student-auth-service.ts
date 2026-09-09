@@ -23,7 +23,7 @@ import {
   checkBothBuckets,
   incrementBothBuckets,
   resetIdentifierBucket,
-} from "@/server/repositories/login-rate-limit-repository";
+} from "@/server/repositories/students/login-rate-limit-repository";
 import {
   findClassSectionIdByCode,
   findStudentByIdentifierAndClass,
@@ -33,12 +33,12 @@ import {
   updateStudentNickname,
   updateStudentPin,
   updateStudentPinHash,
-} from "@/server/repositories/student-repository";
+} from "@/server/repositories/students/student-repository";
 import {
   createForgotPinChallenge,
   verifyForgotPinOtp,
   revokeForgotPinChallenge,
-} from "@/server/repositories/password-reset-challenge-repository";
+} from "@/server/repositories/students/password-reset-challenge-repository";
 import { sendForgotPinOtpEmail } from "@/server/services/notifications/email/brevo-email-service";
 import { deliverEmailSafely } from "@/server/services/notifications/email/safe-email-delivery";
 import {
@@ -46,7 +46,7 @@ import {
   revokeAllSessionsByStudentId,
   revokeSessionById,
   upgradeSessionToFull,
-} from "@/server/repositories/student-session-repository";
+} from "@/server/repositories/students/student-session-repository";
 import {
   SESSION_COOKIE_OPTIONS,
   SESSION_TIMEOUT_MINUTES,

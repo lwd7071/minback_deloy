@@ -3,11 +3,11 @@ import "server-only";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireFullStudentSession } from "@/server/auth/student-session";
 import { createPrivateDownloadUrl } from "@/server/files/cloudinary-service";
-import { findAttachmentForAssignment } from "@/server/repositories/file-asset-repository";
+import { findAttachmentForAssignment } from "@/server/repositories/assignments/file-asset-repository";
 import {
   findStudentAssignmentContext,
   findSubmissionFileForStudent,
-} from "@/server/repositories/submission-repository";
+} from "@/server/repositories/assignments/submission-repository";
 
 async function visibleAssignment(assignmentId: string) {
   const session = await requireFullStudentSession();
