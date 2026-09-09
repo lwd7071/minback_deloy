@@ -249,7 +249,7 @@ export async function listClassSectionSummaries(
       p_sort: query.sort,
     });
 
-  // Gọi đồng thời fetch trang danh sách và facets metrics (nếu RPC facets hỗ trợ)
+  // Fetch the page and aggregate facets concurrently.
   const [initialPage, facetsResult] = await Promise.all([
     fetchPage((query.page - 1) * query.pageSize, query.pageSize),
     supabase
@@ -264,74 +264,15 @@ export async function listClassSectionSummaries(
   ]);
 
   if (initialPage.error) {
-    console.error(
-      "[listClassSectionSummaries] RPC error:",
-      initialPage.error.message ??
-        initialPage.error.code ??
-        JSON.stringify(initialPage.error),
-    );
-
-    // Graceful fallback nếu RPC chưa được tạo trong DB (hoặc Docker/migration chưa chạy)
-    const {
-      data: classes,
-      count,
-      error: tableError,
-    } = await supabase
-      .from("class_sections")
-      .select("id, code, name", { count: "exact" })
-      .order("created_at", { ascending: false });
-
-    if (tableError || !classes) {
-      throw new RepositoryError(
-        "CLASS_SECTION_SUMMARY_LIST_FAILED",
-        "Không thể lấy tóm tắt lớp học",
-        { cause: tableError },
-      );
-    }
-
-    const rows = await Promise.all(
-      classes.map(async (c) => {
-        const [{ count: studentCount }, { count: assignmentCount }] =
-          await Promise.all([
-            supabase
-              .from("students")
-              .select("id", { count: "exact", head: true })
-              .eq("class_section_id", c.id),
-            supabase
-              .from("assignments")
-              .select("id", { count: "exact", head: true })
-              .eq("class_section_id", c.id),
-          ]);
-        return {
-          id: String(c.id),
-          code: String(c.code),
-          name: String(c.name),
-          studentCount: Number(studentCount ?? 0),
-          assignmentCount: Number(assignmentCount ?? 0),
-          gradingProgress: { completed: 0, total: 0, percentage: 0 },
-        };
-      }),
-    );
-
-    const total = count ?? classes.length;
-    return {
-      total,
-      rows,
-      metrics: {
-        classCount: total,
-        studentCount: rows.reduce((acc, r) => acc + r.studentCount, 0),
-        assignmentCount: rows.reduce((acc, r) => acc + r.assignmentCount, 0),
-        completedCount: 0,
-        gradingTotal: 0,
-        gradingPercentage: 0,
+    throw new RepositoryError(
+      "CLASS_SECTION_SUMMARY_LIST_FAILED",
+      "Không thể lấy tóm tắt lớp học",
+      {
+        cause: new Error(
+          initialPage.error.code ?? "CLASS_SECTION_SUMMARY_RPC_FAILED",
+        ),
       },
-      filterCounts: {
-        all: total,
-        urgent: 0,
-        good: 0,
-        complete: 0,
-      },
-    };
+    );
   }
 
   let pageData = initialPage.data;
@@ -361,10 +302,7 @@ export async function listClassSectionSummaries(
   const summary = records[0];
   const facet = ((facetsResult?.data ?? []) as Array<Record<string, unknown>>)[0];
 
-  // Cơ chế giải quyết số liệu phòng thủ (Defense-in-Depth):
-  // 1. Ưu tiên đọc từ RPC get_class_section_summary_facets (chuẩn migration mới nhất)
-  // 2. Nếu không có, đọc từ window aggregates của list_class_section_summaries
-  // 3. Nếu DB chạy RPC cũ không có window aggregate, fallback tính tổng an toàn từ rows
+  // Prefer facet aggregates, then fall back to aggregates returned by the page RPC.
   const total = Number(
     facet?.class_count ?? facet?.all_count ?? summary?.total_count ?? rows.length,
   );

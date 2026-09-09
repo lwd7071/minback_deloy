@@ -82,6 +82,76 @@ describe("bulkUpsertTeacherEvaluations", () => {
     });
   });
 
+  it("waits for changed-row notifications before resolving", async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          id: evaluationId,
+          student_id: studentId,
+          change_type: "updated",
+        },
+      ],
+      error: null,
+    });
+
+    let resolveNotification!: (value: { emailSent: boolean }) => void;
+    vi.mocked(createEvaluationNotification).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveNotification = resolve;
+        }),
+    );
+
+    let settled = false;
+    const resultPromise = bulkUpsertTeacherEvaluations(assignmentId, {
+      evaluations: [
+        { studentId, score: 8, feedback: "Tốt", status: "graded" },
+      ],
+    }).then((result) => {
+      settled = true;
+      return result;
+    });
+
+    await vi.waitFor(() => {
+      expect(createEvaluationNotification).toHaveBeenCalledOnce();
+    });
+    expect(settled).toBe(false);
+
+    resolveNotification({ emailSent: false });
+    await expect(resultPromise).resolves.toEqual([
+      { evaluationId, studentId, changeType: "updated" },
+    ]);
+  });
+
+  it("keeps the bulk result successful when a notification fails", async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          id: evaluationId,
+          student_id: studentId,
+          change_type: "updated",
+        },
+      ],
+      error: null,
+    });
+    vi.mocked(createEvaluationNotification).mockRejectedValueOnce(
+      new Error("notification unavailable"),
+    );
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    await expect(
+      bulkUpsertTeacherEvaluations(assignmentId, {
+        evaluations: [
+          { studentId, score: 8, feedback: "Tốt", status: "graded" },
+        ],
+      }),
+    ).resolves.toEqual([{ evaluationId, studentId, changeType: "updated" }]);
+    expect(JSON.stringify(errorSpy.mock.calls)).not.toContain(studentId);
+    errorSpy.mockRestore();
+  });
+
   it("does not notify when every row is a no-op", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
 

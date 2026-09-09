@@ -66,9 +66,9 @@ export async function bulkUpsertTeacherEvaluations(
     student_id: string;
     change_type: "created" | "updated";
   }>;
-  // Kích hoạt thông báo & email dưới dạng tác vụ nền bất đồng bộ (Non-blocking I/O)
-  // để API phản hồi ngay lập tức cho giáo viên mà không phải chờ Brevo HTTP round-trips
-  void Promise.all(
+  // Wait for notification attempts to settle while keeping their failures isolated
+  // from the already-committed evaluation result.
+  await Promise.all(
     changed.map((row) =>
       createEvaluationNotification({
         studentId: row.student_id,
@@ -78,11 +78,8 @@ export async function bulkUpsertTeacherEvaluations(
             ? "evaluation_created"
             : "evaluation_updated",
         assignmentTitle: assignment.title,
-      }).catch((err) => {
-        console.error(
-          `[BulkEvaluation] Lỗi thông báo cho sinh viên ${row.student_id}:`,
-          err,
-        );
+      }).catch(() => {
+        console.error("[BulkEvaluation] EVALUATION_NOTIFICATION_FAILED");
       }),
     ),
   );

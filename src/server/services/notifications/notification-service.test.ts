@@ -114,6 +114,10 @@ describe("notification-service with Adapter Pattern (OCP/DIP)", () => {
         messageId: "mock-msg-12345",
       }),
     };
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     const result = await createEvaluationNotification(
       {
@@ -144,6 +148,17 @@ describe("notification-service with Adapter Pattern (OCP/DIP)", () => {
     });
 
     expect(result.emailSent).toBe(true);
+
+    const output = JSON.stringify([
+      ...logSpy.mock.calls,
+      ...errorSpy.mock.calls,
+    ]);
+    expect(output).not.toContain("student@example.com");
+    expect(output).not.toContain("Nguyen Van A");
+    expect(output).not.toContain("student-1");
+    expect(output).not.toContain("mock-msg-12345");
+    logSpy.mockRestore();
+    errorSpy.mockRestore();
   });
 
   it("xử lý an toàn khi adapter gửi email thất bại (graceful degradation)", async () => {

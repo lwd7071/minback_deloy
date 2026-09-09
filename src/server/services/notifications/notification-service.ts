@@ -46,7 +46,7 @@ export async function createEvaluationNotification(
     .single();
 
   if (evaluationError || !evaluation) {
-    console.error("[Notification] Lỗi truy vấn Evaluation:", evaluationError);
+    console.error("[Notification] EVALUATION_LOOKUP_FAILED");
     throw new ApiError(
       500,
       API_ERROR_CODES.internal,
@@ -70,10 +70,7 @@ export async function createEvaluationNotification(
     });
 
   if (notificationError) {
-    console.error(
-      "[Notification] Lỗi tạo in-app notification:",
-      notificationError,
-    );
+    console.error("[Notification] IN_APP_NOTIFICATION_CREATE_FAILED");
     throw new ApiError(
       500,
       API_ERROR_CODES.internal,
@@ -101,7 +98,7 @@ export async function createEvaluationNotification(
       .maybeSingle();
 
     if (teacherError) {
-      console.error("[Notification] Lỗi đọc cấu hình giáo viên:", teacherError);
+      console.error("[Notification] TEACHER_NOTIFICATION_CONFIG_LOOKUP_FAILED");
     }
     emailEnabled = Boolean(teacherData?.email_notification_enabled);
   }
@@ -129,17 +126,6 @@ export async function createEvaluationNotification(
     emailConfigured: emailAdapter.isConfigured(),
   });
 
-  console.log("[Notification] Kiểm tra điều kiện gửi email:", {
-    type: input.type,
-    currentStatus: context.status,
-    latestOldStatus,
-    emailEnabled,
-    studentEmail: student.email,
-    emailConfigured: emailAdapter.isConfigured(),
-    adapterId: emailAdapter.id,
-    shouldSend,
-  });
-
   if (!shouldSend) {
     return { emailSent: false };
   }
@@ -158,15 +144,10 @@ export async function createEvaluationNotification(
         throw new Error(result.error ?? "EMAIL_DELIVERY_FAILED");
       }
 
-      console.log(
-        `[Notification] Đã gửi email thành công tới ${student.email}, provider (${emailAdapter.id}) messageId: ${result.messageId}`,
-      );
       return result;
     },
     (code) => {
-      console.error(
-        `[Notification] Gửi email thất bại (${code}) tới ${student.email}`,
-      );
+      console.error(`[Notification] ${code} provider=${emailAdapter.id}`);
     },
   );
   return { emailSent };
