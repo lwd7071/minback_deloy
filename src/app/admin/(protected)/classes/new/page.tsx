@@ -7,6 +7,7 @@ export default function CreateClassPage() {
         <BackLink
           fallbackHref="/admin/classes"
           ariaLabel="Quay lại danh sách lớp học"
+          forceFallback
         />
       </div>
       <ClassCreateFlow />

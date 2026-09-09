@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import type {
   GradebookAssignmentHeaderDto,
   GradebookCellEvaluationDto,
@@ -168,6 +169,26 @@ export function GradebookView({
   classSectionId: string;
   data: GradebookDto;
 }) {
+  const hasStudents = data.meta.students.total > 0;
+  const hasAssignments = data.meta.assignments.total > 0;
+
+  if (!hasStudents || !hasAssignments) {
+    const title =
+      !hasStudents && !hasAssignments
+        ? "Chưa có dữ liệu bảng điểm"
+        : !hasStudents
+          ? "Chưa có sinh viên"
+          : "Chưa có bài tập";
+    const description =
+      !hasStudents && !hasAssignments
+        ? "Thêm sinh viên và tạo bài tập để bắt đầu theo dõi bảng điểm."
+        : !hasStudents
+          ? "Thêm sinh viên vào lớp để bắt đầu nhập điểm."
+          : "Tạo bài tập cho lớp để bắt đầu nhập điểm.";
+
+    return <EmptyState icon="book" title={title} description={description} />;
+  }
+
   return (
     <>
       <div className="table-wrap">

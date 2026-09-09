@@ -36,10 +36,9 @@ describe("resolveClassBackTarget", () => {
 });
 
 describe("ClassContextNav", () => {
-  it("renders one corner back control", () => {
+  it("renders a deterministic link to the parent route", () => {
     render(<ClassContextNav classSectionId="abc123" />);
-    expect(
-      screen.getByRole("button", { name: "Quay lại danh sách lớp học" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Quay lại danh sách lớp học" }))
+      .toHaveAttribute("href", "/admin/classes");
   });
 });

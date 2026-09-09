@@ -27,6 +27,14 @@ describe("UI accessibility contract", () => {
     expect(css).toContain("stroke: var(--color-success)");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain(".class-filter-tab.is-active");
+    expect(css).toContain(".class-create-wizard");
+    expect(css).toContain("width: min(100%, 980px);");
+    expect(css).toContain("margin-inline: auto;");
+    expect(css).toContain(".class-create-stage .form-stack");
+    expect(css).toContain("width: 100%;");
+    expect(css).toContain(".teacher-mini-ring-label");
+    expect(css).toContain("line-height: 1;");
+    expect(css).toContain(".class-filter-tab-pending.is-pending");
   });
 
   it("keeps primary text and surface contrast at WCAG AA level", () => {

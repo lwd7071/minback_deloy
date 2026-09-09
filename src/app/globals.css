@@ -1024,6 +1024,8 @@ label {
 
 .teacher-mini-ring {
   position: relative;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   color: var(--color-warning);
@@ -1038,11 +1040,15 @@ label {
   transition: stroke-dashoffset 180ms ease-out;
 }
 
-.teacher-mini-ring span {
+.teacher-mini-ring-label {
   position: absolute;
+  min-width: 30px;
   color: var(--color-primary);
   font-size: 0.62rem;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .progress-track {
@@ -1824,7 +1830,9 @@ label {
 
 .class-create-wizard {
   display: grid;
+  width: min(100%, 980px);
   max-width: 980px;
+  margin-inline: auto;
   gap: 22px;
 }
 
@@ -1901,7 +1909,9 @@ label {
 }
 
 .class-create-stage .form-stack {
+  width: 100%;
   max-width: 680px;
+  margin-inline: auto;
 }
 
 .class-create-file {
@@ -3039,6 +3049,42 @@ label {
   color: var(--color-primary-foreground);
 }
 
+.class-filter-tab-pending {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: opacity 120ms ease-out;
+}
+
+.class-filter-tab-pending.is-pending {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 100ms;
+}
+
+.class-filter-tab-pending.is-pending::before {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin-top: 1px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: "";
+  animation: class-filter-pending-spin 700ms linear infinite;
+}
+
+@keyframes class-filter-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .class-grading-caption {
   margin-top: calc(var(--space-2) * -1);
 }
@@ -3205,7 +3251,7 @@ body {
     grid-template-columns: 1fr;
   }
   .class-create-wizard {
-    width: min(100%, 840px);
+    width: 100%;
   }
   .class-create-stepper {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3521,6 +3567,15 @@ body {
   }
 
   .otp-input-error {
+    animation: none;
+  }
+
+  .class-filter-tab-pending {
+    transition: none;
+    transition-delay: 0;
+  }
+
+  .class-filter-tab-pending.is-pending::before {
     animation: none;
   }
 }

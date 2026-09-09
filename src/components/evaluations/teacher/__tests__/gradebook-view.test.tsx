@@ -125,4 +125,31 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
     expect(screen.getByText("Sinh viên 1/1")).toBeInTheDocument();
     expect(screen.getByText("Bài tập 1/1")).toBeInTheDocument();
   });
+
+  it.each([
+    [
+      "không có sinh viên hoặc bài tập",
+      { students: 0, assignments: 0 },
+      "Chưa có dữ liệu bảng điểm",
+    ],
+    ["không có sinh viên", { students: 0, assignments: 2 }, "Chưa có sinh viên"],
+    ["không có bài tập", { students: 2, assignments: 0 }, "Chưa có bài tập"],
+  ])("hiện empty state khi lớp %s", (_label, totals, title) => {
+    const data: GradebookDto = {
+      students: totals.students ? mockGradebookData.students : [],
+      assignments: totals.assignments ? mockGradebookData.assignments : [],
+      evaluations: {},
+      meta: {
+        students: { page: 1, pageSize: 20, total: totals.students },
+        assignments: { page: 1, pageSize: 20, total: totals.assignments },
+      },
+    };
+
+    render(<GradebookView classSectionId="empty-class" data={data} />);
+
+    expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sinh viên 1\/1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Bài tập 1\/1/)).not.toBeInTheDocument();
+  });
 });

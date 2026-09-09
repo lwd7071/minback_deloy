@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -38,8 +38,8 @@ export function buildClassListHref(
 
 export function MiniProgressRing({ percentage }: { percentage: number }) {
   const normalizedPercentage = Math.min(100, Math.max(0, percentage));
-  const size = 38;
-  const radius = 14;
+  const size = 44;
+  const radius = 17;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - normalizedPercentage / 100);
 
@@ -74,8 +74,22 @@ export function MiniProgressRing({ percentage }: { percentage: number }) {
           strokeDashoffset={offset}
         />
       </svg>
-      <span>{normalizedPercentage}%</span>
+      <span className="teacher-mini-ring-label">{normalizedPercentage}%</span>
     </div>
+  );
+}
+
+function FilterPendingIndicator({ id }: { id: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden={!pending}
+      className={`class-filter-tab-pending ${pending ? "is-pending" : ""}`}
+      id={id}
+      role={pending ? "status" : undefined}
+    >
+      {pending ? <span className="sr-only">Đang lọc lớp</span> : null}
+    </span>
   );
 }
 
@@ -203,11 +217,13 @@ export function ClassSummaryDashboard({
         {filters.map((filter) => (
           <Link
             aria-current={query.progress === filter.value ? "page" : undefined}
+            aria-describedby={`class-filter-status-${filter.value}`}
             className={`class-filter-tab ${query.progress === filter.value ? "is-active" : ""}`}
             href={buildClassListHref({ ...query, progress: filter.value })}
             key={filter.value}
           >
             {filter.label} ({filterCounts[filter.value]})
+            <FilterPendingIndicator id={`class-filter-status-${filter.value}`} />
           </Link>
         ))}
       </nav>

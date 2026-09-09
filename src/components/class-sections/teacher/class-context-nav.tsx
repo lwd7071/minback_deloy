@@ -30,7 +30,11 @@ export function ClassContextNav({
   const back = resolveClassBackTarget(pathname, sectionId);
   return (
     <div className="teacher-content-back">
-      <BackLink fallbackHref={back.href} ariaLabel={back.ariaLabel} />
+      <BackLink
+        fallbackHref={back.href}
+        ariaLabel={back.ariaLabel}
+        forceFallback
+      />
     </div>
   );
 }
