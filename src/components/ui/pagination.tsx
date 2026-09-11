@@ -19,6 +19,7 @@ export type PaginationProps = {
   pageSizeOptions?: number[];
   disabled?: boolean;
   showSummary?: boolean;
+  itemLabel?: string;
 };
 
 export function Pagination({
@@ -31,6 +32,7 @@ export function Pagination({
   pageSizeOptions = [20, 50, 100],
   disabled = false,
   showSummary = true,
+  itemLabel = "sinh viên",
 }: PaginationProps) {
   const router = useRouter();
 
@@ -101,7 +103,7 @@ export function Pagination({
           {showSummary && (
             <span>
               Hiển thị <strong>{startItem}</strong>–<strong>{endItem}</strong>{" "}
-              trên tổng số <strong>{total}</strong> sinh viên
+              trên tổng số <strong>{total}</strong> {itemLabel}
             </span>
           )}
 

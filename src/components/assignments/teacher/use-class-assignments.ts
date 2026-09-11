@@ -14,6 +14,8 @@ function toDatetimeLocal(d: Date = new Date()): string {
 }
 
 export type StatusFilter = "all" | AssignmentStatus;
+export type DueDateFilter = "all" | "active" | "overdue";
+export type SortOption = "newest" | "due_asc" | "due_desc" | "title_asc";
 
 export interface AssignmentCounts {
   all: number;
@@ -25,6 +27,7 @@ export interface AssignmentCounts {
 export interface UseClassAssignmentsOptions {
   classSectionId: string;
   initialAssignments: AssignmentDto[];
+  defaultPageSize?: number;
 }
 
 /**
@@ -38,6 +41,7 @@ export interface UseClassAssignmentsOptions {
 export function useClassAssignments({
   classSectionId,
   initialAssignments,
+  defaultPageSize = 6,
 }: UseClassAssignmentsOptions) {
   const [rows, setRows] = useState<AssignmentDto[]>(initialAssignments);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +51,13 @@ export function useClassAssignments({
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<
     string | null
   >(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilterState] = useState<StatusFilter>("all");
+  const [searchKeyword, setSearchKeywordState] = useState("");
+  const [dueDateFilter, setDueDateFilterState] = useState<DueDateFilter>("all");
+  const [sortBy, setSortByState] = useState<SortOption>("newest");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(defaultPageSize);
+  const [referenceTime, setReferenceTime] = useState(() => Date.now());
   const [draft, setDraft] = useState({
     title: "",
   });
@@ -151,6 +161,42 @@ export function useClassAssignments({
     }
   };
 
+  // Setters kèm reset về trang 1
+  const setStatusFilter = (st: StatusFilter) => {
+    setStatusFilterState(st);
+    setPage(1);
+  };
+
+  const setSearchKeyword = (kw: string) => {
+    setSearchKeywordState(kw);
+    setPage(1);
+  };
+
+  const setDueDateFilter = (df: DueDateFilter) => {
+    setDueDateFilterState(df);
+    setReferenceTime(Date.now());
+    setPage(1);
+  };
+
+  const setSortBy = (sb: SortOption) => {
+    setSortByState(sb);
+    setPage(1);
+  };
+
+  const setPageSize = (size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  };
+
+  const resetFilters = () => {
+    setSearchKeywordState("");
+    setStatusFilterState("all");
+    setDueDateFilterState("all");
+    setSortByState("newest");
+    setReferenceTime(Date.now());
+    setPage(1);
+  };
+
   // Tính toán số lượng bài tập theo trạng thái
   const counts = useMemo<AssignmentCounts>(() => {
     const published = rows.filter((r) => r.status === "published").length;
@@ -159,11 +205,58 @@ export function useClassAssignments({
     return { all: rows.length, published, draft: draftCount, closed };
   }, [rows]);
 
-  // Lọc danh sách hiển thị
+  // Lọc và sắp xếp danh sách hiển thị
   const filteredRows = useMemo(() => {
-    if (statusFilter === "all") return rows;
-    return rows.filter((r) => r.status === statusFilter);
-  }, [rows, statusFilter]);
+    const keyword = searchKeyword.trim().toLowerCase();
+
+    return rows
+      .filter((row) => {
+        // 1. Lọc theo trạng thái tab
+        if (statusFilter !== "all" && row.status !== statusFilter) {
+          return false;
+        }
+
+        // 2. Lọc theo từ khóa tìm kiếm (tiêu đề hoặc mô tả)
+        if (keyword) {
+          const titleMatch = row.title.toLowerCase().includes(keyword);
+          const descMatch = row.description?.toLowerCase().includes(keyword);
+          if (!titleMatch && !descMatch) return false;
+        }
+
+        // 3. Lọc theo hạn nộp
+        if (dueDateFilter !== "all" && row.dueDate) {
+          const dueTime = new Date(row.dueDate).getTime();
+          if (dueDateFilter === "active" && dueTime < referenceTime) return false;
+          if (dueDateFilter === "overdue" && dueTime >= referenceTime) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "due_asc") {
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        }
+        if (sortBy === "due_desc") {
+          return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+        }
+        if (sortBy === "title_asc") {
+          return a.title.localeCompare(b.title, "vi");
+        }
+        // Mặc định "newest": tạo mới nhất lên đầu
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+  }, [rows, statusFilter, searchKeyword, dueDateFilter, sortBy, referenceTime]);
+
+  // Phân trang danh sách đã lọc
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+
+  const paginatedRows = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, safePage, pageSize]);
 
   // Chi tiết bài tập đang chọn chỉnh sửa
   const selectedAssignment = useMemo(() => {
@@ -174,9 +267,22 @@ export function useClassAssignments({
   return {
     rows,
     filteredRows,
+    paginatedRows,
     counts,
     statusFilter,
     setStatusFilter,
+    searchKeyword,
+    setSearchKeyword,
+    dueDateFilter,
+    setDueDateFilter,
+    sortBy,
+    setSortBy,
+    page: safePage,
+    setPage,
+    pageSize,
+    setPageSize,
+    resetFilters,
+    referenceTime,
     error,
     clearError: () => setError(null),
     showCreate,

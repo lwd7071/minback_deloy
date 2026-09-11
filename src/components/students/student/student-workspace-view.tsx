@@ -9,6 +9,7 @@ import { useNotificationPolling } from "@/components/notifications/student/use-n
 import { useStudentWorkspace } from "@/components/layout/student/student-workspace";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
+import { StudentAssignmentsView } from "./student-assignments-view";
 
 export type Section =
   "overview" | "assignments" | "submissions" | "grades" | "notifications";
@@ -158,15 +159,25 @@ export function StudentWorkspaceView({
             <p className="muted">Chưa có thông báo nào.</p>
           )}
         </Card>
+      ) : section === "assignments" ? (
+        <Card className="workspace-panel workspace-table-panel">
+          <PanelTitle
+            icon="book"
+            title={navigationTitle(section)}
+          />
+          <StudentAssignmentsView
+            assignments={assignments}
+            onSelectAssignment={setSelectedAssignmentId}
+            defaultPageSize={6}
+          />
+        </Card>
       ) : (
         <Card className="workspace-panel workspace-table-panel">
           <PanelTitle
             icon={
-              section === "assignments"
-                ? "book"
-                : section === "grades"
-                  ? "gradebook"
-                  : "bell"
+              section === "grades"
+                ? "gradebook"
+                : "bell"
             }
             title={navigationTitle(section)}
           />

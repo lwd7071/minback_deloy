@@ -179,4 +179,121 @@ describe("useClassAssignments Custom Hook (SRP & UI State Isolation)", () => {
     expect(result.current.showCreate).toBe(false);
     expect(result.current.draft.title).toBe("");
   });
+
+  it("tìm kiếm bài tập theo từ khóa tiêu đề và mô tả", () => {
+    const { result } = renderHook(() =>
+      useClassAssignments({
+        classSectionId: "class-1",
+        initialAssignments: mockAssignments,
+      }),
+    );
+
+    act(() => {
+      result.current.setSearchKeyword("Draft");
+    });
+    expect(result.current.filteredRows).toHaveLength(1);
+    expect(result.current.filteredRows[0].id).toBe("assign-2");
+
+    act(() => {
+      result.current.setSearchKeyword("Mô tả 3");
+    });
+    expect(result.current.filteredRows).toHaveLength(1);
+    expect(result.current.filteredRows[0].id).toBe("assign-3");
+
+    act(() => {
+      result.current.setSearchKeyword("khong-ton-tai");
+    });
+    expect(result.current.filteredRows).toHaveLength(0);
+    expect(result.current.paginatedRows).toHaveLength(0);
+  });
+
+  it("phân trang chính xác với kích thước trang tùy chọn và chuyển trang", () => {
+    // Tạo 10 bài tập giả lập để test phân trang với pageSize = 4
+    const manyAssignments: AssignmentDto[] = Array.from(
+      { length: 10 },
+      (_, i) => ({
+        id: `assign-${i + 1}`,
+        classSectionId: "class-1",
+        title: `Bài tập số ${i + 1}`,
+        description: `Mô tả ${i + 1}`,
+        assignedDate: "2026-09-01T08:00:00.000Z",
+        dueDate: "2026-09-20T23:59:59.000Z",
+        status: "published",
+        maxScore: 10,
+        createdAt: `2026-09-${String(i + 1).padStart(2, "0")}T08:00:00.000Z`,
+        updatedAt: `2026-09-${String(i + 1).padStart(2, "0")}T08:00:00.000Z`,
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useClassAssignments({
+        classSectionId: "class-1",
+        initialAssignments: manyAssignments,
+        defaultPageSize: 4,
+      }),
+    );
+
+    expect(result.current.pageSize).toBe(4);
+    expect(result.current.page).toBe(1);
+    expect(result.current.paginatedRows).toHaveLength(4);
+
+    // Chuyển sang trang 2
+    act(() => {
+      result.current.setPage(2);
+    });
+    expect(result.current.page).toBe(2);
+    expect(result.current.paginatedRows).toHaveLength(4);
+
+    // Chuyển sang trang 3
+    act(() => {
+      result.current.setPage(3);
+    });
+    expect(result.current.page).toBe(3);
+    expect(result.current.paginatedRows).toHaveLength(2); // 10 - 4*2 = 2
+
+    // Khi gõ tìm kiếm, phải tự động reset về trang 1
+    act(() => {
+      result.current.setSearchKeyword("số 1");
+    });
+    expect(result.current.page).toBe(1);
+
+    // Đổi pageSize
+    act(() => {
+      result.current.setPageSize(6);
+    });
+    expect(result.current.pageSize).toBe(6);
+    expect(result.current.page).toBe(1);
+  });
+
+  it("khôi phục bộ lọc về mặc định qua resetFilters", () => {
+    const { result } = renderHook(() =>
+      useClassAssignments({
+        classSectionId: "class-1",
+        initialAssignments: mockAssignments,
+      }),
+    );
+
+    act(() => {
+      result.current.setSearchKeyword("abc");
+      result.current.setStatusFilter("closed");
+      result.current.setDueDateFilter("overdue");
+      result.current.setSortBy("title_asc");
+    });
+
+    expect(result.current.searchKeyword).toBe("abc");
+    expect(result.current.statusFilter).toBe("closed");
+    expect(result.current.dueDateFilter).toBe("overdue");
+    expect(result.current.sortBy).toBe("title_asc");
+
+    act(() => {
+      result.current.resetFilters();
+    });
+
+    expect(result.current.searchKeyword).toBe("");
+    expect(result.current.statusFilter).toBe("all");
+    expect(result.current.dueDateFilter).toBe("all");
+    expect(result.current.sortBy).toBe("newest");
+    expect(result.current.page).toBe(1);
+    expect(result.current.filteredRows).toHaveLength(3);
+  });
 });
