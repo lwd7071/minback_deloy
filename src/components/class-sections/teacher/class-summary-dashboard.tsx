@@ -223,7 +223,9 @@ export function ClassSummaryDashboard({
             key={filter.value}
           >
             {filter.label} ({filterCounts[filter.value]})
-            <FilterPendingIndicator id={`class-filter-status-${filter.value}`} />
+            <FilterPendingIndicator
+              id={`class-filter-status-${filter.value}`}
+            />
           </Link>
         ))}
       </nav>
@@ -268,6 +270,7 @@ export function ClassSummaryDashboard({
           page={meta.page}
           pageSize={meta.pageSize}
           total={meta.total}
+          getPageHref={pageHref}
           onPageChange={(page) => router.push(pageHref(page))}
           showSummary={false}
         />

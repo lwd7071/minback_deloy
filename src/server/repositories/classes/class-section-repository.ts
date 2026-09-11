@@ -300,11 +300,16 @@ export async function listClassSectionSummaries(
   }));
 
   const summary = records[0];
-  const facet = ((facetsResult?.data ?? []) as Array<Record<string, unknown>>)[0];
+  const facet = (
+    (facetsResult?.data ?? []) as Array<Record<string, unknown>>
+  )[0];
 
   // Prefer facet aggregates, then fall back to aggregates returned by the page RPC.
   const total = Number(
-    facet?.class_count ?? facet?.all_count ?? summary?.total_count ?? rows.length,
+    facet?.class_count ??
+      facet?.all_count ??
+      summary?.total_count ??
+      rows.length,
   );
   const studentCount = Number(
     facet?.student_count ??
@@ -398,4 +403,3 @@ export async function findClassSectionCodeById(
 
   return data?.code ?? null;
 }
-

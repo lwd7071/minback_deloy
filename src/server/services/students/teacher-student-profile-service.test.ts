@@ -2,9 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/server/auth/teacher-auth", () => ({ requireTeacher: vi.fn() }));
-vi.mock("@/server/repositories/students/teacher-student-profile-repository", () => ({
-  findTeacherStudentProfileData: vi.fn(),
-}));
+vi.mock(
+  "@/server/repositories/students/teacher-student-profile-repository",
+  () => ({
+    findTeacherStudentProfileData: vi.fn(),
+  }),
+);
 
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findTeacherStudentProfileData } from "@/server/repositories/students/teacher-student-profile-repository";

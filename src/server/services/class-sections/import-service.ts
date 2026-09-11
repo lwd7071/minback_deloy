@@ -10,7 +10,7 @@ import { findClassSectionById } from "@/server/repositories/classes/class-sectio
 import {
   createImportedStudents,
   findImportedStudentsByMssv,
-  updateImportedStudent,
+  bulkUpdateImportedStudents,
 } from "@/server/repositories/classes/import-repository";
 import type { ImportResultDto, ImportRowDto } from "@/types/import";
 import type { ImportPreviewDto } from "@/types/frontend-rebuild";
@@ -334,16 +334,17 @@ async function importTeacherClassSection(
     ).map((student) => [student.mssv, student.id]),
   );
   const rowsToCreate = validRows.filter((row) => !existingByMssv.has(row.mssv));
-  const credentials = await Promise.all(
-    rowsToCreate.map(async (row) => {
-      const initialPin = generateInitialPin();
-      return {
-        row,
-        initialPin,
-        pinHash: await hash(initialPin, BCRYPT_ROUNDS),
-      };
-    }),
-  );
+  // Tối ưu hóa: Toàn bộ sinh viên mới dùng chung mã PIN khởi tạo (DEFAULT_INITIAL_PIN = "111111").
+  // Chỉ băm BCrypt đúng 1 lần duy nhất thay vì băm lặp lại cho từng dòng làm nghẽn CPU và thread pool.
+  const sharedInitialPin = generateInitialPin();
+  const sharedPinHash =
+    rowsToCreate.length > 0 ? await hash(sharedInitialPin, BCRYPT_ROUNDS) : "";
+
+  const credentials = rowsToCreate.map((row) => ({
+    row,
+    initialPin: sharedInitialPin,
+    pinHash: sharedPinHash,
+  }));
   const created = await createImportedStudents(
     credentials.map(({ row, pinHash }) => ({
       classSectionId,
@@ -370,20 +371,35 @@ async function importTeacherClassSection(
     });
   }
 
-  await Promise.all(
-    validRows
-      .filter((row) => existingByMssv.has(row.mssv))
-      .map(async (row) => {
-        const studentId = existingByMssv.get(row.mssv)!;
-        await updateImportedStudent(studentId, classSectionId, {
-          fullName: row.fullName,
-          email:
-            row.email?.trim().toLowerCase() ||
-            deriveInstitutionalEmail(row.mssv),
-        });
-        outcomes.set(row.row, { row: row.row, status: "updated", studentId });
-      }),
-  );
+  const rowsToUpdate = validRows
+    .filter((row) => existingByMssv.has(row.mssv))
+    .map((row) => ({
+      rowNumber: row.row,
+      id: existingByMssv.get(row.mssv)!,
+      fullName: row.fullName,
+      email:
+        row.email?.trim().toLowerCase() || deriveInstitutionalEmail(row.mssv),
+    }));
+
+  if (rowsToUpdate.length > 0) {
+    // Tối ưu hóa: Thay thế N câu lệnh HTTP PATCH bằng 1 lời gọi RPC bulk update duy nhất trong cùng 1 transaction
+    await bulkUpdateImportedStudents(
+      classSectionId,
+      rowsToUpdate.map(({ id, fullName, email }) => ({
+        id,
+        fullName,
+        email,
+      })),
+    );
+
+    for (const item of rowsToUpdate) {
+      outcomes.set(item.rowNumber, {
+        row: item.rowNumber,
+        status: "updated",
+        studentId: item.id,
+      });
+    }
+  }
 
   const rows = parsedRows.map((row) => outcomes.get(row.row)!);
   const summary = rows.reduce(

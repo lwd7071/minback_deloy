@@ -10,10 +10,13 @@ vi.mock("@/server/repositories/students/student-repository", () => ({
 vi.mock("@/server/services/students/student-auth-service", () => ({
   resetStudentPin: vi.fn(),
 }));
-vi.mock("@/server/repositories/evaluations/evaluation-history-repository", () => ({
-  findEvaluationOwnerTeacherId: vi.fn(),
-  listEvaluationHistoryRows: vi.fn(),
-}));
+vi.mock(
+  "@/server/repositories/evaluations/evaluation-history-repository",
+  () => ({
+    findEvaluationOwnerTeacherId: vi.fn(),
+    listEvaluationHistoryRows: vi.fn(),
+  }),
+);
 
 import { createClient } from "@/lib/supabase/server";
 import { findEvaluationOwnerTeacherId } from "@/server/repositories/evaluations/evaluation-history-repository";

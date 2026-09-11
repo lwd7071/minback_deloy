@@ -184,7 +184,9 @@ describe("useBulkGrade hook", () => {
     expect(result.current.byStudentId.get("student-3")?.score).toBe(10);
     expect(result.current.metrics.returned).toBe(2);
     expect(result.current.metrics.missing).toBe(0);
-    expect(result.current.message).toContain("Đã công bố kết quả cho 1 sinh viên");
+    expect(result.current.message).toContain(
+      "Đã công bố kết quả cho 1 sinh viên",
+    );
     expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 });

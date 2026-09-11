@@ -72,14 +72,14 @@ export async function getGradebookRows(
     };
   }
 
-  const students: GradebookStudentColumnDto[] = (
-    studentResult.data ?? []
-  ).map((row) => ({
-    id: row.id as string,
-    mssv: row.mssv as string,
-    fullName: row.full_name as string,
-    nickname: row.nickname as string,
-  }));
+  const students: GradebookStudentColumnDto[] = (studentResult.data ?? []).map(
+    (row) => ({
+      id: row.id as string,
+      mssv: row.mssv as string,
+      fullName: row.full_name as string,
+      nickname: row.nickname as string,
+    }),
+  );
 
   const assignments: GradebookAssignmentHeaderDto[] = (
     assignmentResult.data ?? []

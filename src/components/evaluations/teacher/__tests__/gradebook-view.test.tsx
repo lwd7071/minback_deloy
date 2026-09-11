@@ -97,9 +97,7 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
           <GradebookRow
             student={mockGradebookData.students[0]}
             assignments={mockGradebookData.assignments}
-            evaluationsByAssignment={
-              mockGradebookData.evaluations["student-1"]
-            }
+            evaluationsByAssignment={mockGradebookData.evaluations["student-1"]}
           />
         </tbody>
       </table>,
@@ -113,10 +111,7 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
 
   it("GradebookView kết hợp các sub-components phân rã thành bảng hoàn chỉnh", () => {
     render(
-      <GradebookView
-        classSectionId="class-test"
-        data={mockGradebookData}
-      />,
+      <GradebookView classSectionId="class-test" data={mockGradebookData} />,
     );
 
     expect(screen.getByText("SV001")).toBeInTheDocument();
@@ -132,7 +127,11 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
       { students: 0, assignments: 0 },
       "Chưa có dữ liệu bảng điểm",
     ],
-    ["không có sinh viên", { students: 0, assignments: 2 }, "Chưa có sinh viên"],
+    [
+      "không có sinh viên",
+      { students: 0, assignments: 2 },
+      "Chưa có sinh viên",
+    ],
     ["không có bài tập", { students: 2, assignments: 0 }, "Chưa có bài tập"],
   ])("hiện empty state khi lớp %s", (_label, totals, title) => {
     const data: GradebookDto = {

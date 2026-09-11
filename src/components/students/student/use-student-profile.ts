@@ -82,7 +82,7 @@ export interface DashboardStats {
 
 /**
  * Custom Hook quản lý dữ liệu và tính toán thống kê cho Student Profile.
- * 
+ *
  * Tuân thủ Single Responsibility Principle (SRP):
  * - Tách toàn bộ data fetching, session logout, route sync và dashboard aggregation
  *   ra khỏi presentation view.

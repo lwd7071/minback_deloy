@@ -55,11 +55,17 @@ describe("Evaluation File Parser", () => {
 
   describe("parseCsvRecords & parseEvaluationCsv", () => {
     it("parses rows with quotes and commas", () => {
-      const csv = 'MSSV,Họ tên,Điểm,Feedback\n2011001,"Nguyễn, An",8.5,"Bài làm tốt, rõ ràng"';
+      const csv =
+        'MSSV,Họ tên,Điểm,Feedback\n2011001,"Nguyễn, An",8.5,"Bài làm tốt, rõ ràng"';
       const rows = parseEvaluationCsv(csv);
       expect(rows).toHaveLength(2);
       expect(rows[0].cells).toEqual(["MSSV", "Họ tên", "Điểm", "Feedback"]);
-      expect(rows[1].cells).toEqual(["2011001", "Nguyễn, An", "8.5", "Bài làm tốt, rõ ràng"]);
+      expect(rows[1].cells).toEqual([
+        "2011001",
+        "Nguyễn, An",
+        "8.5",
+        "Bài làm tốt, rõ ràng",
+      ]);
     });
 
     it("throws error for unmatched quotes", () => {

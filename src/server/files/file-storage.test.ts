@@ -61,8 +61,6 @@ describe("File Storage Port & Adapter (OCP / DIP)", () => {
       publicId: "file-123.pdf",
       format: "pdf",
     });
-    expect(downloadUrl).toBe(
-      "https://custom-s3.example.com/download/file.pdf",
-    );
+    expect(downloadUrl).toBe("https://custom-s3.example.com/download/file.pdf");
   });
 });

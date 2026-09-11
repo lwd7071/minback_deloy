@@ -157,7 +157,7 @@ export function GradebookPagination({
 
 /**
  * Composite View: Bảng điểm ma trận 2 chiều của lớp học phần.
- * 
+ *
  * Tuân thủ Interface Segregation Principle (ISP):
  * - Hợp nhất từ các sub-component có hợp đồng props hẹp, độc lập và rõ ràng.
  * - Cho phép dễ dàng tối ưu hóa memoization và test từng phần giao diện độc lập.
@@ -206,10 +206,7 @@ export function GradebookView({
           </tbody>
         </table>
       </div>
-      <GradebookPagination
-        meta={data.meta}
-        classSectionId={classSectionId}
-      />
+      <GradebookPagination meta={data.meta} classSectionId={classSectionId} />
     </>
   );
 }

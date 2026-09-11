@@ -42,11 +42,8 @@ async function BulkGradeData({
   let evaluations: Awaited<ReturnType<typeof listTeacherEvaluations>>;
   try {
     const { teacher, supabase } = await requireTeacher();
-    assignment = await getTeacherAssignment(assignmentId, teacher.id);
-    if (assignment.classSectionId !== classSectionId) {
-      notFound();
-    }
-    [studentResult, evaluations] = await Promise.all([
+    [assignment, studentResult, evaluations] = await Promise.all([
+      getTeacherAssignment(assignmentId, teacher.id),
       listStudentsInClass(classSectionId, {
         page: Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1,
         pageSize: 100,
@@ -57,6 +54,9 @@ async function BulkGradeData({
         supabase,
       }),
     ]);
+    if (assignment.classSectionId !== classSectionId) {
+      notFound();
+    }
   } catch (error) {
     return handleTeacherPageError(error);
   }

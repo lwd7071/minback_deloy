@@ -78,3 +78,21 @@ export async function updateImportedStudent(
 
   if (error) throw new Error("IMPORT_STUDENT_UPDATE_FAILED");
 }
+
+export async function bulkUpdateImportedStudents(
+  classSectionId: string,
+  students: Array<{ id: string; fullName: string; email: string | null }>,
+): Promise<number> {
+  if (students.length === 0) return 0;
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.rpc("bulk_update_imported_students", {
+    p_class_section_id: classSectionId,
+    p_students: students,
+  });
+
+  if (error) {
+    throw new Error(`IMPORT_STUDENT_BULK_UPDATE_FAILED:${error.message}`);
+  }
+
+  return (data as number) ?? 0;
+}

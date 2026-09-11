@@ -43,10 +43,7 @@ export type StudentSessionRow = {
 // Đảm bảo không làm gãy các import hiện có trong codebase.
 export type { NotificationDto, NotificationRow } from "./notification";
 export type { LoginRateLimitRow } from "./rate-limit";
-export type {
-  EvaluationHistoryDto,
-  EvaluationHistoryRow,
-} from "./evaluation";
+export type { EvaluationHistoryDto, EvaluationHistoryRow } from "./evaluation";
 
 // ─── API DTOs (camelCase, expose ra ngoài API) ────────────────────────────────
 // Đây là các type được dùng trong response body của API.

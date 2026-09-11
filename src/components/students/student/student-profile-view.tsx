@@ -104,7 +104,7 @@ function DashboardMetric({
 
 /**
  * Presentational View cho hồ sơ học tập của sinh viên.
- * 
+ *
  * Tuân thủ Single Responsibility Principle (SRP):
  * - View chỉ biểu diễn các thành phần giao diện (Avatar, Metrics, Table, Timeline).
  * - Toàn bộ Data fetching, Polling, Routing sync, Logout và Dashboard Calculations

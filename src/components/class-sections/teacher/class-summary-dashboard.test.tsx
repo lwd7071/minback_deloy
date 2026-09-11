@@ -100,7 +100,11 @@ describe("ClassSummaryDashboard", () => {
       gradingTotal: 40,
     },
     filterCounts: { all: 4, urgent: 1, good: 1, complete: 2 },
-    query: { search: "WEB", progress: "good" as const, sort: "name_asc" as const },
+    query: {
+      search: "WEB",
+      progress: "good" as const,
+      sort: "name_asc" as const,
+    },
   };
 
   it("renders all filter tabs with counts and the active state", () => {
@@ -120,7 +124,9 @@ describe("ClassSummaryDashboard", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: "Hoàn thành (2)" })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: "Hoàn thành (2)" }),
+    ).toHaveAttribute(
       "href",
       "/admin/classes?q=WEB&progress=complete&sort=name_asc",
     );

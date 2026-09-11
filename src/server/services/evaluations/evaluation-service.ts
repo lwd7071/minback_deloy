@@ -13,6 +13,7 @@ import {
 } from "@/server/repositories/evaluations/evaluation-repository";
 import { findStudentById } from "@/server/repositories/students/student-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
+import { deferBackgroundTask } from "@/server/lib/async-task-runner";
 import type {
   EvaluationDto,
   EvaluationWithStudentDto,
@@ -103,16 +104,18 @@ export async function upsertTeacherEvaluation(
       ? await updateEvaluation(supabase, current.id, parsed.data)
       : await insertEvaluation(supabase, assignmentId, studentId, parsed.data);
 
-    try {
-      await createEvaluationNotification({
-        studentId,
-        evaluationId: saved.id,
-        type: current ? "evaluation_updated" : "evaluation_created",
-        assignmentTitle: assignment.title,
-      });
-    } catch {
-      // Evaluation/history are already committed; notification delivery is isolated.
-    }
+    deferBackgroundTask(async () => {
+      try {
+        await createEvaluationNotification({
+          studentId,
+          evaluationId: saved.id,
+          type: current ? "evaluation_updated" : "evaluation_created",
+          assignmentTitle: assignment.title,
+        });
+      } catch {
+        // Evaluation/history are already committed; notification delivery is isolated.
+      }
+    });
 
     return saved;
   } catch (error) {

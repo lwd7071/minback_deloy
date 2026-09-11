@@ -11,10 +11,10 @@ import { useClassAssignments } from "./use-class-assignments";
 
 /**
  * Presentational Component cho màn hình quản lý bài tập của lớp học phần.
- * 
+ *
  * Tuân thủ Single Responsibility Principle (SRP):
  * - View chỉ đảm nhận duy nhất việc biểu diễn giao diện người dùng (Presentational View).
- * - Toàn bộ state management, network calls, validation và modal lifecycle 
+ * - Toàn bộ state management, network calls, validation và modal lifecycle
  *   được ủy nhiệm cho hook `useClassAssignments`.
  */
 export function ClassAssignmentsView({

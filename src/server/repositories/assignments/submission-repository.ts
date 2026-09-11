@@ -87,11 +87,9 @@ export async function createSubmissionAttempt(input: {
     if (error.message.includes("attempt limit")) {
       throw new Error("SUBMISSION_ATTEMPT_LIMIT_REACHED");
     }
-    throw new RepositoryError(
-      "SUBMISSION_CREATE_FAILED",
-      "Không thể nộp bài",
-      { cause: error },
-    );
+    throw new RepositoryError("SUBMISSION_CREATE_FAILED", "Không thể nộp bài", {
+      cause: error,
+    });
   }
   return data as string;
 }

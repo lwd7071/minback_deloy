@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,6 +14,7 @@ export type PaginationProps = {
   pageSize: number;
   total: number;
   onPageChange: (newPage: number) => void;
+  getPageHref?: (page: number) => string;
   onPageSizeChange?: (newPageSize: number) => void;
   pageSizeOptions?: number[];
   disabled?: boolean;
@@ -23,16 +26,38 @@ export function Pagination({
   pageSize,
   total,
   onPageChange,
+  getPageHref,
   onPageSizeChange,
   pageSizeOptions = [20, 50, 100],
   disabled = false,
   showSummary = true,
 }: PaginationProps) {
+  const router = useRouter();
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
 
   const startItem = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, total);
+
+  const prefetchPage = useCallback(
+    (p: number) => {
+      if (getPageHref && router && typeof router.prefetch === "function") {
+        try {
+          router.prefetch(getPageHref(p));
+        } catch {
+          // Safe degrade
+        }
+      }
+    },
+    [getPageHref, router],
+  );
+
+  // Prefetch neighboring pages in background to make pagination instant on click
+  useEffect(() => {
+    if (currentPage < totalPages) prefetchPage(currentPage + 1);
+    if (currentPage > 1) prefetchPage(currentPage - 1);
+  }, [currentPage, totalPages, prefetchPage]);
 
   // Generate visible page numbers
   function getPageNumbers(): (number | "...")[] {
@@ -113,6 +138,8 @@ export function Pagination({
             className="pagination-btn pagination-nav-btn"
             disabled={disabled || currentPage <= 1}
             onClick={() => onPageChange(1)}
+            onMouseEnter={() => prefetchPage(1)}
+            onFocus={() => prefetchPage(1)}
             aria-label="Đến trang đầu tiên"
             title="Trang đầu"
           >
@@ -124,6 +151,8 @@ export function Pagination({
             className="pagination-btn pagination-nav-btn"
             disabled={disabled || currentPage <= 1}
             onClick={() => onPageChange(currentPage - 1)}
+            onMouseEnter={() => prefetchPage(currentPage - 1)}
+            onFocus={() => prefetchPage(currentPage - 1)}
             aria-label="Đến trang trước"
             title="Trang trước"
           >
@@ -153,6 +182,8 @@ export function Pagination({
                   aria-current={isCurrent ? "page" : undefined}
                   aria-label={`Trang ${p}`}
                   onClick={() => onPageChange(p)}
+                  onMouseEnter={() => prefetchPage(p)}
+                  onFocus={() => prefetchPage(p)}
                 >
                   {p}
                 </button>
@@ -165,6 +196,8 @@ export function Pagination({
             className="pagination-btn pagination-nav-btn"
             disabled={disabled || currentPage >= totalPages}
             onClick={() => onPageChange(currentPage + 1)}
+            onMouseEnter={() => prefetchPage(currentPage + 1)}
+            onFocus={() => prefetchPage(currentPage + 1)}
             aria-label="Đến trang sau"
             title="Trang sau"
           >
@@ -176,6 +209,8 @@ export function Pagination({
             className="pagination-btn pagination-nav-btn"
             disabled={disabled || currentPage >= totalPages}
             onClick={() => onPageChange(totalPages)}
+            onMouseEnter={() => prefetchPage(totalPages)}
+            onFocus={() => prefetchPage(totalPages)}
             aria-label="Đến trang cuối cùng"
             title="Trang cuối"
           >

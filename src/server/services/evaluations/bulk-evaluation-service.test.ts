@@ -104,9 +104,7 @@ describe("bulkUpsertTeacherEvaluations", () => {
 
     let settled = false;
     const resultPromise = bulkUpsertTeacherEvaluations(assignmentId, {
-      evaluations: [
-        { studentId, score: 8, feedback: "Tốt", status: "graded" },
-      ],
+      evaluations: [{ studentId, score: 8, feedback: "Tốt", status: "graded" }],
     }).then((result) => {
       settled = true;
       return result;

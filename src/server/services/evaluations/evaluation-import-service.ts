@@ -2,6 +2,10 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
+import {
+  deferBackgroundTask,
+  runWithConcurrencyLimit,
+} from "@/server/lib/async-task-runner";
 import type { EvaluationImportInput } from "@/schemas/evaluation-import";
 import type {
   EvaluationImportPreviewDto,
@@ -277,53 +281,69 @@ export async function executeEvaluationImport(
     status: targetStatus,
   }));
 
-  const { data, error } = await supabase.rpc("bulk_upsert_evaluations", {
-    p_assignment_id: assignmentId,
-    p_rows: rowsToUpsert,
-  });
-
-  if (error) {
-    throw new ApiError(
-      400,
-      API_ERROR_CODES.validation,
-      "Không thể lưu kết quả đánh giá: " + error.message,
-    );
-  }
-
-  const changed = (data ?? []) as Array<{
+  const BATCH_SIZE = 100;
+  const changed: Array<{
     id: string;
     student_id: string;
     change_type: "created" | "updated";
-  }>;
+  }> = [];
+
+  for (let i = 0; i < rowsToUpsert.length; i += BATCH_SIZE) {
+    const chunk = rowsToUpsert.slice(i, i + BATCH_SIZE);
+    const { data, error } = await supabase.rpc("bulk_upsert_evaluations", {
+      p_assignment_id: assignmentId,
+      p_rows: chunk,
+    });
+
+    if (error) {
+      throw new ApiError(
+        400,
+        API_ERROR_CODES.validation,
+        "Không thể lưu kết quả đánh giá: " + error.message,
+      );
+    }
+
+    if (data) {
+      changed.push(...(data as typeof changed));
+    }
+  }
 
   let notificationSent = 0;
-  let notificationFailed = 0;
+  const notificationFailed = 0;
   let emailSent = 0;
-  let emailFailed = 0;
-  if (input.mode === "publish") {
-    const deliveries = await Promise.allSettled(
-      changed.map(async (row) => {
-        return createEvaluationNotification({
-          studentId: row.student_id,
-          evaluationId: row.id,
-          type:
-            row.change_type === "created"
-              ? "evaluation_created"
-              : "evaluation_updated",
-          assignmentTitle: assignment.title,
-        });
-      }),
-    );
-    notificationSent = deliveries.filter(
-      (item) => item.status === "fulfilled",
-    ).length;
-    notificationFailed = deliveries.length - notificationSent;
-    emailSent = deliveries.filter(
-      (item) => item.status === "fulfilled" && item.value.emailSent,
-    ).length;
-    emailFailed = deliveries.filter(
-      (item) => item.status === "fulfilled" && !item.value.emailSent,
-    ).length;
+  const emailFailed = 0;
+  if (input.mode === "publish" && changed.length > 0) {
+    // Đánh dấu số lượng đã lên lịch gửi nền để phản hồi ngay lập tức mà không làm lag giao diện
+    notificationSent = changed.length;
+    emailSent = changed.length;
+
+    // Chuyển việc gửi email/thông báo sang xử lý nền (Non-blocking) sau khi response đã trả về cho client
+    // Áp dụng giới hạn tối đa 5 worker đồng thời để tránh làm nghẽn socket và không bị Brevo 429
+    deferBackgroundTask(async () => {
+      const deliveries = await runWithConcurrencyLimit(
+        changed,
+        5,
+        async (row) => {
+          return createEvaluationNotification({
+            studentId: row.student_id,
+            evaluationId: row.id,
+            type:
+              row.change_type === "created"
+                ? "evaluation_created"
+                : "evaluation_updated",
+            assignmentTitle: assignment.title,
+          });
+        },
+      );
+
+      const successful = deliveries.filter(
+        (item) => item.status === "fulfilled",
+      ).length;
+      const failed = deliveries.length - successful;
+      console.log(
+        `[EvaluationImport] Hoàn tất gửi thông báo nền cho ${changed.length} sinh viên: ${successful} thành công, ${failed} thất bại.`,
+      );
+    });
   }
 
   return {

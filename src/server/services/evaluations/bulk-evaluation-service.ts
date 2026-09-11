@@ -5,6 +5,7 @@ import { bulkEvaluationSchema } from "@/schemas/frontend-rebuild";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
+import { runWithConcurrencyLimit } from "@/server/lib/async-task-runner";
 
 export async function bulkUpsertTeacherEvaluations(
   assignmentId: string,
@@ -66,11 +67,11 @@ export async function bulkUpsertTeacherEvaluations(
     student_id: string;
     change_type: "created" | "updated";
   }>;
-  // Wait for notification attempts to settle while keeping their failures isolated
-  // from the already-committed evaluation result.
-  await Promise.all(
-    changed.map((row) =>
-      createEvaluationNotification({
+  // Gửi thông báo & email với giới hạn 5 worker đồng thời (concurrency control)
+  // để không làm nghẽn kết nối Supabase và không vượt ngưỡng rate limit của email provider
+  if (changed.length > 0) {
+    await runWithConcurrencyLimit(changed, 5, async (row) => {
+      return createEvaluationNotification({
         studentId: row.student_id,
         evaluationId: row.id,
         type:
@@ -80,9 +81,9 @@ export async function bulkUpsertTeacherEvaluations(
         assignmentTitle: assignment.title,
       }).catch(() => {
         console.error("[BulkEvaluation] EVALUATION_NOTIFICATION_FAILED");
-      }),
-    ),
-  );
+      });
+    });
+  }
   return changed.map((row) => ({
     evaluationId: row.id,
     studentId: row.student_id,

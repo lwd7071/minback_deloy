@@ -42,7 +42,9 @@ const mockFrom = vi.fn((table: string) => {
         eq: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
-              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+              maybeSingle: vi
+                .fn()
+                .mockResolvedValue({ data: null, error: null }),
             }),
           }),
         }),
@@ -70,7 +72,11 @@ describe("notification-service with Adapter Pattern (OCP/DIP)", () => {
         students: { email: "student@example.com", full_name: "Nguyen Van A" },
         assignments: {
           title: "Bai Tap 1",
-          class_sections: { code: "CS101", name: "Lap Trinh", teacher_id: "teacher-1" },
+          class_sections: {
+            code: "CS101",
+            name: "Lap Trinh",
+            teacher_id: "teacher-1",
+          },
         },
       },
       error: null,
@@ -94,7 +100,11 @@ describe("notification-service with Adapter Pattern (OCP/DIP)", () => {
         students: { email: "student@example.com", full_name: "Nguyen Van A" },
         assignments: {
           title: "Bai Tap 1",
-          class_sections: { code: "CS101", name: "Lap Trinh", teacher_id: "teacher-1" },
+          class_sections: {
+            code: "CS101",
+            name: "Lap Trinh",
+            teacher_id: "teacher-1",
+          },
         },
       },
       error: null,
@@ -168,7 +178,11 @@ describe("notification-service with Adapter Pattern (OCP/DIP)", () => {
         students: { email: "student@example.com", full_name: "Nguyen Van A" },
         assignments: {
           title: "Bai Tap 1",
-          class_sections: { code: "CS101", name: "Lap Trinh", teacher_id: "teacher-1" },
+          class_sections: {
+            code: "CS101",
+            name: "Lap Trinh",
+            teacher_id: "teacher-1",
+          },
         },
       },
       error: null,
@@ -182,7 +196,9 @@ describe("notification-service with Adapter Pattern (OCP/DIP)", () => {
     const failingAdapter: EmailNotificationAdapter = {
       id: "failing-provider",
       isConfigured: vi.fn().mockReturnValue(true),
-      sendEvaluationEmail: vi.fn().mockRejectedValue(new Error("Network timeout")),
+      sendEvaluationEmail: vi
+        .fn()
+        .mockRejectedValue(new Error("Network timeout")),
     };
 
     const result = await createEvaluationNotification(
