@@ -6,11 +6,7 @@ import { Pagination } from "@/components/ui/pagination";
 import type { StudentProfileAssignmentDto } from "@/types/student-profile";
 
 export type StudentAssignmentStatusTab =
-  | "all"
-  | "pending"
-  | "submitted"
-  | "graded"
-  | "overdue";
+  "all" | "pending" | "submitted" | "graded" | "overdue";
 
 export type StudentSortOption = "newest" | "due_asc" | "due_desc" | "title_asc";
 

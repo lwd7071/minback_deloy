@@ -161,10 +161,7 @@ export function StudentWorkspaceView({
         </Card>
       ) : section === "assignments" ? (
         <Card className="workspace-panel workspace-table-panel">
-          <PanelTitle
-            icon="book"
-            title={navigationTitle(section)}
-          />
+          <PanelTitle icon="book" title={navigationTitle(section)} />
           <StudentAssignmentsView
             assignments={assignments}
             onSelectAssignment={setSelectedAssignmentId}
@@ -174,11 +171,7 @@ export function StudentWorkspaceView({
       ) : (
         <Card className="workspace-panel workspace-table-panel">
           <PanelTitle
-            icon={
-              section === "grades"
-                ? "gradebook"
-                : "bell"
-            }
+            icon={section === "grades" ? "gradebook" : "bell"}
             title={navigationTitle(section)}
           />
           <AssignmentRows

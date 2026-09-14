@@ -2725,7 +2725,9 @@ label {
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .assignment-search-input:focus {
@@ -2941,7 +2943,6 @@ button.assignment-row-card {
     max-width: 100%;
   }
 }
-
 
 /* UI redesign foundation overrides. Page-specific rules are migrated
    incrementally, while these defaults keep the shared language consistent. */

@@ -226,8 +226,10 @@ export function useClassAssignments({
         // 3. Lọc theo hạn nộp
         if (dueDateFilter !== "all" && row.dueDate) {
           const dueTime = new Date(row.dueDate).getTime();
-          if (dueDateFilter === "active" && dueTime < referenceTime) return false;
-          if (dueDateFilter === "overdue" && dueTime >= referenceTime) return false;
+          if (dueDateFilter === "active" && dueTime < referenceTime)
+            return false;
+          if (dueDateFilter === "overdue" && dueTime >= referenceTime)
+            return false;
         }
 
         return true;

@@ -91,9 +91,9 @@ export function ClassAssignmentsView({
 
   const hasActiveFilters = Boolean(
     searchKeyword ||
-      statusFilter !== "all" ||
-      dueDateFilter !== "all" ||
-      sortBy !== "newest",
+    statusFilter !== "all" ||
+    dueDateFilter !== "all" ||
+    sortBy !== "newest",
   );
 
   return (
