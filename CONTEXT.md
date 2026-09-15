@@ -59,6 +59,7 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - **Compatibility retention (2026-09-15)**: Submission, Attachment, deadline fields, Assignment status, Gradebook repository/route handler và Student profile implementation cũ không bị xóa; chúng không được import vào active feedback-first Student flow.
 - **Release documentation (2026-09-15)**: chi tiết tính năng ẩn, filter còn lại, interface và verification nằm trong `docs/RUT-GON-RELEASE.md`.
 - **Release verification status (2026-09-15)**: typecheck, lint, build, targeted tests và full unit baseline (`53 test files/214 tests`) đã pass. Integration chưa đạt vì Supabase local/Docker container crash (`exit 139`, Docker API `500`); các lỗi `AuthRetryableFetchError`/HTTP `500` trong log là hậu quả môi trường. Cần rerun health, integration và database gates sau khi Docker ổn định.
+- **Deployment status (2026-09-15)**: thay đổi đã push lên GitHub `minback_deloy/main` tại commit `d902b4c`. Chưa deploy hoặc migrate lên Supabase production; chỉ mới có thay đổi code/docs trên repository. Production rollout phải chờ release gate local/integration hoàn tất và được thực hiện theo quy trình deploy riêng.
 
 ## Contracts
 
