@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import type { AssignmentDto } from "@/types/assignment";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
 
@@ -14,22 +14,18 @@ function apiMessage<T>(body: ApiResult<T>, fallback: string): string {
 export function AssignmentDetailView({
   assignmentId,
   onSaved,
-  onDeleted,
   onClose,
 }: {
   assignmentId: string;
   onSaved?: (updated: AssignmentDto) => void;
-  onDeleted?: () => void;
   onClose?: () => void;
 }) {
-  const router = useRouter();
   const [assignment, setAssignment] = useState<AssignmentDto | null>(null);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function applyAssignment(next: AssignmentDto): void {
     setAssignment(next);
@@ -93,36 +89,11 @@ export function AssignmentDetailView({
     }
   }
 
-  async function deleteAssignment() {
-    setBusy(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/v1/teacher/assignments/${assignmentId}`,
-        { method: "DELETE" },
-      );
-      if (!response.ok) {
-        const body = (await response.json()) as ApiResult<never>;
-        throw new Error(apiMessage(body, "Không thể xóa bài tập"));
-      }
-      if (onDeleted) {
-        onDeleted();
-      } else {
-        router.back();
-      }
-    } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : "Không thể xóa bài tập",
-      );
-      setBusy(false);
-      setConfirmDelete(false);
-    }
-  }
-
   if (loading) {
     return (
-      <div className="settings-stack" aria-live="polite">
-        <p className="muted">Đang tải thông tin bài tập…</p>
+      <div className="settings-stack" aria-live="polite" aria-busy="true">
+        <Skeleton width="100%" height="42px" />
+        <Skeleton width="120px" height="38px" />
       </div>
     );
   }
@@ -163,69 +134,21 @@ export function AssignmentDetailView({
           </p>
         )}
 
-        {confirmDelete ? (
-          <div
-            className="form-notice"
-            style={{
-              borderColor: "var(--color-error)",
-              background: "var(--color-error-soft)",
-            }}
-          >
-            <p
-              style={{
-                color: "var(--color-error)",
-                margin: 0,
-                fontSize: "0.88rem",
-              }}
-            >
-              <strong>Xác nhận:</strong> Bạn có chắc chắn muốn xóa bài tập này?
-              (Chỉ xóa được nếu chưa có sinh viên nộp bài).
-            </p>
-            <div className="cluster" style={{ marginTop: "10px" }}>
-              <button
-                type="button"
-                className="button button-secondary button-sm"
-                disabled={busy}
-                onClick={() => setConfirmDelete(false)}
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger btn-sm"
-                disabled={busy}
-                onClick={() => void deleteAssignment()}
-              >
-                {busy ? "Đang xóa…" : "Xác nhận xóa bài tập"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="dialog-actions">
+        <div className="dialog-actions">
+          {onClose && (
             <button
-              className="btn btn-outline-danger"
-              disabled={busy}
-              onClick={() => setConfirmDelete(true)}
               type="button"
-              style={{ marginRight: "auto" }}
+              className="button button-secondary"
+              disabled={busy}
+              onClick={onClose}
             >
-              Xóa bài tập này
+              Đóng
             </button>
-            {onClose && (
-              <button
-                type="button"
-                className="button button-secondary"
-                disabled={busy}
-                onClick={onClose}
-              >
-                Đóng
-              </button>
-            )}
-            <button className="button" disabled={busy} type="submit">
-              {busy ? "Đang lưu…" : "Lưu thay đổi"}
-            </button>
-          </div>
-        )}
+          )}
+          <button className="button" disabled={busy} type="submit">
+            {busy ? "Đang lưu…" : "Lưu thay đổi"}
+          </button>
+        </div>
       </form>
     </div>
   );

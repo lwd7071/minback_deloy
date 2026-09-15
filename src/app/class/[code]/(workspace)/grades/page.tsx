@@ -8,6 +8,7 @@ export default async function StudentGradesPage({
   const query = searchParams ? await searchParams : {};
   return (
     <StudentWorkspaceView
+      key={query.assignment ?? "all-results"}
       section="grades"
       initialAssignmentId={query.assignment}
     />

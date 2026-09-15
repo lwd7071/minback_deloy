@@ -31,20 +31,29 @@ export async function listStudentResults(
   const byAssignment = new Map(
     (evaluations ?? []).map((row) => [row.assignment_id, row]),
   );
-  return assignments.flatMap((assignment) => {
-    const evaluation = byAssignment.get(assignment.id);
-    if (!evaluation) return [];
-    return [
-      {
-        assignmentId: assignment.id,
-        assignmentTitle: assignment.title,
-        maxScore: Number(assignment.max_score),
-        score: evaluation.score === null ? null : Number(evaluation.score),
-        feedback: evaluation.feedback || null,
-        status: "returned" as const,
-        returnedAt: evaluation.updated_at,
-        updatedAt: evaluation.updated_at,
-      },
-    ];
-  });
+  return assignments
+    .flatMap((assignment) => {
+      const evaluation = byAssignment.get(assignment.id);
+      if (!evaluation) return [];
+      return [
+        {
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.title,
+          maxScore: Number(assignment.max_score),
+          score: evaluation.score === null ? null : Number(evaluation.score),
+          feedback: evaluation.feedback || null,
+          status: "returned" as const,
+          returnedAt: evaluation.updated_at,
+          updatedAt: evaluation.updated_at,
+        },
+      ];
+    })
+    .sort((left, right) => {
+      const timeDifference =
+        new Date(right.returnedAt).getTime() -
+        new Date(left.returnedAt).getTime();
+      return (
+        timeDifference || left.assignmentId.localeCompare(right.assignmentId)
+      );
+    });
 }

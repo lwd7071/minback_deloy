@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs } from "@/components/ui/tabs";
 import { Modal } from "@/components/ui/modal";
 import { AssignmentDetailView } from "@/components/assignments/teacher/assignment-detail-view";
+import { PRODUCT_CAPABILITIES } from "@/config/product-capabilities";
 export function ClassDetailTabs({
   classSectionId,
 }: {
@@ -10,9 +11,7 @@ export function ClassDetailTabs({
 }) {
   const router = useRouter();
   const search = useSearchParams();
-  const tab = ["students", "assignments", "gradebook"].includes(
-    search.get("tab") ?? "",
-  )
+  const tab = ["students", "assignments"].includes(search.get("tab") ?? "")
     ? search.get("tab")!
     : "students";
   const assignmentId = search.get("assignment");
@@ -30,7 +29,9 @@ export function ClassDetailTabs({
         tabs={[
           { id: "students", label: "Sinh viên" },
           { id: "assignments", label: "Bài tập" },
-          { id: "gradebook", label: "Bảng điểm" },
+          ...(PRODUCT_CAPABILITIES.teacher.gradebook
+            ? [{ id: "gradebook", label: "Bảng điểm" }]
+            : []),
         ]}
         activeTab={tab}
         onTabChange={change}
@@ -42,11 +43,7 @@ export function ClassDetailTabs({
         size="lg"
       >
         {assignmentId ? (
-          <AssignmentDetailView
-            assignmentId={assignmentId}
-            onClose={close}
-            onDeleted={close}
-          />
+          <AssignmentDetailView assignmentId={assignmentId} onClose={close} />
         ) : null}
       </Modal>
     </div>

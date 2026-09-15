@@ -6,7 +6,11 @@ import type {
   AssignmentCreateInput,
   AssignmentUpdateInput,
 } from "@/schemas/assignment";
-import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
+import type {
+  AssignmentDto,
+  AssignmentStatus,
+  TeacherAssignmentSummaryDto,
+} from "@/types/assignment";
 
 type AssignmentRow = {
   id: string;
@@ -86,6 +90,84 @@ export async function listAssignmentsByClassSection(
     );
   }
   return (data as AssignmentRow[]).map(toDto);
+}
+
+export async function listTeacherAssignmentSummaries(
+  classSectionId: string,
+): Promise<TeacherAssignmentSummaryDto[]> {
+  const supabase = createAdminClient();
+  const assignments = await listAssignmentsByClassSection(classSectionId);
+  if (!assignments.length) return [];
+
+  const [{ count: totalStudents, error: studentsError }, { data, error }] =
+    await Promise.all([
+      supabase
+        .from("students")
+        .select("id", { count: "exact", head: true })
+        .eq("class_section_id", classSectionId),
+      supabase
+        .from("evaluations")
+        .select("assignment_id, status")
+        .in(
+          "assignment_id",
+          assignments.map((assignment) => assignment.id),
+        ),
+    ]);
+
+  if (studentsError) {
+    throw new RepositoryError(
+      "ASSIGNMENT_STUDENT_COUNT_FAILED",
+      "Không thể đếm sinh viên trong lớp",
+      { cause: studentsError },
+    );
+  }
+  if (error) {
+    throw new RepositoryError(
+      "ASSIGNMENT_EVALUATION_SUMMARY_FAILED",
+      "Không thể tổng hợp tiến độ chấm",
+      { cause: error },
+    );
+  }
+
+  const summaryByAssignment = new Map<
+    string,
+    { gradedCount: number; returnedCount: number }
+  >();
+  for (const row of data ?? []) {
+    const current = summaryByAssignment.get(row.assignment_id) ?? {
+      gradedCount: 0,
+      returnedCount: 0,
+    };
+    if (row.status === "graded") current.gradedCount += 1;
+    if (row.status === "returned") current.returnedCount += 1;
+    summaryByAssignment.set(row.assignment_id, current);
+  }
+
+  const total = totalStudents ?? 0;
+  return assignments.map((assignment) => {
+    const current = summaryByAssignment.get(assignment.id) ?? {
+      gradedCount: 0,
+      returnedCount: 0,
+    };
+    const evaluatedCount = current.gradedCount + current.returnedCount;
+    const percentage =
+      total > 0 ? Math.round((evaluatedCount / total) * 100) : 0;
+    return {
+      ...assignment,
+      gradingSummary: {
+        totalStudents: total,
+        ...current,
+        evaluatedCount,
+        percentage,
+        state:
+          total === 0
+            ? ("empty" as const)
+            : evaluatedCount === total
+              ? ("complete" as const)
+              : ("incomplete" as const),
+      },
+    };
+  });
 }
 
 export async function createAssignment(

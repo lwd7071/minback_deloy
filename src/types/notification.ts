@@ -22,6 +22,7 @@ export type NotificationDto = {
   type: "evaluation_created" | "evaluation_updated";
   message: string;
   evaluationId: string | null;
+  assignmentId: string | null;
   createdAt: string;
   readAt: string | null;
 };

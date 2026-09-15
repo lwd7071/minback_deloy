@@ -7,10 +7,11 @@ MinBack giúp Teacher/Admin quản lý lớp học phần, bài tập và kết 
 - **Teacher/Admin**: một role dùng Supabase Auth SSR. MVP có một Teacher nhưng mọi truy vấn vẫn giữ `teacher_id` context.
 - **ClassSection**: một lớp học phần do Teacher quản lý.
 - **Student enrollment**: một record Student trong đúng một ClassSection, không phải hồ sơ Person dùng chung toàn hệ thống.
-- **Assignment**: bài tập thuộc một ClassSection, có trạng thái `draft`, `published` hoặc `closed`.
-- **Evaluation**: kết quả hiện hành duy nhất của một Student cho một Assignment.
+- **Assignment**: khóa nhóm Evaluation thuộc một ClassSection. Schema vẫn giữ trạng thái kỹ thuật và field tương thích, nhưng release feedback-first chỉ expose tên và thang điểm cần cho việc nhập kết quả.
+- **Evaluation**: kết quả hiện hành duy nhất của một Student cho một Assignment; `graded` là trạng thái nội bộ Teacher và `returned` là trạng thái duy nhất Student được xem.
 - **EvaluationHistory**: giá trị Evaluation cũ được ghi atomically khi Evaluation thay đổi.
 - **StudentSession**: opaque server-side session mở đúng một Student enrollment; Student browser không dùng Supabase Auth/JWT để đọc dữ liệu.
+- **Feedback-first release profile**: profile sản phẩm chỉ expose Teacher import/save/publish điểm-feedback và Student xem kết quả đã công bố; Submission, Attachment, Deadline và Gradebook được giữ tương thích nhưng ẩn khỏi active UI.
 
 ## System boundaries
 
@@ -25,6 +26,10 @@ MinBack giúp Teacher/Admin quản lý lớp học phần, bài tập và kết 
 - PIN chỉ lưu dạng hash; PIN khởi tạo/reset chỉ được xuất plain text một lần.
 - Evaluation phải nối Student và Assignment thuộc cùng ClassSection.
 - Evaluation update và EvaluationHistory phải cùng transaction.
+- Student không bao giờ nhận Evaluation khác `returned` qua active Results interface.
+- Notification kết quả deep-link bằng `assignmentId`; `evaluationId` chỉ giữ cho compatibility.
+- Ẩn capability khỏi UI không đồng nghĩa xóa authorization, endpoint, schema hoặc dữ liệu backend.
+- Email lỗi không rollback Evaluation hoặc web Notification.
 - Student rate limit có ba lớp: Student enrollment, HMAC identifier bucket và HMAC IP bucket.
 - Mọi quyết định thiết kế chưa có trong contract phải được hỏi trước khi implementation.
 
@@ -45,10 +50,15 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - **ClassSection XLSX import and whole-file limits (Sprint 2 — A2.5)**: Import hỗ trợ CSV và XLSX qua một normalized-row model dùng chung. Endpoint từ chối toàn file trước mutation nếu sai đuôi, quá 5 MB, thiếu header bắt buộc hoặc quá 2.000 dòng dữ liệu; row-level errors vẫn partial-success. ExcelJS 4.4.0 được dùng chỉ để đọc XLSX buffer; rủi ro UUID transitive được ghi ở handoff A2.6. Full integration regression pass 29/29.
 - **Assignment management (Sprint 3 — A3.1–A3.3)**: Teacher quản lý Assignment theo ClassSection qua API list/create/detail/update/delete và UI `/teacher/assignments`. DTO, date/max-score validation, status transitions và deletion restriction được enforce tại service/repository; direct API privacy tests che giấu cross-Teacher resources bằng `404` và yêu cầu Origin cho mutations. Handoff: `docs/team/dev-a-sprint-3-handoff.md`.
 - **Current Evaluation management (Sprint 4 — A4.1–A4.5)**: Teacher list/upsert Evaluation theo Assignment/Student trong cùng ClassSection qua API và UI `/teacher/evaluations`. Score/feedback/status được validate theo Assignment; update dùng authenticated Teacher client để trigger ghi EvaluationHistory atomically và Notification chỉ được gọi sau commit khi payload thay đổi. Evaluation responses dùng `Cache-Control: no-store`. Handoff: `docs/team/dev-a-sprint-4-handoff.md`.
-- **Student Profile API (Sprint 5)**: `GET /api/v1/student/profile` chỉ nhận identity từ `requireFullStudentSession()`. Repository scope Student và ClassSection theo session, chỉ aggregate Assignment `published|closed` cùng Evaluation hiện hành của chính Student bằng tập ID (không N+1). Response có `Cache-Control: no-store`; progress đếm `graded|returned` và dùng `Math.round`, với không Assignment là `0/0/0`. Handoff: `docs/team/dev-a-sprint-5-handoff.md`.
+- **Student Profile API (Sprint 5, compatibility)**: `GET /api/v1/student/profile` vẫn nhận identity từ `requireFullStudentSession()` và giữ contract cũ cho compatibility. Active feedback-first Student workspace dùng identity + `GET /api/v1/student/results`, không tải submission/attachment.
 - **Hardening/release gate (Sprint 6)**: Benchmark local tái lập được bằng `npm run benchmark:local`; lookup MSSV import được batch 100 phần tử để hỗ trợ import giới hạn 2,000 rows. `EXPLAIN` baseline không chứng minh cần index mới. Core workflow synthetic và cleanup cùng test được kiểm tra trong integration suite. Handoff: `docs/team/dev-a-sprint-6-handoff.md`.
-- **Assignment files and submissions (post-MVP extension)**: Assignment attachment và Student submission dùng Cloudinary authenticated raw assets qua signed direct upload; Supabase chỉ giữ metadata/Cloudinary identifiers. Student Profile giữ grading progress và thêm submission progress. File binary không được trả qua API public URL.
-- **Frontend rebuild**: UI công khai dùng `/class/[code]/*`, Teacher dùng `/admin/*`; URL UI cũ không có redirect. Public lookup chỉ lộ code/name. Dashboard summary, import preview, paginated gradebook và atomic bulk Evaluation là API server-side có Teacher/privacy scope.
+- **Assignment files and submissions (post-MVP extension)**: Assignment attachment và Student submission dùng Cloudinary authenticated raw assets qua signed direct upload; Supabase chỉ giữ metadata/Cloudinary identifiers. Backend và file binary policy được giữ, nhưng active release không gọi các module này.
+- **Frontend rebuild**: UI công khai dùng `/class/[code]/*`, Teacher dùng `/admin/*`; release feedback-first redirect các route UI legacy `/assignments`, `/submissions` và Gradebook về luồng active tương ứng. Public lookup chỉ lộ code/name. Dashboard summary, import preview, paginated gradebook và atomic bulk Evaluation là server-side modules có Teacher/privacy scope.
+- **Feedback-first release (2026-09-15)**: capability profile tại `src/config/product-capabilities.ts` ẩn deadline, attachment, submission, technical Assignment status, delete và Gradebook khỏi active UI. Teacher Assignment list dùng `gradingSummary` aggregate theo batch, chỉ còn filter `Tất cả/Chưa chấm/Đã chấm`, search tên và sort mới nhất/A–Z.
+- **Student Results workspace (2026-09-15)**: active Student layout chỉ tải identity; `/profile` và `/grades` đọc Student Results scoped theo StudentSession + ClassSection, chỉ hiển thị Evaluation `returned`. `/assignments` và `/submissions` redirect về `/grades`; notification dùng Assignment ID.
+- **Compatibility retention (2026-09-15)**: Submission, Attachment, deadline fields, Assignment status, Gradebook repository/route handler và Student profile implementation cũ không bị xóa; chúng không được import vào active feedback-first Student flow.
+- **Release documentation (2026-09-15)**: chi tiết tính năng ẩn, filter còn lại, interface và verification nằm trong `docs/RUT-GON-RELEASE.md`.
+- **Release verification status (2026-09-15)**: typecheck, lint, build, targeted tests và full unit baseline (`53 test files/214 tests`) đã pass. Integration chưa đạt vì Supabase local/Docker container crash (`exit 139`, Docker API `500`); các lỗi `AuthRetryableFetchError`/HTTP `500` trong log là hậu quả môi trường. Cần rerun health, integration và database gates sau khi Docker ổn định.
 
 ## Contracts
 
@@ -62,3 +72,4 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - Sprint 6/release handoff: `docs/team/dev-a-sprint-6-handoff.md`
 - Dev B: `docs/team/dev-b-assignment.md`
 - Checklist Dev A: `docs/team/dev-a-tasks.md`
+- Release rút gọn: `docs/RUT-GON-RELEASE.md`

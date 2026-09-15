@@ -12,9 +12,14 @@ import {
   findAssignmentById,
   hasEvaluations,
   listAssignmentsByClassSection,
+  listTeacherAssignmentSummaries as listAssignmentSummaries,
   updateAssignment,
 } from "@/server/repositories/assignments/assignment-repository";
-import type { AssignmentDto, AssignmentStatus } from "@/types/assignment";
+import type {
+  AssignmentDto,
+  AssignmentStatus,
+  TeacherAssignmentSummaryDto,
+} from "@/types/assignment";
 
 function unexpected(error: unknown): never {
   if (error instanceof ApiError) throw error;
@@ -85,6 +90,18 @@ export async function listTeacherAssignments(
   try {
     await requireOwnedClassSection(classSectionId, teacherId);
     return await listAssignmentsByClassSection(classSectionId);
+  } catch (error) {
+    return unexpected(error);
+  }
+}
+
+export async function listTeacherAssignmentSummaries(
+  classSectionId: string,
+  teacherId: string,
+): Promise<TeacherAssignmentSummaryDto[]> {
+  try {
+    await requireOwnedClassSection(classSectionId, teacherId);
+    return await listAssignmentSummaries(classSectionId);
   } catch (error) {
     return unexpected(error);
   }

@@ -6,6 +6,7 @@ import { requireTeacher } from "@/server/auth/teacher-auth";
 import { getTeacherAssignment } from "@/server/services/assignments/assignment-service";
 import { listTeacherEvaluations } from "@/server/services/evaluations/evaluation-service";
 import { listStudentsInClass } from "@/server/services/students/student-management-service";
+import { Skeleton } from "@/components/ui/skeleton";
 export default async function GradePage({
   params,
   searchParams,
@@ -18,7 +19,13 @@ export default async function GradePage({
   return (
     <div className="stack">
       <Suspense
-        fallback={<p className="muted">Đang tải danh sách chấm bài…</p>}
+        fallback={
+          <div className="stack" aria-busy="true">
+            <Skeleton width="260px" height="30px" />
+            <Skeleton width="100%" height="84px" />
+            <Skeleton width="100%" height="320px" />
+          </div>
+        }
       >
         <BulkGradeData classSectionId={id} assignmentId={aid} query={query} />
       </Suspense>

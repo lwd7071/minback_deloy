@@ -5,7 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { requireFullStudentSession } from "@/server/auth/student-session";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { cacheTags } from "@/server/cache/resource-tags";
-import { listTeacherAssignments } from "@/server/services/assignments/assignment-service";
+import { listTeacherAssignmentSummaries } from "@/server/services/assignments/assignment-service";
 import { getTeacherClassSection } from "@/server/services/class-sections/class-section-service";
 import {
   getTeacherClassSectionSummaries,
@@ -16,7 +16,6 @@ import { getStudentProfile } from "@/server/services/students/student-profile-se
 import { getNotificationSettings } from "@/server/services/notifications/notification-settings-service";
 import { getTeacherAssignment } from "@/server/services/assignments/assignment-service";
 import { listTeacherEvaluations } from "@/server/services/evaluations/evaluation-service";
-import { listTeacherSubmissions } from "@/server/services/students/teacher-submission-service";
 import { listStudentsInClass } from "@/server/services/students/student-management-service";
 
 function privateNavigationLife(): void {
@@ -73,7 +72,7 @@ export async function loadClassAssignments(classSectionId: string) {
     cacheTags.classSection(classSectionId),
     cacheTags.classAssignments(classSectionId),
   );
-  return listTeacherAssignments(classSectionId, teacher.id);
+  return listTeacherAssignmentSummaries(classSectionId, teacher.id);
 }
 
 export async function loadGradebook(classSectionId: string, input: unknown) {
@@ -112,16 +111,15 @@ export async function loadBulkGrade(
     cacheTags.assignment(assignmentId),
     cacheTags.assignmentGrading(assignmentId),
   );
-  const [assignment, students, evaluations, submissions] = await Promise.all([
+  const [assignment, students, evaluations] = await Promise.all([
     getTeacherAssignment(assignmentId, teacher.id),
     listStudentsInClass(classSectionId, { page: 1, pageSize: 100 }),
     listTeacherEvaluations(assignmentId, {
       teacherId: teacher.id,
       supabase,
     }),
-    listTeacherSubmissions(assignmentId),
   ]);
-  return { assignment, students: students.students, evaluations, submissions };
+  return { assignment, students: students.students, evaluations };
 }
 
 export async function loadStudentWorkspace() {

@@ -5,6 +5,47 @@ import { findStudentProfileData } from "@/server/repositories/students/student-p
 import type { EvaluationStatus } from "@/types/evaluation";
 import type { VerifiedStudentSession } from "@/types/student";
 import type { StudentProfileDto } from "@/types/student-profile";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { StudentWorkspaceIdentity } from "@/types/student-workspace";
+
+export async function getStudentWorkspaceIdentity(
+  session: VerifiedStudentSession,
+): Promise<StudentWorkspaceIdentity> {
+  const supabase = createAdminClient();
+  const [studentResult, classResult] = await Promise.all([
+    supabase
+      .from("students")
+      .select("mssv, full_name, nickname")
+      .eq("id", session.studentId)
+      .eq("class_section_id", session.classSectionId)
+      .maybeSingle(),
+    supabase
+      .from("class_sections")
+      .select("id, code, name")
+      .eq("id", session.classSectionId)
+      .maybeSingle(),
+  ]);
+  if (
+    studentResult.error ||
+    classResult.error ||
+    !studentResult.data ||
+    !classResult.data
+  ) {
+    throw new ApiError(
+      401,
+      API_ERROR_CODES.sessionExpired,
+      "Phiên đăng nhập không hợp lệ",
+    );
+  }
+  return {
+    student: {
+      mssv: studentResult.data.mssv,
+      fullName: studentResult.data.full_name,
+      nickname: studentResult.data.nickname,
+    },
+    classSection: classResult.data,
+  };
+}
 
 export type ProfileProgress = {
   completed: number;

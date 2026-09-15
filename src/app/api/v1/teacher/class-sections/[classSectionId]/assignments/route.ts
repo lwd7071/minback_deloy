@@ -6,7 +6,7 @@ import { errorResponse, successResponse } from "@/lib/api/response";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import {
   createTeacherAssignment,
-  listTeacherAssignments,
+  listTeacherAssignmentSummaries,
 } from "@/server/services/assignments/assignment-service";
 
 type RouteContext = { params: Promise<{ classSectionId: string }> };
@@ -34,7 +34,7 @@ export async function GET(
     const { teacher } = await requireTeacher();
     const { classSectionId } = await params;
     return successResponse(
-      await listTeacherAssignments(parseId(classSectionId), teacher.id),
+      await listTeacherAssignmentSummaries(parseId(classSectionId), teacher.id),
     );
   } catch (error) {
     return errorResponse(error);

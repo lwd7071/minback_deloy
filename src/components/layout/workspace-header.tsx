@@ -16,6 +16,7 @@ import {
 import { useEffect, useState, useRef } from "react";
 import { useNotificationPolling } from "@/components/notifications/student/use-notification-polling";
 import { Avatar } from "@/components/ui/avatar";
+import { PRODUCT_CAPABILITIES } from "@/config/product-capabilities";
 
 type WorkspaceHeaderProps =
   | { role: "teacher"; displayName: string; classCode?: never }
@@ -31,7 +32,9 @@ export function makeItems(
     const root = `/class/${encodeURIComponent(classCode)}`;
     return [
       { href: `${root}/profile`, label: "Tổng quan", icon: LayoutDashboard },
-      { href: `${root}/assignments`, label: "Bài tập", icon: BookOpen },
+      ...(PRODUCT_CAPABILITIES.student.results
+        ? [{ href: `${root}/grades`, label: "Kết quả", icon: GraduationCap }]
+        : []),
       { href: `${root}/notifications`, label: "Thông báo", icon: Bell },
     ];
   }
@@ -215,9 +218,9 @@ function StudentNotificationBell({ classCode }: { classCode: string }) {
                 onClick={() => {
                   void markAsRead(notif.id);
                   setOpen(false);
-                  if (notif.evaluationId) {
+                  if (notif.assignmentId) {
                     router.push(
-                      `/class/${encodeURIComponent(classCode)}/grades?assignment=${encodeURIComponent(notif.evaluationId)}`,
+                      `/class/${encodeURIComponent(classCode)}/grades?assignment=${encodeURIComponent(notif.assignmentId)}`,
                     );
                   }
                 }}

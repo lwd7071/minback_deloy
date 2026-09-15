@@ -4,8 +4,9 @@ import { Suspense, type ReactNode } from "react";
 import { StudentWorkspaceLayout } from "@/components/layout/student/student-workspace";
 import { requireFullStudentSession } from "@/server/auth/student-session";
 import { findClassSectionCodeById } from "@/server/repositories/students/student-repository";
-import { getStudentProfile } from "@/server/services/students/student-profile-service";
+import { getStudentWorkspaceIdentity } from "@/server/services/students/student-profile-service";
 import { handleStudentWorkspaceError } from "@/server/navigation/page-errors";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function StudentWorkspaceRouteLayout({
   children,
@@ -19,8 +20,10 @@ export default async function StudentWorkspaceRouteLayout({
   return (
     <Suspense
       fallback={
-        <div className="workspace-state" aria-busy="true">
-          Đang tải không gian học tập…
+        <div className="stack" aria-busy="true">
+          <Skeleton width="220px" height="30px" />
+          <Skeleton width="100%" height="110px" />
+          <Skeleton width="100%" height="260px" />
         </div>
       }
     >
@@ -39,7 +42,7 @@ async function StudentWorkspaceData({
   children: ReactNode;
 }) {
   let canonicalCode: string;
-  let profile: Awaited<ReturnType<typeof getStudentProfile>>;
+  let identity: Awaited<ReturnType<typeof getStudentWorkspaceIdentity>>;
   try {
     const session = await requireFullStudentSession();
     const foundCode = await findClassSectionCodeById(session.classSectionId);
@@ -47,12 +50,12 @@ async function StudentWorkspaceData({
     if (foundCode !== classCode)
       redirect(`/class/${encodeURIComponent(foundCode)}/profile`);
     canonicalCode = foundCode;
-    profile = await getStudentProfile(session);
+    identity = await getStudentWorkspaceIdentity(session);
   } catch (error) {
     return handleStudentWorkspaceError(error, classCode);
   }
   return (
-    <StudentWorkspaceLayout classCode={canonicalCode} profile={profile}>
+    <StudentWorkspaceLayout classCode={canonicalCode} identity={identity}>
       {children}
     </StudentWorkspaceLayout>
   );

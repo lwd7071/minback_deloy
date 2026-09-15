@@ -78,9 +78,11 @@ Mỗi lần xác thực thành công chỉ mở **một hồ sơ học tập duy
 - **Chống brute-force**: giới hạn theo cả IP và định danh đăng nhập; khóa tạm định danh 15 phút sau 5 lần sai liên tiếp. Thông báo lỗi luôn dùng câu chung ("thông tin đăng nhập không đúng") — không tiết lộ nickname có tồn tại hay không.
 
 ### Assignment Management
-- Tạo, cập nhật, xóa/đổi trạng thái bài tập.
-- Thiết lập ngày giao và hạn nộp.
-- Theo dõi bài tập theo từng lớp học phần.
+- Tạo và đổi tên Assignment để làm khóa nhóm cho điểm/feedback theo ClassSection.
+- Các field ngày giao, hạn nộp, mô tả, trạng thái kỹ thuật, attachment và thao tác xóa
+  vẫn giữ trong schema/backend để tương thích nhưng không thuộc giao diện release
+  feedback-first.
+- Theo dõi tiến độ đã có Evaluation theo từng Assignment.
 
 ### Evaluation Management
 - Nhập/cập nhật điểm.
@@ -162,7 +164,7 @@ Evaluation
 | BR-002 | Nickname chỉ cần unique trong 1 lớp học phần: `UNIQUE(class_section_id, nickname)` |
 | BR-003 | Mỗi Student có hồ sơ học tập riêng theo từng lớp học phần |
 | BR-004 | Teacher/Admin quản lý toàn bộ lớp, sinh viên, bài tập, đánh giá trong phạm vi hệ thống |
-| BR-005 | Assignment gồm tên, mô tả, ngày giao, hạn nộp, trạng thái; liên kết với 1 lớp học phần |
+| BR-005 | Assignment gồm tên và liên kết với 1 lớp học phần; các field mô tả/ngày giao/hạn nộp/trạng thái vẫn giữ tương thích nhưng không expose trong UI feedback-first |
 | BR-006 | Evaluation gồm tối thiểu Score, Feedback, Evaluation Status. `Score` là nguồn sự thật duy nhất (source of truth) — MVP nhập tay, version sau có thể tự tính từ Rubric mà không đổi cấu trúc bảng (xem mục 14b) |
 | BR-007 | Feedback riêng tư — chỉ hiển thị đúng hồ sơ sinh viên tương ứng |
 | BR-008 | PIN 6 số, **bắt buộc áp dụng toàn hệ thống**; PIN khởi tạo/reset được sinh ngẫu nhiên riêng cho từng Student và bắt buộc đổi ở lần đăng nhập kế tiếp |
@@ -170,6 +172,7 @@ Evaluation
 | BR-010 *(mới)* | Mỗi record `Student` = 1 lượt ghi danh vào 1 lớp (enrollment), không phải định danh 1 người duy nhất toàn hệ thống |
 | BR-011 *(mới)* | Hệ thống phải lưu lại lịch sử thay đổi điểm/feedback (không chỉ giá trị hiện hành) — đáp ứng EVA-005 |
 | BR-012 *(mới)* | Tiến độ học tập (progress) được tính từ `Evaluation.status` theo từng Assignment trong lớp, không cần entity Submission riêng ở MVP |
+| BR-013 *(release feedback-first)* | Student chỉ xem Evaluation `returned`; Teacher chọn Assignment để import/save/publish điểm và feedback |
 
 ---
 

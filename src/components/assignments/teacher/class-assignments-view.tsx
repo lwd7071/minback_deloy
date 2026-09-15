@@ -1,42 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, RotateCcw, Search, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { RotateCcw, Search, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Pagination } from "@/components/ui/pagination";
-import type { AssignmentDto } from "@/types/assignment";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import type { TeacherAssignmentSummaryDto } from "@/types/assignment";
 import { AssignmentDetailView } from "./assignment-detail-view";
-import {
-  useClassAssignments,
-  type DueDateFilter,
-  type SortOption,
-} from "./use-class-assignments";
-
-function formatDueDate(dueDateStr: string): string {
-  try {
-    const d = new Date(dueDateStr);
-    if (Number.isNaN(d.getTime())) return dueDateStr;
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${hours}:${minutes} ${day}/${month}/${year}`;
-  } catch {
-    return dueDateStr;
-  }
-}
-
-function isOverdue(dueDateStr: string, referenceTime: number): boolean {
-  try {
-    return new Date(dueDateStr).getTime() < referenceTime;
-  } catch {
-    return false;
-  }
-}
+import { useClassAssignments, type SortOption } from "./use-class-assignments";
 
 /**
  * Presentational Component cho màn hình quản lý bài tập của lớp học phần.
@@ -51,19 +24,17 @@ export function ClassAssignmentsView({
   initialAssignments,
 }: {
   classSectionId: string;
-  initialAssignments: AssignmentDto[];
+  initialAssignments: TeacherAssignmentSummaryDto[];
 }) {
   const {
     rows,
     filteredRows,
     paginatedRows,
     counts,
-    statusFilter,
-    setStatusFilter,
+    gradingFilter,
+    setGradingFilter,
     searchKeyword,
     setSearchKeyword,
-    dueDateFilter,
-    setDueDateFilter,
     sortBy,
     setSortBy,
     page,
@@ -71,7 +42,6 @@ export function ClassAssignmentsView({
     pageSize,
     setPageSize,
     resetFilters,
-    referenceTime,
     error,
     showCreate,
     setShowCreate,
@@ -82,7 +52,6 @@ export function ClassAssignmentsView({
     selectedAssignmentId,
     setSelectedAssignmentId,
     handleAssignmentSaved,
-    handleAssignmentDeleted,
   } = useClassAssignments({
     classSectionId,
     initialAssignments,
@@ -90,10 +59,7 @@ export function ClassAssignmentsView({
   });
 
   const hasActiveFilters = Boolean(
-    searchKeyword ||
-    statusFilter !== "all" ||
-    dueDateFilter !== "all" ||
-    sortBy !== "newest",
+    searchKeyword || gradingFilter !== "all" || sortBy !== "newest",
   );
 
   return (
@@ -159,39 +125,30 @@ export function ClassAssignmentsView({
           <button
             type="button"
             role="tab"
-            aria-selected={statusFilter === "all"}
-            className={`assignment-tab-btn ${statusFilter === "all" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("all")}
+            aria-selected={gradingFilter === "all"}
+            className={`assignment-tab-btn ${gradingFilter === "all" ? "is-active" : ""}`}
+            onClick={() => setGradingFilter("all")}
           >
             Tất cả <span className="tab-count-badge">{counts.all}</span>
           </button>
           <button
             type="button"
             role="tab"
-            aria-selected={statusFilter === "published"}
-            className={`assignment-tab-btn ${statusFilter === "published" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("published")}
+            aria-selected={gradingFilter === "incomplete"}
+            className={`assignment-tab-btn ${gradingFilter === "incomplete" ? "is-active" : ""}`}
+            onClick={() => setGradingFilter("incomplete")}
           >
-            Đã phát hành{" "}
-            <span className="tab-count-badge">{counts.published}</span>
+            Chưa chấm{" "}
+            <span className="tab-count-badge">{counts.incomplete}</span>
           </button>
           <button
             type="button"
             role="tab"
-            aria-selected={statusFilter === "draft"}
-            className={`assignment-tab-btn ${statusFilter === "draft" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("draft")}
+            aria-selected={gradingFilter === "complete"}
+            className={`assignment-tab-btn ${gradingFilter === "complete" ? "is-active" : ""}`}
+            onClick={() => setGradingFilter("complete")}
           >
-            Bản nháp <span className="tab-count-badge">{counts.draft}</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={statusFilter === "closed"}
-            className={`assignment-tab-btn ${statusFilter === "closed" ? "is-active" : ""}`}
-            onClick={() => setStatusFilter("closed")}
-          >
-            Đã đóng <span className="tab-count-badge">{counts.closed}</span>
+            Đã chấm <span className="tab-count-badge">{counts.complete}</span>
           </button>
         </div>
 
@@ -217,24 +174,11 @@ export function ClassAssignmentsView({
 
           <select
             className="assignment-select"
-            value={dueDateFilter}
-            onChange={(e) => setDueDateFilter(e.target.value as DueDateFilter)}
-            aria-label="Lọc theo hạn nộp"
-          >
-            <option value="all">Tất cả hạn nộp</option>
-            <option value="active">Còn hạn nộp</option>
-            <option value="overdue">Đã quá hạn</option>
-          </select>
-
-          <select
-            className="assignment-select"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             aria-label="Sắp xếp bài tập"
           >
             <option value="newest">Mới tạo nhất</option>
-            <option value="due_asc">Hạn nộp gần nhất</option>
-            <option value="due_desc">Hạn nộp xa nhất</option>
             <option value="title_asc">Tên A → Z</option>
           </select>
         </div>
@@ -276,29 +220,27 @@ export function ClassAssignmentsView({
           return (
             <Card hover className="assignment-row-card" key={row.id}>
               <div className="assignment-row-left">
-                <Badge variant={row.status}>{row.status}</Badge>
                 <h3 className="assignment-row-title" title={row.title}>
                   {row.title}
                 </h3>
               </div>
 
               <div className="assignment-row-meta">
-                <div className="assignment-card-meta-item">
-                  <Clock size={13} aria-hidden="true" />
-                  <span>Hạn: {formatDueDate(row.dueDate)}</span>
-                </div>
-                {row.dueDate ? (
-                  isOverdue(row.dueDate, referenceTime) ? (
-                    <span className="assignment-overdue-tag">Quá hạn</span>
-                  ) : (
-                    <span className="assignment-active-tag">Còn hạn</span>
-                  )
-                ) : null}
+                <span className="assignment-active-tag">
+                  {row.gradingSummary.state === "complete"
+                    ? "Đã chấm"
+                    : "Chưa chấm"}
+                </span>
                 <div className="assignment-row-score">
                   <span>
-                    Thang: <strong>{row.maxScore}đ</strong>
+                    {row.gradingSummary.evaluatedCount} /{" "}
+                    {row.gradingSummary.totalStudents} sinh viên
                   </span>
                 </div>
+                <ProgressBar
+                  value={row.gradingSummary.evaluatedCount}
+                  max={row.gradingSummary.totalStudents || 1}
+                />
               </div>
 
               <div className="assignment-row-actions">
@@ -376,9 +318,6 @@ export function ClassAssignmentsView({
           <AssignmentDetailView
             assignmentId={selectedAssignmentId}
             onSaved={handleAssignmentSaved}
-            onDeleted={() => {
-              handleAssignmentDeleted(selectedAssignmentId);
-            }}
             onClose={() => setSelectedAssignmentId(null)}
           />
         ) : null}

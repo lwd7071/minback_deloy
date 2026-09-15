@@ -11,10 +11,10 @@ import {
 import { useRouter } from "next/navigation";
 
 import { WorkspaceHeader } from "@/components/layout/workspace-header";
-import type { StudentProfileDto } from "@/types/student-profile";
+import type { StudentWorkspaceIdentity } from "@/types/student-workspace";
 
 type WorkspaceState = {
-  profile: StudentProfileDto | null;
+  identity: StudentWorkspaceIdentity | null;
   loading: boolean;
   error: string | null;
   refresh: () => void;
@@ -30,11 +30,11 @@ export function useStudentWorkspace() {
 
 export function StudentWorkspaceLayout({
   classCode,
-  profile,
+  identity,
   children,
 }: {
   classCode: string;
-  profile: StudentProfileDto;
+  identity: StudentWorkspaceIdentity;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -46,8 +46,8 @@ export function StudentWorkspaceLayout({
   }, [router, startTransition]);
 
   const value = useMemo(
-    () => ({ profile, loading: isPending, error: null, refresh }),
-    [isPending, profile, refresh],
+    () => ({ identity, loading: isPending, error: null, refresh }),
+    [isPending, identity, refresh],
   );
 
   return (

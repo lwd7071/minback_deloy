@@ -12,3 +12,14 @@ export type AssignmentDto = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type TeacherAssignmentSummaryDto = AssignmentDto & {
+  gradingSummary: {
+    totalStudents: number;
+    gradedCount: number;
+    returnedCount: number;
+    evaluatedCount: number;
+    percentage: number;
+    state: "empty" | "incomplete" | "complete";
+  };
+};

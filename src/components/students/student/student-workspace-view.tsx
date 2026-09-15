@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { StudentAssignmentModal } from "@/components/assignments/student/student-assignment-modal";
 import { useNotificationPolling } from "@/components/notifications/student/use-notification-polling";
 import { useStudentWorkspace } from "@/components/layout/student/student-workspace";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
-import { StudentAssignmentsView } from "./student-assignments-view";
+import type { StudentResultDto } from "@/types/student-results";
 
 export type Section =
   "overview" | "assignments" | "submissions" | "grades" | "notifications";
@@ -29,113 +28,106 @@ export function StudentWorkspaceView({
   section: Section;
   initialAssignmentId?: string;
 }) {
-  const { profile, loading, error, refresh } = useStudentWorkspace();
+  const { identity, loading, refresh } = useStudentWorkspace();
   const router = useRouter();
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
-    string | null
-  >(initialAssignmentId ?? null);
   const notifications = useNotificationPolling();
+  const [results, setResults] = useState<StudentResultDto[]>([]);
+  const [resultLoading, setResultLoading] = useState(true);
+  const [resultError, setResultError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState(initialAssignmentId ?? null);
+  const [search, setSearch] = useState("");
 
-  const selected = profile?.assignments.find(
-    (assignment) => assignment.id === selectedAssignmentId,
-  );
-  const summary = useMemo(() => {
-    if (!profile) return null;
-    const returned = profile.assignments.filter(
-      (assignment) => assignment.evaluation?.status === "returned",
-    ).length;
-    return { returned };
-  }, [profile]);
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/v1/student/results", { cache: "no-store" })
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok || !body.data?.results) {
+          throw new Error(body.error?.message ?? "Không thể tải kết quả");
+        }
+        return body.data.results as StudentResultDto[];
+      })
+      .then((data) => {
+        if (active) setResults(data);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setResultError(
+            error instanceof Error ? error.message : "Không thể tải kết quả",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setResultLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [refresh, section]);
 
-  if (loading)
-    return <div className="workspace-state">Đang tải không gian học tập…</div>;
-  if (error || !profile || !summary) {
+  const filteredResults = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return results.filter((result) =>
+      keyword ? result.assignmentTitle.toLowerCase().includes(keyword) : true,
+    );
+  }, [results, search]);
+
+  const selected =
+    results.find((result) => result.assignmentId === selectedId) ?? null;
+
+  if (loading || resultLoading) {
+    return (
+      <div className="workspace-state" aria-busy="true">
+        Đang tải kết quả học tập…
+      </div>
+    );
+  }
+  if (!identity || resultError) {
     return (
       <div className="workspace-state">
-        <p className="form-error">{error ?? "Không thể tải dữ liệu"}</p>
-        <button className="btn btn-primary" onClick={() => void refresh()}>
+        <p className="form-error">{resultError ?? "Không thể tải dữ liệu"}</p>
+        <button className="btn btn-primary" onClick={() => refresh()}>
           Tải lại
         </button>
       </div>
     );
   }
 
-  const assignments = profile.assignments;
+  const average = results.length
+    ? Math.round(
+        (results.reduce(
+          (sum, result) =>
+            sum +
+            (result.score === null
+              ? 0
+              : (result.score / result.maxScore) * 100),
+          0,
+        ) /
+          results.length) *
+          10,
+      ) / 10
+    : null;
 
   return (
     <div className="student-workspace-view">
       <header className="workspace-topbar">
         <div className="workspace-person">
           <span className="workspace-avatar">
-            {profile.student.fullName.slice(0, 1)}
+            {identity.student.fullName.slice(0, 1)}
           </span>
           <div>
-            <p className="eyebrow">{profile.classSection.code}</p>
+            <p className="eyebrow">{identity.classSection.code}</p>
             <h1>
               {section === "overview"
-                ? `Chào ${profile.student.fullName.split(" ").at(-1)}!`
+                ? `Chào ${identity.student.fullName.split(" ").at(-1)}!`
                 : navigationTitle(section)}
             </h1>
           </div>
         </div>
-        <span className="workspace-user-meta">{profile.student.mssv}</span>
+        <span className="workspace-user-meta">{identity.student.mssv}</span>
       </header>
 
-      {section === "overview" ? (
-        <>
-          <section
-            className="student-summary-cards"
-            aria-label="Tổng quan lớp học"
-          >
-            <Card className="stat-card student-class-card">
-              <span className="signature-icon">
-                <AppIcon name="book" size={28} />
-              </span>
-              <div>
-                <strong>{profile.classSection.code}</strong>
-                <small>{profile.classSection.name}</small>
-              </div>
-            </Card>
-            <Card className="stat-card">
-              <strong>{profile.assignments.length}</strong>
-              <span className="muted">Bài tập</span>
-            </Card>
-            <Card className="stat-card">
-              <strong>{summary.returned}</strong>
-              <span className="muted">Đã trả kết quả</span>
-            </Card>
-            <Card className="stat-card">
-              <strong>{profile.progress.percentage}%</strong>
-              <span className="muted">Tiến độ</span>
-            </Card>
-          </section>
-          <div className="student-dashboard-panels">
-            <Card className="workspace-panel">
-              <PanelTitle
-                icon="book"
-                title="Bài tập gần đây"
-                href={`/class/${profile.classSection.code}/assignments`}
-              />
-              <AssignmentRows
-                assignments={profile.assignments.slice(0, 4)}
-                onSelect={setSelectedAssignmentId}
-              />
-            </Card>
-            <Card className="workspace-panel">
-              <PanelTitle icon="check" title="Kết quả gần đây" />
-              <AssignmentRows
-                assignments={profile.assignments
-                  .filter(
-                    (assignment) =>
-                      assignment.evaluation?.status === "returned",
-                  )
-                  .slice(0, 4)}
-                onSelect={setSelectedAssignmentId}
-              />
-            </Card>
-          </div>
-        </>
-      ) : section === "notifications" ? (
+      {section === "notifications" ? (
         <Card className="workspace-panel notification-page">
           <PanelTitle icon="bell" title="Thông báo" />
           {notifications.notifications.length ? (
@@ -145,10 +137,11 @@ export function StudentWorkspaceView({
                 key={item.id}
                 onClick={() => {
                   void notifications.markAsRead(item.id);
-                  if (item.evaluationId)
+                  if (item.assignmentId) {
                     router.push(
-                      `/class/${encodeURIComponent(profile.classSection.code)}/grades?assignment=${encodeURIComponent(item.evaluationId)}`,
+                      `/class/${encodeURIComponent(identity.classSection.code)}/grades?assignment=${encodeURIComponent(item.assignmentId)}`,
                     );
+                  }
                 }}
               >
                 <span>{item.message}</span>
@@ -159,50 +152,64 @@ export function StudentWorkspaceView({
             <p className="muted">Chưa có thông báo nào.</p>
           )}
         </Card>
-      ) : section === "assignments" ? (
-        <Card className="workspace-panel workspace-table-panel">
-          <PanelTitle icon="book" title={navigationTitle(section)} />
-          <StudentAssignmentsView
-            assignments={assignments}
-            onSelectAssignment={setSelectedAssignmentId}
-            defaultPageSize={6}
-          />
-        </Card>
+      ) : section === "overview" ? (
+        <>
+          <section
+            className="student-summary-cards"
+            aria-label="Tổng quan lớp học"
+          >
+            <Card className="stat-card student-class-card">
+              <span className="signature-icon">
+                <AppIcon name="book" size={28} />
+              </span>
+              <div>
+                <strong>{identity.classSection.code}</strong>
+                <small>{identity.classSection.name}</small>
+              </div>
+            </Card>
+            <Card className="stat-card">
+              <strong>{results.length}</strong>
+              <span className="muted">Đã công bố</span>
+            </Card>
+            <Card className="stat-card">
+              <strong>{average === null ? "—" : `${average}%`}</strong>
+              <span className="muted">Điểm trung bình</span>
+            </Card>
+          </section>
+          <Card className="workspace-panel">
+            <PanelTitle
+              icon="check"
+              title="Kết quả gần đây"
+              href={`/class/${identity.classSection.code}/grades`}
+            />
+            <ResultRows
+              results={results.slice(0, 4)}
+              onSelect={setSelectedId}
+            />
+          </Card>
+        </>
       ) : (
         <Card className="workspace-panel workspace-table-panel">
-          <PanelTitle
-            icon={section === "grades" ? "gradebook" : "bell"}
-            title={navigationTitle(section)}
+          <PanelTitle icon="gradebook" title="Kết quả" />
+          <input
+            className="form-input"
+            placeholder="Tìm theo tên bài tập…"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
           />
-          <AssignmentRows
-            assignments={
-              section === "grades"
-                ? assignments.filter((a) => a.evaluation !== null)
-                : assignments
-            }
-            onSelect={setSelectedAssignmentId}
-          />
+          <ResultRows results={filteredResults} onSelect={setSelectedId} />
         </Card>
       )}
+
       {selected ? (
-        <StudentAssignmentModal
-          assignment={selected}
-          open
-          onClose={() => setSelectedAssignmentId(null)}
-        />
+        <ResultDetail result={selected} onClose={() => setSelectedId(null)} />
       ) : null}
     </div>
   );
 }
 
 function navigationTitle(section: Exclude<Section, "overview">) {
-  const titles: Record<Exclude<Section, "overview">, string> = {
-    assignments: "Bài tập",
-    submissions: "Bài đã chấm",
-    grades: "Bảng điểm",
-    notifications: "Thông báo",
-  };
-  return titles[section];
+  return section === "notifications" ? "Thông báo" : "Kết quả";
 }
 
 function PanelTitle({
@@ -210,7 +217,7 @@ function PanelTitle({
   title,
   href,
 }: {
-  icon: "book" | "clock" | "gradebook" | "bell" | "upload" | "check";
+  icon: "book" | "gradebook" | "bell" | "check";
   title: string;
   href?: string;
 }) {
@@ -225,53 +232,66 @@ function PanelTitle({
   );
 }
 
-function AssignmentRows({
-  assignments,
+function ResultRows({
+  results,
   onSelect,
 }: {
-  assignments: StudentProfileAssignment[];
+  results: StudentResultDto[];
   onSelect: (id: string) => void;
 }) {
-  if (!assignments.length)
-    return <p className="muted">Chưa có bài tập nào được giao.</p>;
+  if (!results.length) {
+    return <p className="muted">Chưa có kết quả được công bố.</p>;
+  }
   return (
     <div className="workspace-assignment-list">
-      {assignments.map((assignment) => {
-        const hasReturned = assignment.evaluation?.status === "returned";
-        return (
-          <button
-            key={assignment.id}
-            className="workspace-assignment-row"
-            onClick={() => onSelect(assignment.id)}
-            aria-label={`Xem chi tiết bài tập ${assignment.title}`}
-            type="button"
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "3px",
-                textAlign: "left",
-              }}
-            >
-              <strong style={{ fontSize: "0.95rem" }}>
-                {assignment.title}
-              </strong>
-            </div>
-            <span
-              className={`workspace-status ${hasReturned ? "is-complete" : "is-pending"}`}
-            >
-              {hasReturned && assignment.evaluation?.score !== null
-                ? `${assignment.evaluation!.score} / ${assignment.maxScore} điểm`
-                : "Chưa công bố"}
-            </span>
-          </button>
-        );
-      })}
+      {results.map((result) => (
+        <button
+          key={result.assignmentId}
+          className="workspace-assignment-row"
+          onClick={() => onSelect(result.assignmentId)}
+          type="button"
+        >
+          <strong>{result.assignmentTitle}</strong>
+          <span className="workspace-status is-complete">
+            {result.score === null
+              ? "—"
+              : `${result.score} / ${result.maxScore} điểm`}
+          </span>
+        </button>
+      ))}
     </div>
   );
 }
 
-type StudentProfileAssignment = NonNullable<
-  ReturnType<typeof useStudentWorkspace>["profile"]
->["assignments"][number];
+function ResultDetail({
+  result,
+  onClose,
+}: {
+  result: StudentResultDto;
+  onClose: () => void;
+}) {
+  return (
+    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="result-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button className="modal-close" onClick={onClose} aria-label="Đóng">
+          ×
+        </button>
+        <h2 id="result-title">{result.assignmentTitle}</h2>
+        <p className="student-result-score">
+          {result.score === null ? "—" : `${result.score} / ${result.maxScore}`}
+        </p>
+        <p className="muted">Đã công bố {formatDate(result.returnedAt)}</p>
+        <div className="form-notice">
+          <strong>Feedback</strong>
+          <p>{result.feedback || "Giảng viên chưa thêm feedback."}</p>
+        </div>
+      </div>
+    </div>
+  );
+}

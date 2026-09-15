@@ -14,12 +14,16 @@ import type { NotificationDto, NotificationRow } from "@/types/notification";
 
 // ─── Mapper: DB row → DTO ─────────────────────────────────────────────────────
 
-function toNotificationDto(row: NotificationRow): NotificationDto {
+function toNotificationDto(
+  row: NotificationRow,
+  assignmentId: string | null = null,
+): NotificationDto {
   return {
     id: row.id,
     type: row.type,
     message: row.message,
     evaluationId: row.evaluation_id,
+    assignmentId,
     createdAt: row.created_at,
     readAt: row.read_at,
   };
@@ -75,7 +79,7 @@ export async function listNotificationsByStudentId(
     .is("read_at", null);
 
   return {
-    notifications: (data as NotificationRow[]).map(toNotificationDto),
+    notifications: await addAssignmentIds(data as NotificationRow[]),
     total: count ?? 0,
     unreadCount: unreadCount ?? 0,
   };
@@ -100,7 +104,8 @@ export async function findNotificationById(
 
   if (error || !data) return null;
 
-  return toNotificationDto(data as NotificationRow);
+  const [notification] = await addAssignmentIds([data as NotificationRow]);
+  return notification ?? null;
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
@@ -132,5 +137,29 @@ export async function markNotificationAsRead(
 
   if (!data) return null;
 
-  return toNotificationDto(data as NotificationRow);
+  const [notification] = await addAssignmentIds([data as NotificationRow]);
+  return notification ?? null;
+}
+
+async function addAssignmentIds(
+  rows: NotificationRow[],
+): Promise<NotificationDto[]> {
+  if (!rows.length) return [];
+  const evaluationIds = rows.flatMap((row) =>
+    row.evaluation_id ? [row.evaluation_id] : [],
+  );
+  if (!evaluationIds.length) return rows.map((row) => toNotificationDto(row));
+  const { data } = await createAdminClient()
+    .from("evaluations")
+    .select("id, assignment_id")
+    .in("id", evaluationIds);
+  const assignments = new Map(
+    (data ?? []).map((row) => [row.id, row.assignment_id]),
+  );
+  return rows.map((row) =>
+    toNotificationDto(
+      row,
+      row.evaluation_id ? (assignments.get(row.evaluation_id) ?? null) : null,
+    ),
+  );
 }

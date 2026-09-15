@@ -35,14 +35,7 @@ export function ClassOverviewView({
       href: `/admin/classes/${classSectionId}/assignments`,
       icon: "book" as const,
       title: "Bài tập",
-      description:
-        "Tạo, cập nhật và công bố bài tập kèm file hướng dẫn cho lớp.",
-    },
-    {
-      href: `/admin/classes/${classSectionId}/gradebook`,
-      icon: "gradebook" as const,
-      title: "Bảng điểm",
-      description: "Theo dõi tiến độ nộp bài, chấm điểm và trả nhận xét.",
+      description: "Tạo, đổi tên và nhập điểm kèm feedback cho lớp.",
     },
   ];
 

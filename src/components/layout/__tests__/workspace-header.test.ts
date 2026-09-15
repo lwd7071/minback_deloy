@@ -9,10 +9,10 @@ describe("workspace navigation", () => {
     ]);
   });
 
-  it("does not change Student navigation", () => {
+  it("keeps Student navigation focused on published results", () => {
     expect(makeItems("student", "TEST115").map((item) => item.label)).toEqual([
       "Tổng quan",
-      "Bài tập",
+      "Kết quả",
       "Thông báo",
     ]);
   });
