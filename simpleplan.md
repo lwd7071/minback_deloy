@@ -67,11 +67,11 @@ Quy tắc:
 
 ### Redirect bắt buộc
 
-| Route cũ | Route đích |
-|---|---|
+| Route cũ                        | Route đích                        |
+| ------------------------------- | --------------------------------- |
 | `/admin/classes/[id]/gradebook` | `/admin/classes/[id]/assignments` |
-| `/class/[code]/assignments` | `/class/[code]/grades` |
-| `/class/[code]/submissions` | `/class/[code]/grades` |
+| `/class/[code]/assignments`     | `/class/[code]/grades`            |
+| `/class/[code]/submissions`     | `/class/[code]/grades`            |
 
 Nếu URL Student có `?assignment=...`, phải giữ query này khi redirect.
 
@@ -125,15 +125,15 @@ Trong `use-class-assignments.ts`:
 
 ### Code cần sửa
 
-| Module | Cách sửa |
-|---|---|
-| `class-assignments-view.tsx` | Thay status tabs bằng `Tất cả / Chưa chấm / Đã chấm`; bỏ deadline filter/sort/badge, status badge, description và deadline |
-| `assignment-detail-view.tsx` | Form chỉ cho đổi tên; bỏ nút xóa, status, description, ngày giao, hạn nộp và max score khỏi UI |
-| `attachment-upload-panel.tsx` | Giữ file nhưng không import trong active flow |
-| `class-overview-view.tsx` | Giữ card Sinh viên và Bài tập; ẩn Gradebook theo capability |
-| `class-context-nav.tsx`, `class-detail-tabs.tsx` | Bỏ Gradebook khỏi navigation feedback-first |
-| Gradebook page | Redirect trước khi tải Gradebook |
-| `navigation-loaders.ts` | Active grading loader không được tải submission/attachment |
+| Module                                           | Cách sửa                                                                                                                   |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `class-assignments-view.tsx`                     | Thay status tabs bằng `Tất cả / Chưa chấm / Đã chấm`; bỏ deadline filter/sort/badge, status badge, description và deadline |
+| `assignment-detail-view.tsx`                     | Form chỉ cho đổi tên; bỏ nút xóa, status, description, ngày giao, hạn nộp và max score khỏi UI                             |
+| `attachment-upload-panel.tsx`                    | Giữ file nhưng không import trong active flow                                                                              |
+| `class-overview-view.tsx`                        | Giữ card Sinh viên và Bài tập; ẩn Gradebook theo capability                                                                |
+| `class-context-nav.tsx`, `class-detail-tabs.tsx` | Bỏ Gradebook khỏi navigation feedback-first                                                                                |
+| Gradebook page                                   | Redirect trước khi tải Gradebook                                                                                           |
+| `navigation-loaders.ts`                          | Active grading loader không được tải submission/attachment                                                                 |
 
 ### Giao diện danh sách Assignment
 
@@ -310,17 +310,17 @@ UI:
 
 ## 10. Test Luna phải sửa/thêm
 
-| Nhóm | Test bắt buộc |
-|---|---|
-| Capability | Nav không có Gradebook/Bài tập submission; route cũ redirect đúng và giữ query |
-| Teacher Assignment | Filter all/incomplete/complete; lớp rỗng; search title; sort; reset; create/rename |
-| Aggregate | Nhiều Assignment và Student; graded+returned; 100%; thiếu Evaluation; không N+1 |
-| Teacher UI | Không render deadline, status kỹ thuật, attachment, delete hoặc Gradebook |
-| Evaluation | Import preview, save draft, publish, idempotency, history atomic, notification sau commit |
-| Student Results | Chỉ returned; graded/pending bị ẩn; cross-student/class; assignment filter; deterministic sort |
-| Student UI | Overview tối giản; results detail; không submission/deadline/attachment; deep link |
-| Notification | DTO có assignmentId; privacy scope; mark-read; legacy null; điều hướng đúng Assignment |
-| Loading | Skeleton và progress accessibility; không spinner; nội dung cũ không biến mất khi transition |
+| Nhóm               | Test bắt buộc                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| Capability         | Nav không có Gradebook/Bài tập submission; route cũ redirect đúng và giữ query                 |
+| Teacher Assignment | Filter all/incomplete/complete; lớp rỗng; search title; sort; reset; create/rename             |
+| Aggregate          | Nhiều Assignment và Student; graded+returned; 100%; thiếu Evaluation; không N+1                |
+| Teacher UI         | Không render deadline, status kỹ thuật, attachment, delete hoặc Gradebook                      |
+| Evaluation         | Import preview, save draft, publish, idempotency, history atomic, notification sau commit      |
+| Student Results    | Chỉ returned; graded/pending bị ẩn; cross-student/class; assignment filter; deterministic sort |
+| Student UI         | Overview tối giản; results detail; không submission/deadline/attachment; deep link             |
+| Notification       | DTO có assignmentId; privacy scope; mark-read; legacy null; điều hướng đúng Assignment         |
+| Loading            | Skeleton và progress accessibility; không spinner; nội dung cũ không biến mất khi transition   |
 
 Các test hiện có cần chuyển đổi:
 
