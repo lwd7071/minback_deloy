@@ -8,6 +8,9 @@ import { Modal } from "@/components/ui/modal";
 import { Pagination } from "@/components/ui/pagination";
 import { Alert } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { StudentImportModal } from "./student-import-modal";
+import { StudentAddModal } from "./student-add-modal";
 
 type ApiResult<T> =
   | { data: T; meta?: { page: number; pageSize: number; total: number } }
@@ -34,6 +37,11 @@ export function StudentManagementView({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(initialMeta.total);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Modals
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Debounce tìm kiếm 300ms để chống spam request và race condition
   useEffect(() => {
@@ -117,7 +125,7 @@ export function StudentManagementView({
     return () => {
       controller.abort();
     };
-  }, [classSectionId, page, pageSize, debouncedSearch]);
+  }, [classSectionId, page, pageSize, debouncedSearch, refreshKey]);
 
   function startEdit(st: StudentAdminDto) {
     setEditingStudent(st);
@@ -236,19 +244,37 @@ export function StudentManagementView({
 
   return (
     <div className="settings-stack">
-      {/* Ô tìm kiếm & tổng số */}
-      <div className="settings-row">
-        <input
-          type="text"
-          className="form-input"
-          placeholder="Tìm theo MSSV, Họ tên, Nickname…"
-          autoComplete="off"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-          }}
-        />
-        <span className="muted">Tổng số: {total} sinh viên</span>
+      {/* Ô tìm kiếm, tổng số & nút Thao tác */}
+      <div className="settings-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center", flex: "1 1 300px" }}>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Tìm theo MSSV, Họ tên, Nickname…"
+            autoComplete="off"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+            }}
+          />
+          <span className="muted" style={{ whiteSpace: "nowrap" }}>Tổng số: {total} sinh viên</span>
+        </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setShowImportModal(true)}
+          >
+            Nhập file Excel/CSV
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => setShowAddModal(true)}
+          >
+            + Thêm sinh viên
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -272,9 +298,31 @@ export function StudentManagementView({
                   <td
                     colSpan={6}
                     className="muted"
-                    style={{ textAlign: "center", padding: "32px 0" }}
+                    style={{ textAlign: "center", padding: "40px 0" }}
                   >
-                    Không tìm thấy sinh viên nào trong lớp này.
+                    <p style={{ marginBottom: "16px", fontSize: "15px" }}>
+                      {search.trim()
+                        ? "Không tìm thấy sinh viên nào phù hợp với từ khóa tìm kiếm."
+                        : "Lớp học phần chưa có sinh viên nào."}
+                    </p>
+                    {!search.trim() && (
+                      <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setShowImportModal(true)}
+                        >
+                          Nhập file Excel/CSV
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="primary"
+                          onClick={() => setShowAddModal(true)}
+                        >
+                          + Thêm sinh viên
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -513,6 +561,22 @@ export function StudentManagementView({
           </div>
         </div>
       </Modal>
+
+      {/* Modal Nhập danh sách sinh viên từ file */}
+      <StudentImportModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        classSectionId={classSectionId}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+      />
+
+      {/* Modal Thêm sinh viên đơn lẻ */}
+      <StudentAddModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        classSectionId={classSectionId}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+      />
     </div>
   );
 }

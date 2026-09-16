@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "test:setup": "node scripts/test-setup.mjs",
     "test:health": "node scripts/test-health.mjs",
     "benchmark:local": "node scripts/perf-baseline.mjs",
@@ -45,7 +47,7 @@
     "zod": "^4.5.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/bcrypt": "^6.0.0",

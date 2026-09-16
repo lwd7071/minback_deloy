@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const E2E_DIR = path.resolve(process.cwd(), "e2e");
+const E2E_DIR = path.resolve(process.cwd(), "test/e2e/fixtures/large");
 if (!fs.existsSync(E2E_DIR)) {
   fs.mkdirSync(E2E_DIR, { recursive: true });
 }
@@ -140,7 +140,7 @@ fs.writeFileSync(
 );
 
 console.log(
-  "Đã tạo thành công 2 file dữ liệu mẫu 300 sinh viên trong thư mục e2e/:",
+  "Đã tạo thành công 2 file dữ liệu mẫu 300 sinh viên trong thư mục test/e2e/fixtures/large/:",
 );
-console.log("- e2e/danh_sach_300_sinh_vien.csv");
-console.log("- e2e/bang_diem_300_sinh_vien.csv");
+console.log("- test/e2e/fixtures/large/danh_sach_300_sinh_vien.csv");
+console.log("- test/e2e/fixtures/large/bang_diem_300_sinh_vien.csv");

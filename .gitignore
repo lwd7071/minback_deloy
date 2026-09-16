@@ -10,6 +10,7 @@ next-env.d.ts
 coverage/
 playwright-report/
 test-results/
+test/e2e/fixtures/last-class.json
 
 # Environment files (commit only .env.example)
 .env
