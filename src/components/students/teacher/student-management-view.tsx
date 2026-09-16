@@ -245,8 +245,24 @@ export function StudentManagementView({
   return (
     <div className="settings-stack">
       {/* Ô tìm kiếm, tổng số & nút Thao tác */}
-      <div className="settings-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center", flex: "1 1 300px" }}>
+      <div
+        className="settings-row"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            alignItems: "center",
+            flex: "1 1 300px",
+          }}
+        >
           <input
             type="text"
             className="form-input"
@@ -257,7 +273,9 @@ export function StudentManagementView({
               setSearch(e.target.value);
             }}
           />
-          <span className="muted" style={{ whiteSpace: "nowrap" }}>Tổng số: {total} sinh viên</span>
+          <span className="muted" style={{ whiteSpace: "nowrap" }}>
+            Tổng số: {total} sinh viên
+          </span>
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <Button
@@ -306,7 +324,13 @@ export function StudentManagementView({
                         : "Lớp học phần chưa có sinh viên nào."}
                     </p>
                     {!search.trim() && (
-                      <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          gap: "12px",
+                        }}
+                      >
                         <Button
                           type="button"
                           variant="secondary"

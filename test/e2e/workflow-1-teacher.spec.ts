@@ -8,7 +8,8 @@ test.describe("Workflow 1: Teacher Flow", () => {
   }) => {
     // 1. Đăng nhập Giáo viên
     const teacherEmail = process.env.E2E_TEACHER_EMAIL || "admin@test.com";
-    const teacherPassword = process.env.E2E_TEACHER_PASSWORD || "DemoTeacherA123!";
+    const teacherPassword =
+      process.env.E2E_TEACHER_PASSWORD || "DemoTeacherA123!";
 
     await page.goto("/admin/login");
     await page.waitForLoadState("networkidle");
@@ -26,7 +27,10 @@ test.describe("Workflow 1: Teacher Flow", () => {
     const className = `Lớp Kiểm Thử E2E ${classCode}`;
 
     // Lưu classCode để kịch bản workflow-2 (Student) kế thừa kiểm thử
-    const statePath = path.resolve(process.cwd(), "test/e2e/fixtures/last-class.json");
+    const statePath = path.resolve(
+      process.cwd(),
+      "test/e2e/fixtures/last-class.json",
+    );
     fs.mkdirSync(path.dirname(statePath), { recursive: true });
     fs.writeFileSync(statePath, JSON.stringify({ classCode }), "utf-8");
 
@@ -34,7 +38,9 @@ test.describe("Workflow 1: Teacher Flow", () => {
     await page.waitForLoadState("networkidle");
 
     // Bước 1: Thông tin lớp
-    const codeInput = page.locator('label:has-text("Mã lớp") input, input.form-input').first();
+    const codeInput = page
+      .locator('label:has-text("Mã lớp") input, input.form-input')
+      .first();
     await codeInput.fill(classCode);
     const nameInput = page.locator('label:has-text("Tên lớp") input').first();
     await nameInput.fill(className);
@@ -42,7 +48,9 @@ test.describe("Workflow 1: Teacher Flow", () => {
     await page.click('button[type="submit"]:has-text("Tiếp tục")');
 
     // Bước 2: Tải lên danh sách sinh viên
-    await expect(page.locator("text=Chuẩn bị danh sách sinh viên")).toBeVisible();
+    await expect(
+      page.locator("text=Chuẩn bị danh sách sinh viên"),
+    ).toBeVisible();
 
     const studentCsvPath = path.resolve(
       process.cwd(),
@@ -55,13 +63,18 @@ test.describe("Workflow 1: Teacher Flow", () => {
     await checkFileBtn.click();
 
     // Chờ bản xem trước hiển thị (10 sinh viên hợp lệ)
-    await expect(page.locator(".class-create-stats strong").first()).toHaveText("10", {
-      timeout: 30_000,
-    });
+    await expect(page.locator(".class-create-stats strong").first()).toHaveText(
+      "10",
+      {
+        timeout: 30_000,
+      },
+    );
     await expect(page.locator("text=Nguyễn Văn An")).toBeVisible();
 
     // Tiếp tục xác nhận
-    const continueReviewBtn = page.locator('button:has-text("Tiếp tục xác nhận")');
+    const continueReviewBtn = page.locator(
+      'button:has-text("Tiếp tục xác nhận")',
+    );
     await continueReviewBtn.click();
 
     // Bước 3: Xác nhận & Tạo lớp
@@ -89,7 +102,9 @@ test.describe("Workflow 1: Teacher Flow", () => {
     await showCreateBtn.click();
 
     // Nhập tên bài tập
-    const titleInput = page.locator('label:has-text("Tên bài tập") input, input.form-input').first();
+    const titleInput = page
+      .locator('label:has-text("Tên bài tập") input, input.form-input')
+      .first();
     await titleInput.fill("Bài tập 1: Kiểm thử E2E");
 
     // Bấm Tạo bài tập
@@ -102,11 +117,15 @@ test.describe("Workflow 1: Teacher Flow", () => {
     });
 
     // 4. Nhập điểm & feedback cho bài tập
-    const gradeLink = page.locator('a:has-text("Nhập điểm & feedback")').first();
+    const gradeLink = page
+      .locator('a:has-text("Nhập điểm & feedback")')
+      .first();
     await gradeLink.click();
 
     await page.waitForLoadState("networkidle");
-    await expect(page).toHaveURL(/\/admin\/classes\/.*\/assignments\/.*\/grade/);
+    await expect(page).toHaveURL(
+      /\/admin\/classes\/.*\/assignments\/.*\/grade/,
+    );
 
     // 4. Nhập file điểm & feedback cho bài tập
     const importGradeBtn = page.locator('button:has-text("Nhập file điểm")');
@@ -116,7 +135,9 @@ test.describe("Workflow 1: Teacher Flow", () => {
       process.cwd(),
       "test/e2e/bang_cham_diem_mau.csv",
     );
-    const modal = page.locator(".grade-import-modal-content, .modal, [role='dialog']");
+    const modal = page.locator(
+      ".grade-import-modal-content, .modal, [role='dialog']",
+    );
     await modal.locator('input[type="file"]').setInputFiles(gradeCsvPath);
 
     // Click Kiểm tra tệp
@@ -124,13 +145,17 @@ test.describe("Workflow 1: Teacher Flow", () => {
     await checkGradeFileBtn.click();
 
     // Chờ xem trước load xong
-    await expect(modal.locator("text=Tạo mới")).toBeVisible({ timeout: 10_000 });
+    await expect(modal.locator("text=Tạo mới")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Công bố kết quả
     const publishBtn = modal.locator('button:has-text("Công bố kết quả")');
     await publishBtn.click();
 
-    const confirmPublishBtn = modal.locator('button:has-text("Xác nhận công bố")');
+    const confirmPublishBtn = modal.locator(
+      'button:has-text("Xác nhận công bố")',
+    );
     await confirmPublishBtn.click();
 
     // Chờ cập nhật và kiểm tra sinh viên kèm điểm số hiển thị trên bảng

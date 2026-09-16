@@ -19,7 +19,10 @@ test.describe("Workflow 2: Student Flow & Privacy Verification", () => {
   }) => {
     // 1. Xác định mã lớp học phần: ưu tiên lớp vừa tạo từ Workflow 1
     let classCode = "E2E10376";
-    const statePath = path.resolve(process.cwd(), "test/e2e/fixtures/last-class.json");
+    const statePath = path.resolve(
+      process.cwd(),
+      "test/e2e/fixtures/last-class.json",
+    );
     if (fs.existsSync(statePath)) {
       try {
         const state = JSON.parse(fs.readFileSync(statePath, "utf-8"));
@@ -44,9 +47,12 @@ test.describe("Workflow 2: Student Flow & Privacy Verification", () => {
     await loginBtn.click();
 
     // 2. Kiểm tra bắt buộc chuyển hướng sang Onboarding
-    await expect(page).toHaveURL(new RegExp(`/class/${classCode}/onboarding`, "i"), {
-      timeout: 10_000,
-    });
+    await expect(page).toHaveURL(
+      new RegExp(`/class/${classCode}/onboarding`, "i"),
+      {
+        timeout: 10_000,
+      },
+    );
     await expect(
       page.locator("text=Để bảo mật tài khoản, bạn cần"),
     ).toBeVisible();
@@ -78,9 +84,12 @@ test.describe("Workflow 2: Student Flow & Privacy Verification", () => {
     await submitBtn.click();
 
     // 3. Kiểm tra chuyển hướng vào bảng điểm / hồ sơ cá nhân
-    await expect(page).toHaveURL(new RegExp(`/class/${classCode}/(profile|grades)`, "i"), {
-      timeout: 10_000,
-    });
+    await expect(page).toHaveURL(
+      new RegExp(`/class/${classCode}/(profile|grades)`, "i"),
+      {
+        timeout: 10_000,
+      },
+    );
     await page.waitForLoadState("networkidle");
 
     // Sinh viên thấy đúng bài tập và điểm số cá nhân đã được công bố từ Workflow 1

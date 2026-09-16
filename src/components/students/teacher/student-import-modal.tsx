@@ -96,8 +96,8 @@ export function StudentImportModal({
       <form onSubmit={(e) => void handleSubmit(e)} className="dialog-form">
         <p className="muted dialog-copy">
           Hỗ trợ file Excel (<strong>.xlsx</strong>) hoặc <strong>.csv</strong>.
-          Cần có cột <strong>MSSV</strong>, <strong>Họ Tên</strong> (Email là tùy
-          chọn). Sinh viên mới dùng PIN mặc định <strong>111111</strong>.
+          Cần có cột <strong>MSSV</strong>, <strong>Họ Tên</strong> (Email là
+          tùy chọn). Sinh viên mới dùng PIN mặc định <strong>111111</strong>.
         </p>
 
         <div style={{ margin: "16px 0" }}>
