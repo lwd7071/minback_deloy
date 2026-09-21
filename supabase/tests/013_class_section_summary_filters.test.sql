@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(11);
 
 set local request.jwt.claim.sub = 'f0000000-0000-0000-0000-000000000001';
 
@@ -145,6 +145,22 @@ select is(
   ) limit 1),
   6::bigint,
   'pagination row carries the pre-pagination total'
+);
+
+select is(
+  ((public.get_teacher_class_dashboard(
+    'f0000000-0000-0000-0000-000000000001', 0, 20, null, 'urgent', 'name_asc'
+  )->>'total')::bigint),
+  2::bigint,
+  'combined dashboard total follows the active progress filter'
+);
+
+select is(
+  ((public.get_teacher_class_dashboard(
+    'f0000000-0000-0000-0000-000000000001', 0, 20, null, 'urgent', 'name_asc'
+  )->'facets'->>'class_count')::bigint),
+  6::bigint,
+  'combined dashboard keeps global KPI count separate from filtered total'
 );
 
 select * from finish();
