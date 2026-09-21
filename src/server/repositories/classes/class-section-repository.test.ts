@@ -152,4 +152,52 @@ describe("listClassSectionSummaries", () => {
     );
     expect(result.total).toBe(1);
   });
+
+  it("uses the active progress count for pagination while keeping global KPIs", async () => {
+    const rpc = vi.fn().mockImplementation((name: string) => {
+      if (name === "list_class_section_summaries") {
+        return Promise.resolve({
+          data: [
+            {
+              id: "class-urgent",
+              code: "URGENT",
+              name: "Urgent class",
+              student_count: 2,
+              assignment_count: 3,
+              completed_count: 1,
+              grading_total: 6,
+              grading_percentage: 17,
+              total_count: 1,
+            },
+          ],
+          error: null,
+        });
+      }
+      return Promise.resolve({
+        data: [
+          {
+            class_count: 17,
+            student_count: 446,
+            assignment_count: 78,
+            completed_count: 666,
+            grading_total: 6947,
+            all_count: 17,
+            urgent_count: 1,
+            good_count: 3,
+            complete_count: 1,
+          },
+        ],
+        error: null,
+      });
+    });
+
+    const result = await listClassSectionSummaries(
+      createSupabase(rpc),
+      teacherId,
+      { ...query, progress: "urgent" },
+    );
+
+    expect(result.total).toBe(1);
+    expect(result.metrics.classCount).toBe(17);
+  });
 });

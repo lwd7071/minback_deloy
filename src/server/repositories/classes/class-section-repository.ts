@@ -333,12 +333,14 @@ export async function listClassSectionSummaries(
   )[0];
 
   // Prefer facet aggregates, then fall back to aggregates returned by the page RPC.
-  const total = Number(
-    facet?.class_count ??
-      facet?.all_count ??
-      summary?.total_count ??
-      rows.length,
-  );
+  const filteredTotal = {
+    all: facet?.all_count,
+    urgent: facet?.urgent_count,
+    good: facet?.good_count,
+    complete: facet?.complete_count,
+  }[query.progress];
+  const total = Number(filteredTotal ?? summary?.total_count ?? rows.length);
+  const classCount = Number(facet?.class_count ?? facet?.all_count ?? total);
   const studentCount = Number(
     facet?.student_count ??
       summary?.total_student_count ??
@@ -364,7 +366,7 @@ export async function listClassSectionSummaries(
     total,
     rows,
     metrics: {
-      classCount: total,
+      classCount,
       studentCount,
       assignmentCount,
       completedCount,
@@ -404,11 +406,12 @@ function mapClassSectionSummaryPayload(
   const assignmentCount = Number(facet.assignment_count ?? 0);
   const completedCount = Number(facet.completed_count ?? 0);
   const gradingTotal = Number(facet.grading_total ?? 0);
+  const classCount = Number(facet.class_count ?? facet.all_count ?? total);
   return {
     total,
     rows,
     metrics: {
-      classCount: total,
+      classCount,
       studentCount,
       assignmentCount,
       completedCount,
