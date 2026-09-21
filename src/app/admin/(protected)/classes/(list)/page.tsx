@@ -64,7 +64,6 @@ export default async function AdminClassesPage({
   }
   return (
     <ClassSummaryDashboard
-      key={`${result.meta.page}:${search}`}
       rows={result.data}
       meta={result.meta}
       metrics={result.metrics}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -38,21 +38,32 @@ export function Pagination({
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
+  const prefetchedHrefs = useRef(new Set<string>());
 
   const startItem = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, total);
 
   const prefetchPage = useCallback(
     (p: number) => {
-      if (getPageHref && router && typeof router.prefetch === "function") {
+      if (
+        getPageHref &&
+        p >= 1 &&
+        p <= totalPages &&
+        p !== currentPage &&
+        router &&
+        typeof router.prefetch === "function"
+      ) {
+        const href = getPageHref(p);
+        if (prefetchedHrefs.current.has(href)) return;
+        prefetchedHrefs.current.add(href);
         try {
-          router.prefetch(getPageHref(p));
+          router.prefetch(href);
         } catch {
-          // Safe degrade
+          prefetchedHrefs.current.delete(href);
         }
       }
     },
-    [getPageHref, router],
+    [currentPage, getPageHref, router, totalPages],
   );
 
   const prefetchOnPointerDown = useCallback(
