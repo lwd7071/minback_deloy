@@ -15,7 +15,10 @@ const LOCAL_ENV = {
   APP_URL: BASE_URL,
   PORT: String(PORT),
 };
-const ITERATIONS = 20;
+const WARMUP_RUNS = 5;
+const MEASURED_RUNS = 60;
+const BATCHES = 3;
+const slow4g = process.argv.includes("--slow-4g");
 const outputIndex = process.argv.indexOf("--output");
 const OUTPUT_PATH =
   outputIndex >= 0 && process.argv[outputIndex + 1]
@@ -99,7 +102,10 @@ async function login(context) {
 
 async function navigate(page, href, expectedHeading, forbiddenSelector) {
   const before = await page.evaluate(() => performance.now());
-  await page.locator(`a[href="${href}"]:visible`).first().click();
+  const link = page.locator(`a[href="${href}"]:visible`).first();
+  await link.hover();
+  await page.waitForTimeout(150);
+  await link.click();
   const showedWrongLoading = forbiddenSelector
     ? await page
         .locator(forbiddenSelector)
@@ -125,76 +131,141 @@ function summarize(values) {
 const server = await startServer();
 try {
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-  });
-  const requests = [];
-  context.on("response", async (response) => {
-    const request = response.request();
-    const type = request.resourceType();
-    if (
-      type === "document" ||
-      response.url().includes("_rsc") ||
-      response.url().includes("/api/")
-    ) {
-      const length = Number(response.headers()["content-length"] ?? 0);
-      requests.push({
-        type,
-        url: response.url(),
-        status: response.status(),
-        bytes: length,
+  const batches = [];
+  for (let batch = 0; batch < BATCHES; batch += 1) {
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 800 },
+    });
+    const page = await context.newPage();
+    const requests = [];
+    const requestStartedAt = new Map();
+    const failedRequests = [];
+    context.on("request", (request) => {
+      requestStartedAt.set(request, performance.now());
+    });
+    context.on("requestfailed", (request) => {
+      failedRequests.push({
+        type: request.resourceType(),
+        url: request.url().replace(BASE_URL, ""),
+        action: "navigation",
+        error: request.failure()?.errorText ?? "requestfailed",
+      });
+    });
+    context.on("response", async (response) => {
+      const type = response.request().resourceType();
+      if (
+        type === "document" ||
+        response.url().includes("_rsc") ||
+        response.url().includes("/api/")
+      ) {
+        requests.push({
+          type,
+          url: response
+            .url()
+            .replace(BASE_URL, "")
+            .replace(/&_rsc=[^&]+|\?_rsc=[^&]+/, ""),
+          action: "navigation",
+          status: response.status(),
+          bytes: Number(response.headers()["content-length"] ?? 0),
+          durationMs: requestStartedAt.has(response.request())
+            ? performance.now() - requestStartedAt.get(response.request())
+            : null,
+        });
+      }
+    });
+    if (slow4g) {
+      const cdp = await context.newCDPSession(page);
+      await cdp.send("Network.enable");
+      await cdp.send("Network.emulateNetworkConditions", {
+        offline: false,
+        latency: 150,
+        downloadThroughput: (1_600_000 / 8) * 1.25,
+        uploadThroughput: (750_000 / 8) * 1.25,
       });
     }
-  });
-  await login(context);
-  const page = await context.newPage();
-  await page.goto(`${BASE_URL}/admin/classes`, { waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Lớp học phần" }).waitFor();
-  const coldNavigation = await page.evaluate(() => {
-    const entry = performance.getEntriesByType("navigation")[0];
-    return entry
-      ? { durationMs: entry.duration, ttfbMs: entry.responseStart }
-      : null;
-  });
-  const classesToSettingsMs = [];
-  const settingsToClassesMs = [];
-  let wrongLoadingCount = 0;
-  for (let index = 0; index < ITERATIONS; index += 1) {
-    const toSettings = await navigate(
-      page,
-      "/admin/settings",
-      "Thông báo",
-      ".teacher-class-card.skeleton",
+    await login(context);
+    await page.goto(`${BASE_URL}/admin/classes`, { waitUntil: "networkidle" });
+    const coldNavigation = await page.evaluate(() => {
+      const entry = performance.getEntriesByType("navigation")[0];
+      return entry
+        ? { durationMs: entry.duration, ttfbMs: entry.responseStart }
+        : null;
+    });
+    const warmSamples = [];
+    let wrongLoadingCount = 0;
+    for (let index = 0; index < WARMUP_RUNS + MEASURED_RUNS; index += 1) {
+      const toSettings = await navigate(
+        page,
+        "/admin/settings",
+        "Thông báo",
+        ".teacher-class-card.skeleton",
+      );
+      const toClasses = await navigate(page, "/admin/classes", "Lớp học");
+      if (toSettings.showedWrongLoading) wrongLoadingCount += 1;
+      if (index >= WARMUP_RUNS) {
+        warmSamples.push({
+          classesToSettingsMs: toSettings.durationMs,
+          settingsToClassesMs: toClasses.durationMs,
+        });
+      }
+    }
+    const classesToSettings = warmSamples.map(
+      (sample) => sample.classesToSettingsMs,
     );
-    classesToSettingsMs.push(toSettings.durationMs);
-    if (toSettings.showedWrongLoading) wrongLoadingCount += 1;
-
-    const toClasses = await navigate(page, "/admin/classes", "Lớp học phần");
-    settingsToClassesMs.push(toClasses.durationMs);
+    const settingsToClasses = warmSamples.map(
+      (sample) => sample.settingsToClassesMs,
+    );
+    const coefficientOfVariation = (values) => {
+      const mean =
+        values.reduce((sum, value) => sum + value, 0) / values.length;
+      const deviation = Math.sqrt(
+        values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+          values.length,
+      );
+      return mean === 0 ? 0 : deviation / mean;
+    };
+    if (
+      classesToSettings.length !== MEASURED_RUNS ||
+      settingsToClasses.length !== MEASURED_RUNS ||
+      coefficientOfVariation(classesToSettings) > 0.75 ||
+      coefficientOfVariation(settingsToClasses) > 0.75
+    ) {
+      throw new Error("Benchmark samples are incomplete or too noisy");
+    }
+    batches.push({
+      batch,
+      coldNavigation,
+      warmNavigation: {
+        classesToSettings: summarize(classesToSettings),
+        settingsToClasses: summarize(settingsToClasses),
+        wrongLoadingCount,
+      },
+      network: requests,
+      failedRequests,
+    });
+    await context.close();
   }
   const output = {
     generatedAt: new Date().toISOString(),
     environment: {
       baseUrl: BASE_URL,
       viewport: "desktop-1280x800",
-      iterations: ITERATIONS,
+      warmupRuns: WARMUP_RUNS,
+      measuredRuns: MEASURED_RUNS,
+      batches: BATCHES,
+      networkProfile: slow4g ? "slow-4g-150ms-1.6Mbps-750Kbps" : "local",
     },
-    coldDocument: coldNavigation,
-    warmNavigation: {
-      classesToSettings: summarize(classesToSettingsMs),
-      settingsToClasses: summarize(settingsToClassesMs),
-      wrongLoadingCount,
-    },
-    network: {
-      documentRequests: requests.filter((entry) => entry.type === "document")
-        .length,
-      rscRequests: requests.filter((entry) => entry.url.includes("_rsc"))
-        .length,
-      apiRequests: requests.filter((entry) => entry.url.includes("/api/"))
-        .length,
-      transferredBytes: requests.reduce((sum, entry) => sum + entry.bytes, 0),
-    },
+    batches,
   };
+  const failedResponses = batches.flatMap((batch) =>
+    batch.network.filter((request) => request.status >= 400),
+  );
+  const failedRequests = batches.flatMap((batch) => batch.failedRequests);
+  if (failedResponses.length > 0 || failedRequests.length > 0) {
+    throw new Error(
+      `Benchmark captured ${failedResponses.length} HTTP errors and ${failedRequests.length} failed requests`,
+    );
+  }
   await mkdir(dirname(OUTPUT_PATH), { recursive: true });
   await writeFile(OUTPUT_PATH, `${JSON.stringify(output, null, 2)}\n`);
   console.log(JSON.stringify(output, null, 2));

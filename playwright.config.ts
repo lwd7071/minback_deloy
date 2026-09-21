@@ -10,7 +10,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1, // Sequential execution to prevent DB state collisions
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
   timeout: 60_000,
   expect: {
     timeout: 10_000,
@@ -20,7 +20,10 @@ export default defineConfig({
     ["html", { open: "never", outputFolder: "playwright-report" }],
   ],
   use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
+    baseURL:
+      process.env.PLAYWRIGHT_BASE_URL ??
+      process.env.PLAYWRIGHT_TEST_BASE_URL ??
+      "http://127.0.0.1:3100",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -34,10 +37,12 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
+        url: "http://127.0.0.1:3100",
+        reuseExistingServer: true,
+        timeout: 120_000,
+      },
 });
