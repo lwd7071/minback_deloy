@@ -21,6 +21,7 @@ Status: in progress. This document records only behavior that is implemented and
 - Class dashboard and Teacher grading snapshot RPC migrations are additive and feature-gated where applicable. Grading page now reads students, evaluations, assignment and counts from one snapshot RPC.
 - Public class lookup is server-loaded with an initial DTO; notification coordination validates messages at runtime and negotiates page size 3 for workspace routes versus 50 for the notifications route.
 - Notification list and mark-read now use server-only scoped RPCs: legacy notifications remain visible only when `evaluation_id` is null; related rows require matching Student and ClassSection in SQL. Browser roles cannot execute these RPCs.
+- Class dashboard remediation is implemented but not production-verified: `20260921140000_optimize_class_dashboard_rpc.sql` replaces the V2 wrapper's repeated legacy list/facets calls with one shared aggregate pipeline, while the repository now derives pagination totals from the active progress filter and keeps global KPI counts separate. The regression test passes locally; the production migration and `MINBACK_CLASS_DASHBOARD_RPC_V2=true` rollout remain pending.
 
 ## Tests added
 
@@ -39,6 +40,7 @@ The latest deterministic single-worker run passed 55 test files / 222 Vitest tes
 - Run authenticated three-tab notification Playwright coverage with seeded Student credentials.
 - Run the three-batch local and Slow-4G benchmark against the production build and record real p50/p75/p95 artifacts.
 - Run `scripts/perf-db-scale.sql` and retain target/stress EXPLAIN output; verify the scheduled production monitor with repository secrets and `SYNTHETIC_MONITOR_URL`.
+- Apply the class dashboard RPC optimization migration in production, enable `MINBACK_CLASS_DASHBOARD_RPC_V2`, then re-check Supabase Query Performance and Chrome navigation p75/p95 before claiming improvement.
 
 Current environment blocker: Supabase image pulls completed, but Docker Desktop's Linux engine is not reachable after container startup failed (`overlayfs metadata.db: read-only file system`; subsequent start reports the missing `dockerDesktopLinuxEngine` pipe). Therefore migrations, pgTAP, RLS/privacy integration, concurrent snapshot tests and real benchmark artifacts remain unverified.
 
