@@ -13,16 +13,20 @@ function apiMessage<T>(body: ApiResult<T>, fallback: string): string {
 
 export function AssignmentDetailView({
   assignmentId,
+  initialAssignment,
   onSaved,
   onClose,
 }: {
   assignmentId: string;
+  initialAssignment?: AssignmentDto;
   onSaved?: (updated: AssignmentDto) => void;
   onClose?: () => void;
 }) {
-  const [assignment, setAssignment] = useState<AssignmentDto | null>(null);
-  const [title, setTitle] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [assignment, setAssignment] = useState<AssignmentDto | null>(
+    initialAssignment ?? null,
+  );
+  const [title, setTitle] = useState(initialAssignment?.title ?? "");
+  const [loading, setLoading] = useState(!initialAssignment);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -33,6 +37,7 @@ export function AssignmentDetailView({
   }
 
   useEffect(() => {
+    if (initialAssignment) return;
     let active = true;
     void (async () => {
       try {
@@ -58,7 +63,7 @@ export function AssignmentDetailView({
       active = false;
     };
     // applyAssignment only updates local form state; assignmentId is the fetch lifecycle key.
-  }, [assignmentId]);
+  }, [assignmentId, initialAssignment]);
 
   async function updateAssignment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

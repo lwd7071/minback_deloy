@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -55,11 +55,14 @@ export function Pagination({
     [getPageHref, router],
   );
 
-  // Prefetch neighboring pages in background to make pagination instant on click
-  useEffect(() => {
-    if (currentPage < totalPages) prefetchPage(currentPage + 1);
-    if (currentPage > 1) prefetchPage(currentPage - 1);
-  }, [currentPage, totalPages, prefetchPage]);
+  const prefetchOnPointerDown = useCallback(
+    (event: React.PointerEvent, targetPage: number) => {
+      if (event.pointerType === "touch" || event.pointerType === "pen") {
+        prefetchPage(targetPage);
+      }
+    },
+    [prefetchPage],
+  );
 
   // Generate visible page numbers
   function getPageNumbers(): (number | "...")[] {
@@ -142,6 +145,7 @@ export function Pagination({
             onClick={() => onPageChange(1)}
             onMouseEnter={() => prefetchPage(1)}
             onFocus={() => prefetchPage(1)}
+            onPointerDown={(event) => prefetchOnPointerDown(event, 1)}
             aria-label="Đến trang đầu tiên"
             title="Trang đầu"
           >
@@ -155,6 +159,9 @@ export function Pagination({
             onClick={() => onPageChange(currentPage - 1)}
             onMouseEnter={() => prefetchPage(currentPage - 1)}
             onFocus={() => prefetchPage(currentPage - 1)}
+            onPointerDown={(event) =>
+              prefetchOnPointerDown(event, currentPage - 1)
+            }
             aria-label="Đến trang trước"
             title="Trang trước"
           >
@@ -186,6 +193,7 @@ export function Pagination({
                   onClick={() => onPageChange(p)}
                   onMouseEnter={() => prefetchPage(p)}
                   onFocus={() => prefetchPage(p)}
+                  onPointerDown={(event) => prefetchOnPointerDown(event, p)}
                 >
                   {p}
                 </button>
@@ -200,6 +208,9 @@ export function Pagination({
             onClick={() => onPageChange(currentPage + 1)}
             onMouseEnter={() => prefetchPage(currentPage + 1)}
             onFocus={() => prefetchPage(currentPage + 1)}
+            onPointerDown={(event) =>
+              prefetchOnPointerDown(event, currentPage + 1)
+            }
             aria-label="Đến trang sau"
             title="Trang sau"
           >
@@ -213,6 +224,7 @@ export function Pagination({
             onClick={() => onPageChange(totalPages)}
             onMouseEnter={() => prefetchPage(totalPages)}
             onFocus={() => prefetchPage(totalPages)}
+            onPointerDown={(event) => prefetchOnPointerDown(event, totalPages)}
             aria-label="Đến trang cuối cùng"
             title="Trang cuối"
           >

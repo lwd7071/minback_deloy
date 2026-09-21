@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";

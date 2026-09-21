@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink } from "@/components/ui/intent-prefetch-link";
 
 export function BackLink({
   fallbackHref,
@@ -20,14 +20,14 @@ export function BackLink({
 
   if (forceFallback) {
     return (
-      <Link
+      <IntentPrefetchLink
         href={fallbackHref}
         className={`back-link${className ? ` ${className}` : ""}`}
         aria-label={label}
         title={title ?? label}
       >
         <ChevronLeft size={16} aria-hidden="true" />
-      </Link>
+      </IntentPrefetchLink>
     );
   }
 

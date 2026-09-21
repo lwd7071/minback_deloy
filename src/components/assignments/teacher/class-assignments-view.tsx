@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { RotateCcw, Search, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IntentPrefetchLink } from "@/components/ui/intent-prefetch-link";
 import { Modal } from "@/components/ui/modal";
 import { Pagination } from "@/components/ui/pagination";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -250,12 +250,12 @@ export function ClassAssignmentsView({
                 >
                   Chỉnh sửa
                 </button>
-                <Link
+                <IntentPrefetchLink
                   className="btn btn-primary"
                   href={`/admin/classes/${classSectionId}/assignments/${row.id}/grade`}
                 >
                   Nhập điểm & feedback
-                </Link>
+                </IntentPrefetchLink>
               </div>
             </Card>
           );
@@ -316,7 +316,11 @@ export function ClassAssignmentsView({
       >
         {selectedAssignmentId ? (
           <AssignmentDetailView
+            key={selectedAssignmentId}
             assignmentId={selectedAssignmentId}
+            initialAssignment={paginatedRows.find(
+              (row) => row.id === selectedAssignmentId,
+            )}
             onSaved={handleAssignmentSaved}
             onClose={() => setSelectedAssignmentId(null)}
           />

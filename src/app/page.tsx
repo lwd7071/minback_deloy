@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
 import { ArrowUpRight } from "lucide-react";
 import { ClassLookupForm } from "@/components/auth/student/class-lookup-form";
 import styles from "./home.module.css";

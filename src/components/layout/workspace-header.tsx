@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
@@ -16,6 +15,7 @@ import {
 import { useEffect, useState, useRef } from "react";
 import { useNotificationPolling } from "@/components/notifications/student/use-notification-polling";
 import { Avatar } from "@/components/ui/avatar";
+import { IntentPrefetchLink } from "@/components/ui/intent-prefetch-link";
 import { PRODUCT_CAPABILITIES } from "@/config/product-capabilities";
 
 type WorkspaceHeaderProps =
@@ -82,31 +82,29 @@ export function WorkspaceHeader({
   return (
     <header className="workspace-header">
       <div className="workspace-header-inner">
-        <Link
+        <IntentPrefetchLink
           className="wordmark"
           href={
             role === "student" && classCode
               ? `/class/${encodeURIComponent(classCode)}/profile`
               : "/admin/classes"
           }
-          prefetch={role === "teacher" ? true : null}
         >
           <span className="wordmark-mark">
             <GraduationCap size={18} />
           </span>
           <span>MinBack</span>
-        </Link>
+        </IntentPrefetchLink>
         <nav aria-label="Điều hướng chính" className="workspace-nav-desktop">
           {items.map(({ href, label, icon: Icon }) => (
-            <Link
+            <IntentPrefetchLink
               className={`workspace-nav-link ${pathname === href || (href === "/admin/classes" && pathname.startsWith("/admin/classes")) ? "is-active" : ""}`}
               href={href}
               key={href}
-              prefetch={role === "teacher" ? true : null}
             >
               <Icon aria-hidden="true" size={16} />
               {label}
-            </Link>
+            </IntentPrefetchLink>
           ))}
         </nav>
         <div className="workspace-header-actions">
@@ -156,16 +154,15 @@ export function WorkspaceHeader({
           ) : null}
           <nav aria-label="Điều hướng di động">
             {items.map(({ href, label, icon: Icon }) => (
-              <Link
+              <IntentPrefetchLink
                 className={`workspace-mobile-link ${pathname === href ? "is-active" : ""}`}
                 href={href}
                 key={href}
                 onClick={() => setOpen(false)}
-                prefetch={role === "teacher" ? true : null}
               >
                 <Icon aria-hidden="true" size={18} />
                 {label}
-              </Link>
+              </IntentPrefetchLink>
             ))}
           </nav>
           <button
@@ -244,13 +241,13 @@ function StudentNotificationBell({ classCode }: { classCode: string }) {
               </div>
             )}
           </div>
-          <Link
+          <IntentPrefetchLink
             href={`/class/${encodeURIComponent(classCode)}/notifications`}
             onClick={() => setOpen(false)}
             className="header-notification-all"
           >
             Xem tất cả
-          </Link>
+          </IntentPrefetchLink>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 "use client";
-import Link, { useLinkStatus } from "next/link";
+import { useLinkStatus } from "@/components/ui/intent-prefetch-link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Toolbar } from "@/components/layout/toolbar";
 import { AppIcon } from "@/components/ui/app-icon";
 import { StatCard } from "@/components/ui/stat-card";
+import { IntentPrefetchLink } from "@/components/ui/intent-prefetch-link";
 import type {
   ClassSectionSummaryDto,
   ClassSummaryFilterCounts,
@@ -206,16 +207,19 @@ export function ClassSummaryDashboard({
               </option>
               <option value="name_asc">Sắp xếp: Tên A → Z</option>
             </select>
-            <Link className="btn btn-primary" href="/admin/classes/new">
+            <IntentPrefetchLink
+              className="btn btn-primary"
+              href="/admin/classes/new"
+            >
               + Tạo lớp mới
-            </Link>
+            </IntentPrefetchLink>
           </>
         }
       />
 
       <nav aria-label="Lọc lớp theo tiến độ" className="class-filter-tabs">
         {filters.map((filter) => (
-          <Link
+          <IntentPrefetchLink
             aria-current={query.progress === filter.value ? "page" : undefined}
             aria-describedby={`class-filter-status-${filter.value}`}
             className={`class-filter-tab ${query.progress === filter.value ? "is-active" : ""}`}
@@ -226,7 +230,7 @@ export function ClassSummaryDashboard({
             <FilterPendingIndicator
               id={`class-filter-status-${filter.value}`}
             />
-          </Link>
+          </IntentPrefetchLink>
         ))}
       </nav>
 
@@ -234,7 +238,7 @@ export function ClassSummaryDashboard({
         {rows.map((row) => {
           const pct = row.gradingProgress.percentage;
           return (
-            <Link
+            <IntentPrefetchLink
               className="class-link"
               href={`/admin/classes/${row.id}`}
               key={row.id}
@@ -260,7 +264,7 @@ export function ClassSummaryDashboard({
                     : "Chưa có nội dung cần chấm"}
                 </small>
               </Card>
-            </Link>
+            </IntentPrefetchLink>
           );
         })}
       </div>

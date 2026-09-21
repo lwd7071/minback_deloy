@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { TeacherAssignmentSummaryDto } from "@/types/assignment";
+import { useMemo, useState } from "react";
+import type {
+  AssignmentDto,
+  TeacherAssignmentSummaryDto,
+} from "@/types/assignment";
 
 function toDatetimeLocal(d: Date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -46,7 +49,6 @@ export function useClassAssignments({
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<
     string | null
   >(null);
@@ -65,38 +67,6 @@ export function useClassAssignments({
     setPrevInitialAssignments(initialAssignments);
     setRows(initialAssignments);
   }
-
-  // Chỉ fetch dữ liệu qua API client khi có thao tác mutation (refreshKey > 0)
-  // để bảo toàn lợi thế tốc độ của Server Component rendering ban đầu
-  useEffect(() => {
-    if (refreshKey === 0) return;
-
-    let active = true;
-    void fetch(`/api/v1/teacher/class-sections/${classSectionId}/assignments`, {
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok || !body.data) {
-          throw new Error(body.error?.message ?? "Không thể tải bài tập");
-        }
-        return body.data as TeacherAssignmentSummaryDto[];
-      })
-      .then((data) => {
-        if (active && Array.isArray(data)) setRows(data);
-      })
-      .catch((cause) => {
-        if (active) {
-          setError(
-            cause instanceof Error ? cause.message : "Không thể tải bài tập",
-          );
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [classSectionId, refreshKey]);
 
   // Tạo bài tập mới
   async function createAssignment(event?: React.FormEvent): Promise<boolean> {
@@ -126,10 +96,21 @@ export function useClassAssignments({
         throw new Error(body.error?.message ?? "Không thể tạo bài tập");
       }
 
-      // The follow-up summary refresh supplies the class-wide grading counts.
       setShowCreate(false);
       setDraft({ title: "" });
-      setRefreshKey((value) => value + 1);
+      const created = body.data as TeacherAssignmentSummaryDto;
+      const createdSummary = created.gradingSummary ?? {
+        totalStudents: 0,
+        gradedCount: 0,
+        returnedCount: 0,
+        evaluatedCount: 0,
+        percentage: 0,
+        state: "empty" as const,
+      };
+      setRows((current) => [
+        { ...created, gradingSummary: createdSummary },
+        ...current,
+      ]);
       return true;
     } catch (cause) {
       setError(
@@ -142,8 +123,12 @@ export function useClassAssignments({
   }
 
   // Cập nhật bài tập đã sửa vào state
-  const handleAssignmentSaved = () => {
-    setRefreshKey((value) => value + 1);
+  const handleAssignmentSaved = (updated: AssignmentDto) => {
+    setRows((current) =>
+      current.map((row) =>
+        row.id === updated.id ? { ...row, ...updated } : row,
+      ),
+    );
   };
 
   // Setters kèm reset về trang 1
@@ -258,6 +243,6 @@ export function useClassAssignments({
     setSelectedAssignmentId,
     selectedAssignment,
     handleAssignmentSaved,
-    refresh: () => setRefreshKey((k) => k + 1),
+    refresh: () => undefined,
   };
 }
