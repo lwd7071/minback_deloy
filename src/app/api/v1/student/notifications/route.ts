@@ -20,7 +20,7 @@ import { ApiError } from "@/lib/api/errors";
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     // Chỉ Student với 'full' session mới xem được notification
-    const { studentId } = await requireFullStudentSession();
+    const { studentId, classSectionId } = await requireFullStudentSession();
 
     const { searchParams } = new URL(request.url);
     const queryRaw = {
@@ -45,7 +45,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const result = await listNotificationsByStudentId(studentId, parsed.data);
+    const result = await listNotificationsByStudentId(
+      studentId,
+      classSectionId,
+      parsed.data,
+    );
 
     return successResponse(
       result.notifications,

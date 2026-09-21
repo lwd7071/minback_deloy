@@ -2,6 +2,7 @@ import "server-only";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { listStudentResults } from "@/server/repositories/students/student-results-repository";
+import { withServerTiming } from "@/server/lib/server-timing";
 import type { VerifiedStudentSession } from "@/types/student";
 import type { StudentResultsResponseDto } from "@/types/student-results";
 
@@ -11,10 +12,15 @@ export async function getStudentResults(
 ): Promise<StudentResultsResponseDto> {
   try {
     return {
-      results: await listStudentResults(
-        session.studentId,
-        session.classSectionId,
-        assignmentId,
+      results: await withServerTiming(
+        "/class/[code]/results",
+        () =>
+          listStudentResults(
+            session.studentId,
+            session.classSectionId,
+            assignmentId,
+          ),
+        (results) => results.length,
       ),
     };
   } catch (error) {

@@ -28,12 +28,13 @@ export async function PATCH(
     // CSRF check: phải là bước đầu tiên theo engineering-rules §5.4 và §6.3
     assertSameOrigin(request);
 
-    const { studentId } = await requireFullStudentSession();
+    const { studentId, classSectionId } = await requireFullStudentSession();
     const { notificationId } = await params;
 
     const notification = await markNotificationAsRead(
       notificationId,
       studentId,
+      classSectionId,
     );
 
     if (!notification) {

@@ -10,6 +10,7 @@ const ASSIGNMENT_A = "f3000000-0000-0000-0000-000000000001";
 
 const createdSessionIds: string[] = [];
 const createdEvaluationIds: string[] = [];
+const createdNotificationIds: string[] = [];
 const createdAssignmentIds: string[] = [];
 const createdStudentIds: string[] = [];
 const fixtureSessionIds: string[] = [];
@@ -149,7 +150,41 @@ async function createEvaluationFixture(
   return evaluation.id;
 }
 
+async function createNotificationFixture(
+  studentId: string,
+  evaluationId: string | null,
+  message: string,
+): Promise<string> {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/notifications`,
+    {
+      method: "POST",
+      headers: adminHeaders({
+        "content-type": "application/json",
+        prefer: "return=representation",
+      }),
+      body: JSON.stringify({
+        student_id: studentId,
+        evaluation_id: evaluationId,
+        type: "evaluation_updated",
+        message,
+      }),
+    },
+  );
+  expect(response.status).toBe(201);
+  const [notification] = await response.json();
+  createdNotificationIds.push(notification.id);
+  return notification.id;
+}
+
 afterEach(async () => {
+  for (const id of createdNotificationIds.splice(0)) {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/notifications?id=eq.${id}`,
+      { method: "DELETE", headers: adminHeaders() },
+    );
+    expect(response.ok).toBe(true);
+  }
   for (const id of createdSessionIds.splice(0)) {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/student_sessions?id=eq.${id}`,
@@ -182,6 +217,7 @@ afterEach(async () => {
 
 afterAll(async () => {
   const checks = [
+    ["notifications", createdNotificationIds],
     ["student_sessions", fixtureSessionIds],
     ["evaluations", fixtureEvaluationIds],
     ["assignments", fixtureAssignmentIds],
@@ -398,5 +434,65 @@ describe("Student Profile API", () => {
     expect(
       body.data.assignments.map((assignment: { id: string }) => assignment.id),
     ).not.toContain(ASSIGNMENT_A);
+  });
+
+  it("does not expose a notification whose Evaluation belongs to another Student", async () => {
+    const otherStudentId = await createStudentFixture(CLASS_SECTION_A, {
+      mssv: `A5-MALFORMED-${randomUUID()}`,
+      fullName: "A5 Other Evaluation Owner",
+      nickname: `A5OtherEval${randomUUID().slice(0, 8)}`,
+    });
+    const otherEvaluationId = await createEvaluationFixture(
+      ASSIGNMENT_A,
+      {
+        score: 9,
+        feedback: "Private other student feedback",
+        status: "returned",
+      },
+      otherStudentId,
+    );
+    const forgedNotificationId = await createNotificationFixture(
+      STUDENT_A,
+      otherEvaluationId,
+      "Forged notification must not be visible",
+    );
+    const legacyNotificationId = await createNotificationFixture(
+      STUDENT_A,
+      null,
+      "Legacy notification without evaluation",
+    );
+    const token = await createSession(STUDENT_A);
+
+    const response = await fetchApi("/api/v1/student/notifications", {
+      method: "GET",
+      headers: { cookie: `minback_student_session=${token}` },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: forgedNotificationId }),
+      ]),
+    );
+    expect(body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: legacyNotificationId,
+          assignmentId: null,
+        }),
+      ]),
+    );
+
+    const markRead = await fetchApi(
+      `/api/v1/student/notifications/${forgedNotificationId}/read`,
+      {
+        method: "PATCH",
+        headers: {
+          cookie: `minback_student_session=${token}`,
+        },
+      },
+    );
+    expect(markRead.status).toBe(404);
   });
 });

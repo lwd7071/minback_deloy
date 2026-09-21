@@ -10,24 +10,8 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { withServerTiming } from "@/server/lib/server-timing";
 import type { NotificationDto, NotificationRow } from "@/types/notification";
-
-// ─── Mapper: DB row → DTO ─────────────────────────────────────────────────────
-
-function toNotificationDto(
-  row: NotificationRow,
-  assignmentId: string | null = null,
-): NotificationDto {
-  return {
-    id: row.id,
-    type: row.type,
-    message: row.message,
-    evaluationId: row.evaluation_id,
-    assignmentId,
-    createdAt: row.created_at,
-    readAt: row.read_at,
-  };
-}
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -39,6 +23,7 @@ function toNotificationDto(
  */
 export async function listNotificationsByStudentId(
   studentId: string,
+  classSectionId: string,
   options: {
     page: number;
     pageSize: number;
@@ -51,37 +36,33 @@ export async function listNotificationsByStudentId(
 }> {
   const supabase = createAdminClient();
   const { page, pageSize, unreadOnly } = options;
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const { data, error } = await withServerTiming(
+    "/class/[code]/notifications",
+    () =>
+      supabase.rpc("list_student_notifications", {
+        p_student_id: studentId,
+        p_class_section_id: classSectionId,
+        p_page: page,
+        p_page_size: pageSize,
+        p_unread_only: unreadOnly,
+      }),
+    (result) => (result.data as { rows?: unknown[] } | null)?.rows?.length,
+  );
 
-  let query = supabase
-    .from("notifications")
-    .select("*", { count: "exact" })
-    .eq("student_id", studentId) // bắt buộc scope theo student
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (unreadOnly) {
-    query = query.is("read_at", null);
+  if (error || !data) {
+    throw new Error(
+      `Không thể lấy danh sách Notification: ${error?.message ?? "empty response"}`,
+    );
   }
-
-  const { data, error, count } = await query;
-
-  if (error) {
-    throw new Error(`Không thể lấy danh sách Notification: ${error.message}`);
-  }
-
-  // Đếm riêng unreadCount (luôn đếm bất kể unreadOnly)
-  const { count: unreadCount } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("student_id", studentId)
-    .is("read_at", null);
-
+  const result = data as unknown as {
+    rows: NotificationRpcRow[];
+    total: number;
+    unread_count: number;
+  };
   return {
-    notifications: await addAssignmentIds(data as NotificationRow[]),
-    total: count ?? 0,
-    unreadCount: unreadCount ?? 0,
+    notifications: result.rows.map(toNotificationRpcDto),
+    total: Number(result.total ?? 0),
+    unreadCount: Number(result.unread_count ?? 0),
   };
 }
 
@@ -92,20 +73,22 @@ export async function listNotificationsByStudentId(
 export async function findNotificationById(
   notificationId: string,
   studentId: string,
+  classSectionId: string,
 ): Promise<NotificationDto | null> {
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("id", notificationId)
-    .eq("student_id", studentId) // bắt buộc scope
-    .maybeSingle();
-
+  const { data, error } = await supabase.rpc("list_student_notifications", {
+    p_student_id: studentId,
+    p_class_section_id: classSectionId,
+    p_page: 1,
+    p_page_size: 100,
+    p_unread_only: false,
+  });
   if (error || !data) return null;
-
-  const [notification] = await addAssignmentIds([data as NotificationRow]);
-  return notification ?? null;
+  const row = (data as unknown as { rows: NotificationRpcRow[] }).rows.find(
+    (item) => item.id === notificationId,
+  );
+  return row ? toNotificationRpcDto(row) : null;
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
@@ -118,48 +101,40 @@ export async function findNotificationById(
 export async function markNotificationAsRead(
   notificationId: string,
   studentId: string,
+  classSectionId: string,
 ): Promise<NotificationDto | null> {
   const supabase = createAdminClient();
-  const now = new Date().toISOString();
-
-  const { data, error } = await supabase
-    .from("notifications")
-    .update({ read_at: now })
-    .eq("id", notificationId)
-    .eq("student_id", studentId) // bắt buộc scope
-    .is("read_at", null) // chỉ update nếu chưa đọc (idempotent nếu cần, bỏ dòng này)
-    .select()
-    .maybeSingle();
-
+  const { data, error } = await supabase.rpc("mark_student_notification_read", {
+    p_notification_id: notificationId,
+    p_student_id: studentId,
+    p_class_section_id: classSectionId,
+  });
   if (error) {
     throw new Error(`Không thể đánh dấu đã đọc Notification: ${error.message}`);
   }
-
-  if (!data) return null;
-
-  const [notification] = await addAssignmentIds([data as NotificationRow]);
-  return notification ?? null;
+  return data
+    ? toNotificationRpcDto(data as unknown as NotificationRpcRow)
+    : null;
 }
 
-async function addAssignmentIds(
-  rows: NotificationRow[],
-): Promise<NotificationDto[]> {
-  if (!rows.length) return [];
-  const evaluationIds = rows.flatMap((row) =>
-    row.evaluation_id ? [row.evaluation_id] : [],
-  );
-  if (!evaluationIds.length) return rows.map((row) => toNotificationDto(row));
-  const { data } = await createAdminClient()
-    .from("evaluations")
-    .select("id, assignment_id")
-    .in("id", evaluationIds);
-  const assignments = new Map(
-    (data ?? []).map((row) => [row.id, row.assignment_id]),
-  );
-  return rows.map((row) =>
-    toNotificationDto(
-      row,
-      row.evaluation_id ? (assignments.get(row.evaluation_id) ?? null) : null,
-    ),
-  );
+type NotificationRpcRow = {
+  id: string;
+  type: NotificationRow["type"];
+  message: string;
+  evaluation_id: string | null;
+  assignment_id: string | null;
+  created_at: string;
+  read_at: string | null;
+};
+
+function toNotificationRpcDto(row: NotificationRpcRow): NotificationDto {
+  return {
+    id: row.id,
+    type: row.type,
+    message: row.message,
+    evaluationId: row.evaluation_id,
+    assignmentId: row.assignment_id,
+    createdAt: row.created_at,
+    readAt: row.read_at,
+  };
 }

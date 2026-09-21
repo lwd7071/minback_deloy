@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useNotificationPolling } from "@/components/notifications/student/use-notification-polling";
 import { useStudentWorkspace } from "@/components/layout/student/student-workspace";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
+import { IntentPrefetchLink } from "@/components/ui/intent-prefetch-link";
 import type { StudentResultDto } from "@/types/student-results";
 
 export type Section =
@@ -24,46 +24,18 @@ function formatDate(value: string) {
 export function StudentWorkspaceView({
   section,
   initialAssignmentId,
+  initialResults = [],
 }: {
   section: Section;
   initialAssignmentId?: string;
+  initialResults?: StudentResultDto[];
 }) {
   const { identity, loading, refresh } = useStudentWorkspace();
   const router = useRouter();
   const notifications = useNotificationPolling();
-  const [results, setResults] = useState<StudentResultDto[]>([]);
-  const [resultLoading, setResultLoading] = useState(true);
-  const [resultError, setResultError] = useState<string | null>(null);
+  const [results] = useState<StudentResultDto[]>(initialResults);
   const [selectedId, setSelectedId] = useState(initialAssignmentId ?? null);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    void fetch("/api/v1/student/results", { cache: "no-store" })
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok || !body.data?.results) {
-          throw new Error(body.error?.message ?? "Không thể tải kết quả");
-        }
-        return body.data.results as StudentResultDto[];
-      })
-      .then((data) => {
-        if (active) setResults(data);
-      })
-      .catch((error: unknown) => {
-        if (active) {
-          setResultError(
-            error instanceof Error ? error.message : "Không thể tải kết quả",
-          );
-        }
-      })
-      .finally(() => {
-        if (active) setResultLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [refresh, section]);
 
   const filteredResults = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -75,17 +47,17 @@ export function StudentWorkspaceView({
   const selected =
     results.find((result) => result.assignmentId === selectedId) ?? null;
 
-  if (loading || resultLoading) {
+  if (loading) {
     return (
       <div className="workspace-state" aria-busy="true">
         Đang tải kết quả học tập…
       </div>
     );
   }
-  if (!identity || resultError) {
+  if (!identity) {
     return (
       <div className="workspace-state">
-        <p className="form-error">{resultError ?? "Không thể tải dữ liệu"}</p>
+        <p className="form-error">Không thể tải dữ liệu</p>
         <button className="btn btn-primary" onClick={() => refresh()}>
           Tải lại
         </button>
@@ -227,7 +199,9 @@ function PanelTitle({
         <AppIcon name={icon} size={19} />
         {title}
       </span>
-      {href ? <Link href={href}>Xem tất cả</Link> : null}
+      {href ? (
+        <IntentPrefetchLink href={href}>Xem tất cả</IntentPrefetchLink>
+      ) : null}
     </div>
   );
 }

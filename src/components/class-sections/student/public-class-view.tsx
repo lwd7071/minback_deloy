@@ -2,13 +2,24 @@
 import { useEffect, useState } from "react";
 import { PinLoginForm } from "@/components/auth/student/pin-login-form";
 import { AuthCard } from "@/components/auth/auth-card";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
 import type { PublicClassSectionDto } from "@/types/frontend-rebuild";
-export function PublicClassView({ code }: { code: string }) {
-  const [section, setSection] = useState<PublicClassSectionDto | null>(null);
+
+export function PublicClassView({
+  code,
+  initialSection,
+}: {
+  code: string;
+  initialSection?: PublicClassSectionDto | null;
+}) {
+  const hasInitialSection = initialSection !== undefined;
+  const [section, setSection] = useState<PublicClassSectionDto | null>(
+    initialSection ?? null,
+  );
 
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    if (hasInitialSection) return;
     let active = true;
     void fetch(`/api/v1/public/class-sections/${encodeURIComponent(code)}`, {
       cache: "no-store",
@@ -31,8 +42,8 @@ export function PublicClassView({ code }: { code: string }) {
     return () => {
       active = false;
     };
-  }, [code]);
-  if (error)
+  }, [code, hasInitialSection]);
+  if (error || (hasInitialSection && !section))
     return (
       <AuthCard
         back={{
@@ -41,7 +52,11 @@ export function PublicClassView({ code }: { code: string }) {
           forceFallback: true,
         }}
         title="Mã lớp chưa đúng"
-        context={<span className="form-error">{error}</span>}
+        context={
+          <span className="form-error">
+            {error ?? "Không tìm thấy lớp học phần"}
+          </span>
+        }
       />
     );
   if (!section)

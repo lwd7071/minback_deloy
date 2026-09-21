@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { WorkspaceHeader } from "@/components/layout/workspace-header";
+import { NotificationPollingProvider } from "@/components/notifications/student/use-notification-polling";
 import type { StudentWorkspaceIdentity } from "@/types/student-workspace";
 
 type WorkspaceState = {
@@ -31,10 +32,14 @@ export function useStudentWorkspace() {
 export function StudentWorkspaceLayout({
   classCode,
   identity,
+  coordinationKey,
+  sharedPollingEnabled,
   children,
 }: {
   classCode: string;
   identity: StudentWorkspaceIdentity;
+  coordinationKey: string;
+  sharedPollingEnabled: boolean;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -52,10 +57,15 @@ export function StudentWorkspaceLayout({
 
   return (
     <StudentWorkspaceContext.Provider value={value}>
-      <div className="workspace-page student-workspace">
-        <WorkspaceHeader classCode={classCode} role="student" />
-        <main className="workspace-main">{children}</main>
-      </div>
+      <NotificationPollingProvider
+        coordinationKey={coordinationKey}
+        enabled={sharedPollingEnabled}
+      >
+        <div className="workspace-page student-workspace">
+          <WorkspaceHeader classCode={classCode} role="student" />
+          <main className="workspace-main">{children}</main>
+        </div>
+      </NotificationPollingProvider>
     </StudentWorkspaceContext.Provider>
   );
 }

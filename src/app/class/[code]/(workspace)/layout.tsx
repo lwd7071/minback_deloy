@@ -2,11 +2,15 @@ import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 
 import { StudentWorkspaceLayout } from "@/components/layout/student/student-workspace";
-import { requireFullStudentSession } from "@/server/auth/student-session";
+import {
+  deriveStudentCoordinationKey,
+  requireFullStudentSession,
+} from "@/server/auth/student-session";
 import { findClassSectionCodeById } from "@/server/repositories/students/student-repository";
 import { getStudentWorkspaceIdentity } from "@/server/services/students/student-profile-service";
 import { handleStudentWorkspaceError } from "@/server/navigation/page-errors";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getServerEnv } from "@/lib/env/server";
 
 export default async function StudentWorkspaceRouteLayout({
   children,
@@ -43,6 +47,8 @@ async function StudentWorkspaceData({
 }) {
   let canonicalCode: string;
   let identity: Awaited<ReturnType<typeof getStudentWorkspaceIdentity>>;
+  let coordinationKey: string;
+  let sharedPollingEnabled: boolean;
   try {
     const session = await requireFullStudentSession();
     const foundCode = await findClassSectionCodeById(session.classSectionId);
@@ -51,11 +57,19 @@ async function StudentWorkspaceData({
       redirect(`/class/${encodeURIComponent(foundCode)}/profile`);
     canonicalCode = foundCode;
     identity = await getStudentWorkspaceIdentity(session);
+    coordinationKey = deriveStudentCoordinationKey(session.sessionId);
+    sharedPollingEnabled =
+      getServerEnv().MINBACK_SHARED_NOTIFICATION_POLLING_V2;
   } catch (error) {
     return handleStudentWorkspaceError(error, classCode);
   }
   return (
-    <StudentWorkspaceLayout classCode={canonicalCode} identity={identity}>
+    <StudentWorkspaceLayout
+      classCode={canonicalCode}
+      identity={identity}
+      coordinationKey={coordinationKey}
+      sharedPollingEnabled={sharedPollingEnabled}
+    >
       {children}
     </StudentWorkspaceLayout>
   );

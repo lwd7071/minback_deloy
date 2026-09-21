@@ -25,9 +25,10 @@
 
 import "server-only";
 
-import { createHash, randomBytes } from "crypto";
+import { createHash, createHmac, randomBytes } from "crypto";
 
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
@@ -39,6 +40,7 @@ import type {
   StudentSessionDto,
   VerifiedStudentSession,
 } from "@/types/student";
+import { getServerEnv } from "@/lib/env/server";
 
 /** Tên cookie chứa raw session token */
 export const STUDENT_SESSION_COOKIE = "minback_student_session";
@@ -63,6 +65,13 @@ export function generateRawToken(): string {
  */
 export function hashToken(rawToken: string): string {
   return createHash("sha256").update(rawToken).digest("hex");
+}
+
+/** Stable per-session browser coordination key; never exposes the raw session id. */
+export function deriveStudentCoordinationKey(sessionId: string): string {
+  return createHmac("sha256", getServerEnv().RATE_LIMIT_HMAC_SECRET)
+    .update(sessionId)
+    .digest("base64url");
 }
 
 /**
@@ -195,7 +204,7 @@ async function requireStudentSession(): Promise<
  * @throws ApiError 401 SESSION_EXPIRED - Session hết hạn hoặc đã bị revoke
  * @throws ApiError 403 CREDENTIAL_CHANGE_REQUIRED - Session đang ở credential_change
  */
-export async function requireFullStudentSession(): Promise<VerifiedStudentSession> {
+async function requireFullStudentSessionUncached(): Promise<VerifiedStudentSession> {
   const session = await requireStudentSession();
 
   if (session.accessLevel !== "full") {
@@ -212,6 +221,11 @@ export async function requireFullStudentSession(): Promise<VerifiedStudentSessio
     classSectionId: session.classSectionId,
   };
 }
+
+/** Request-scoped memoization prevents layout/page duplicate session lookups. */
+export const requireFullStudentSession = cache(
+  requireFullStudentSessionUncached,
+);
 
 /**
  * Xác thực StudentSession cho các endpoint credential change.
