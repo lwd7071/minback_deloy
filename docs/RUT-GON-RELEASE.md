@@ -57,6 +57,11 @@ Schema, dữ liệu, repository, route handler và logic backend cũ không bị
 - Notification DTO có thêm `assignmentId`; deep-link dùng Assignment ID, còn `evaluationId` giữ tương thích.
 - Không có migration/schema deletion trong đợt này.
 
+### Performance hardening release note (2026-09-20)
+
+- Đã thêm intent prefetch, server initial DTO cho Results/public lookup, shared notification coordinator, joined-query scoping, additive snapshot RPC, telemetry và request-budget E2E.
+- Static evidence: format, typecheck, lint không lỗi, production build và request-budget Playwright pass. Chưa ghi percentile before/after vì benchmark ba batch và DB/pgTAP còn chờ Supabase local/Docker; không coi rollout production hoàn tất trước khi có artifacts thật.
+
 ## Kiểm thử
 
 - Targeted Teacher Assignment/Evaluation/Student Results/notification tests đã được cập nhật theo release profile.

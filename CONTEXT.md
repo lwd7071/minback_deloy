@@ -60,6 +60,7 @@ Không tạo `EvaluationCriteria`, `RubricTemplate` hoặc `RubricCriterion` tro
 - **Release documentation (2026-09-15)**: chi tiết tính năng ẩn, filter còn lại, interface và verification nằm trong `docs/RUT-GON-RELEASE.md`.
 - **Release verification status (2026-09-15)**: typecheck, lint, build, targeted tests và full unit baseline (`53 test files/214 tests`) đã pass. Integration chưa đạt vì Supabase local/Docker container crash (`exit 139`, Docker API `500`); các lỗi `AuthRetryableFetchError`/HTTP `500` trong log là hậu quả môi trường. Cần rerun health, integration và database gates sau khi Docker ổn định.
 - **Deployment status (2026-09-15)**: thay đổi đã push lên GitHub `minback_deloy/main` tại commit `d902b4c`. Chưa deploy hoặc migrate lên Supabase production; chỉ mới có thay đổi code/docs trên repository. Production rollout phải chờ release gate local/integration hoàn tất và được thực hiện theo quy trình deploy riêng.
+- **Performance hardening v2 (2026-09-20)**: active UI không fetch lại dữ liệu đã có từ Server Component; Results/public lookup dùng initial DTO; notification polling dùng provider chung, Web Locks/BroadcastChannel có HMAC key, timeout 8 giây và fallback per-tab. Grading snapshot lấy students/evaluations/counts trong một RPC statement; joined queries phải scope theo Student + ClassSection và select đúng DTO allowlist. Chi tiết và trạng thái gate ở `docs/PERFORMANCE-HARDENING.md`.
 
 ## Contracts
 

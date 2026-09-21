@@ -419,3 +419,21 @@ Sprint 6 closes measurable engineering gaps only. Do not add post-MVP Rubric/Aca
 - [x] Verify TypeScript, ESLint, 160/160 unit tests across 42 files and the production build.
 - [ ] VERIFY: run `npm run test:setup`, pgTAP and the full integration suite once Docker Desktop is available; the 2026-09-08 attempt stopped before reset because the local Docker engine was not running.
 - [ ] VERIFY: complete responsive and keyboard browser QA at 390/800/1440 after the migration is applied locally.
+
+## Frontend performance hardening v2 — 2026-09-20
+
+- [x] RED/GREEN: shared Student notification provider removes duplicate same-tab pollers and adds 8-second timeout recovery.
+- [x] RED/GREEN: Student profile/grades use Server Component Results data without post-hydration Results GET.
+- [x] RED/GREEN: Student Management consumes URL/server rows and performs one authoritative refresh after edit without local total drift.
+- [x] RED/GREEN: Assignment edit uses the existing summary row when available instead of fetching the Assignment on modal open.
+- [x] RED/GREEN: header, class-card, assignment and back links use intent-only prefetch; Pagination no longer prefetches on mount.
+- [x] VERIFY: `npm run typecheck` passes after the slice.
+- [x] VERIFY: 222/222 Vitest tests pass with `--pool=threads --fileParallelism=false --maxWorkers=1`.
+- [x] RED/GREEN: add Playwright request-budget tests and the authenticated multi-tab test scaffold.
+- [x] RED/GREEN: add scoped joined-query filters, snapshot RPC, feature flags, telemetry and benchmark harness.
+- [x] RED/GREEN: benchmark recorder captures normalized action/type/bytes/duration/failures; comparator gates p75/p95 across three-batch medians; deterministic DB scale/EXPLAIN fixture is available with transaction rollback.
+- [x] RED/GREEN: grading import returns snapshot version/counts without full-tree refresh; stale server snapshots are ignored.
+- [x] RED/GREEN: notification scope is enforced by service-only RPCs, including legacy rows and mark-read authorization.
+- [x] RED/GREEN: leader notification poll tick, fallback telemetry and server timing events are covered/implemented.
+- [ ] VERIFY: run Supabase migrations, pgTAP/RLS/privacy integration and authenticated three-tab test when Docker is available.
+- [ ] VERIFY: update `docs/PERFORMANCE-HARDENING.md` with real before/after metrics after benchmark execution.

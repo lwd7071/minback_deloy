@@ -241,6 +241,13 @@ Test phải độc lập, có dữ liệu setup/cleanup rõ ràng và không ph�
 - Không commit `.env`, secret, file export chứa PIN khởi tạo hoặc dữ liệu sinh viên thật.
 - Resolve toàn bộ review comment; nếu không sửa phải ghi rõ lý do và được reviewer chấp nhận.
 
+### Performance hardening rules (2026-09-20)
+
+- Không duplicate SSR/client fetch; request budget là contract được assert bằng browser test.
+- Joined query phải filter ownership trong query và select explicit DTO allowlist; không materialize dữ liệu rộng rồi lọc bằng JavaScript.
+- Mutation ảnh hưởng membership, pagination hoặc aggregate phải nhận authoritative response/refresh; không tự điều chỉnh total local.
+- Mỗi tracer bullet dùng RED → GREEN → refactor và lưu command/evidence trong `docs/PERFORMANCE-HARDENING.md`.
+
 ## 11. Definition of Done
 
 Một task chỉ được đánh dấu Done khi:

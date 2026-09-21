@@ -880,6 +880,11 @@ createPortal(
 
 ## 9. ACCEPTANCE CHECKLIST CHO REDESIGN
 
+### Performance interaction contract (2026-09-20)
+
+- Notification polling chạy mỗi 10 giây ở route thường với page size 3; route Notifications dùng page size 50. Tab visible leader poll, follower nhận BroadcastChannel snapshot; hidden tab dừng polling.
+- Link chỉ prefetch khi hover, keyboard focus hoặc pointer-down touch/pen; không prefetch khi viewport, Save-Data, 2G hoặc slow-2G.
+
 - [ ] Toàn bộ các route đều có đầy đủ Heading ngữ cảnh, trạng thái Loading, Empty state và Error boundary.
 - [ ] Tuân thủ triệt để nguyên tắc không fetch trùng dữ liệu đã có sẵn từ Server Component.
 - [ ] Header active state chuẩn xác theo từng cấp route; phím `Escape` đóng mượt mà mọi popover/modal/mobile drawer.

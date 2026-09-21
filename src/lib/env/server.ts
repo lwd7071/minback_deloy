@@ -15,6 +15,13 @@ const serverEnvSchema = z.object({
   BREVO_SENDER_EMAIL: z.email().optional().or(z.literal("")),
   BREVO_SENDER_NAME: z.string().trim().min(1).max(100).default("MinBack"),
   APP_URL: z.url().default("http://localhost:3000"),
+  MINBACK_SHARED_NOTIFICATION_POLLING_V2: z.coerce.boolean().default(false),
+  MINBACK_CLASS_DASHBOARD_RPC_V2: z.coerce.boolean().default(false),
+  PERFORMANCE_TELEMETRY_SAMPLE_RATE: z.coerce
+    .number()
+    .min(0)
+    .max(1)
+    .default(0.05),
   CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
@@ -31,6 +38,12 @@ export function getServerEnv() {
       BREVO_SENDER_EMAIL: process.env.BREVO_SENDER_EMAIL,
       BREVO_SENDER_NAME: process.env.BREVO_SENDER_NAME,
       APP_URL: process.env.APP_URL,
+      MINBACK_SHARED_NOTIFICATION_POLLING_V2:
+        process.env.MINBACK_SHARED_NOTIFICATION_POLLING_V2,
+      MINBACK_CLASS_DASHBOARD_RPC_V2:
+        process.env.MINBACK_CLASS_DASHBOARD_RPC_V2,
+      PERFORMANCE_TELEMETRY_SAMPLE_RATE:
+        process.env.PERFORMANCE_TELEMETRY_SAMPLE_RATE,
       CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
       CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
       CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
