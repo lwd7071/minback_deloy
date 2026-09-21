@@ -154,7 +154,7 @@ describe("useBulkGrade hook", () => {
     );
   });
 
-  it("cập nhật state khi import thành công", () => {
+  it("cập nhật state và counts authoritative khi import thành công", () => {
     const { result } = renderHook(() =>
       useBulkGrade({
         classSectionId: "class-1",
@@ -163,6 +163,14 @@ describe("useBulkGrade hook", () => {
         studentMeta: { page: 1, pageSize: 10, total: 3 },
         initialSearch: "",
         initialEvaluations: mockEvaluations,
+        initialGradingCounts: {
+          totalStudents: 3,
+          gradedCount: 1,
+          returnedCount: 1,
+          evaluatedCount: 2,
+          missingCount: 1,
+        },
+        initialSnapshotVersion: "2026-09-01T08:00:00.000Z",
       }),
     );
 
@@ -178,6 +186,14 @@ describe("useBulkGrade hook", () => {
             status: "returned",
           },
         ],
+        snapshotVersion: "2026-09-01T08:01:00.000Z",
+        gradingCounts: {
+          totalStudents: 3,
+          gradedCount: 1,
+          returnedCount: 2,
+          evaluatedCount: 3,
+          missingCount: 0,
+        },
       });
     });
 
@@ -187,6 +203,64 @@ describe("useBulkGrade hook", () => {
     expect(result.current.message).toContain(
       "Đã công bố kết quả cho 1 sinh viên",
     );
-    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(result.current.metrics).toEqual({
+      total: 3,
+      graded: 1,
+      returned: 2,
+      missing: 0,
+    });
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("thay state bằng snapshot mới khi URL chuyển sang trang khác", () => {
+    const firstProps = {
+      classSectionId: "class-1",
+      assignment: mockAssignment,
+      students: mockStudents,
+      studentMeta: { page: 1, pageSize: 10, total: 3 },
+      initialSearch: "",
+      initialEvaluations: mockEvaluations,
+      initialGradingCounts: {
+        totalStudents: 3,
+        gradedCount: 1,
+        returnedCount: 1,
+        evaluatedCount: 2,
+        missingCount: 1,
+      },
+      initialSnapshotVersion: "2026-09-01T08:00:00.000Z",
+    };
+    const { result, rerender } = renderHook((props) => useBulkGrade(props), {
+      initialProps: firstProps,
+    });
+
+    rerender({
+      ...firstProps,
+      studentMeta: { page: 2, pageSize: 10, total: 3 },
+      initialSearch: "tran",
+      initialEvaluations: [mockEvaluations[1]],
+      initialSnapshotVersion: "2026-09-01T08:02:00.000Z",
+      initialGradingCounts: {
+        totalStudents: 3,
+        gradedCount: 0,
+        returnedCount: 1,
+        evaluatedCount: 1,
+        missingCount: 2,
+      },
+    });
+
+    expect(result.current.evaluations).toEqual([
+      {
+        studentId: "student-2",
+        score: 8,
+        feedback: "Khá",
+        status: "returned",
+      },
+    ]);
+    expect(result.current.metrics).toEqual({
+      total: 3,
+      graded: 0,
+      returned: 1,
+      missing: 2,
+    });
   });
 });

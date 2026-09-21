@@ -33,6 +33,14 @@ export type EvaluationImportResultDto = {
     feedback: string | null;
     status: "graded" | "returned";
   }>;
+  snapshotVersion?: string;
+  gradingCounts?: {
+    totalStudents: number;
+    gradedCount: number;
+    returnedCount: number;
+    evaluatedCount: number;
+    missingCount: number;
+  };
   summary?: {
     rows: number;
     created: number;

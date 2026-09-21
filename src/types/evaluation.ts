@@ -20,6 +20,21 @@ export type EvaluationWithStudentDto = EvaluationDto & {
   };
 };
 
+export type TeacherGradingSnapshotDto = {
+  snapshotVersion: string;
+  assignment: import("./assignment").AssignmentDto;
+  students: import("./student").StudentAdminDto[];
+  studentMeta: { page: number; pageSize: number; total: number };
+  evaluations: EvaluationWithStudentDto[];
+  gradingCounts: {
+    totalStudents: number;
+    gradedCount: number;
+    returnedCount: number;
+    evaluatedCount: number;
+    missingCount: number;
+  };
+};
+
 // ─── Evaluation History ───────────────────────────────────────────────────────
 
 export type EvaluationHistoryRow = {

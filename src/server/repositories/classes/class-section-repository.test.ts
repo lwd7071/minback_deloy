@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -20,6 +20,8 @@ function createSupabase(rpc: ReturnType<typeof vi.fn>) {
 }
 
 describe("listClassSectionSummaries", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
   it("fails closed when the summary RPC fails", async () => {
     const rpc = vi.fn().mockImplementation((name: string) => {
       if (name === "list_class_section_summaries") {
@@ -103,5 +105,51 @@ describe("listClassSectionSummaries", () => {
       },
       filterCounts: { all: 1, urgent: 0, good: 1, complete: 0 },
     });
+  });
+
+  it("uses the combined dashboard snapshot RPC only when its rollout flag is enabled", async () => {
+    vi.stubEnv("MINBACK_CLASS_DASHBOARD_RPC_V2", "true");
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        rows: [
+          {
+            id: "class-1",
+            code: "CS101",
+            name: "Computer Science",
+            student_count: 2,
+            assignment_count: 3,
+            completed_count: 4,
+            grading_total: 6,
+            grading_percentage: 67,
+            total_count: 1,
+          },
+        ],
+        facets: {
+          student_count: 2,
+          assignment_count: 3,
+          completed_count: 4,
+          grading_total: 6,
+          all_count: 1,
+          urgent_count: 0,
+          good_count: 1,
+          complete_count: 0,
+        },
+        total: 1,
+      },
+      error: null,
+    });
+
+    const result = await listClassSectionSummaries(
+      createSupabase(rpc),
+      teacherId,
+      query,
+    );
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith(
+      "get_teacher_class_dashboard",
+      expect.objectContaining({ p_teacher_id: teacherId }),
+    );
+    expect(result.total).toBe(1);
   });
 });

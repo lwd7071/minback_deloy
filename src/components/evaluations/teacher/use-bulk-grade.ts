@@ -25,6 +25,14 @@ export interface UseBulkGradeOptions {
   studentMeta: { page: number; pageSize: number; total: number };
   initialSearch: string;
   initialEvaluations: EvaluationWithStudentDto[];
+  initialGradingCounts?: {
+    totalStudents: number;
+    gradedCount: number;
+    returnedCount: number;
+    evaluatedCount: number;
+    missingCount: number;
+  };
+  initialSnapshotVersion?: string;
 }
 
 export function useBulkGrade({
@@ -33,6 +41,8 @@ export function useBulkGrade({
   studentMeta,
   initialSearch,
   initialEvaluations,
+  initialGradingCounts,
+  initialSnapshotVersion = "",
 }: UseBulkGradeOptions) {
   const router = useRouter();
   const [evaluations, setEvaluations] = useState<ResultRow[]>(() =>
@@ -49,6 +59,26 @@ export function useBulkGrade({
   const [error, setError] = useState<string | null>(null);
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [gradingCounts, setGradingCounts] = useState(initialGradingCounts);
+  const [snapshotVersion, setSnapshotVersion] = useState(
+    initialSnapshotVersion,
+  );
+  const serverStateKey = `${initialSnapshotVersion}:${initialSearch}:${studentMeta.page}:${studentMeta.total}`;
+  const [lastServerStateKey, setLastServerStateKey] = useState(serverStateKey);
+  if (serverStateKey !== lastServerStateKey) {
+    setLastServerStateKey(serverStateKey);
+    setEvaluations(
+      initialEvaluations.map((evaluation) => ({
+        studentId: evaluation.studentId,
+        score: evaluation.score,
+        feedback: evaluation.feedback,
+        status: evaluation.status,
+      })),
+    );
+    setGradingCounts(initialGradingCounts);
+    setSnapshotVersion(initialSnapshotVersion);
+    setSearchQuery(initialSearch);
+  }
 
   useEffect(() => {
     if (searchQuery === initialSearch) return;
@@ -71,6 +101,14 @@ export function useBulkGrade({
   );
 
   const metrics = useMemo(() => {
+    if (gradingCounts) {
+      return {
+        total: gradingCounts.totalStudents,
+        graded: gradingCounts.gradedCount,
+        returned: gradingCounts.returnedCount,
+        missing: gradingCounts.missingCount,
+      };
+    }
     const graded = evaluations.filter((row) => row.status === "graded").length;
     const returned = evaluations.filter(
       (row) => row.status === "returned",
@@ -81,7 +119,7 @@ export function useBulkGrade({
       returned,
       missing: Math.max(0, studentMeta.total - graded - returned),
     };
-  }, [evaluations, studentMeta.total]);
+  }, [evaluations, gradingCounts, studentMeta.total]);
 
   const pages = Math.max(
     1,
@@ -97,6 +135,13 @@ export function useBulkGrade({
   }
 
   function handleImportSuccess(result: EvaluationImportResultDto): void {
+    if (
+      result.snapshotVersion &&
+      snapshotVersion &&
+      result.snapshotVersion < snapshotVersion
+    ) {
+      return;
+    }
     setEvaluations((current) => {
       const next = new Map(current.map((row) => [row.studentId, row]));
       for (const updated of result.updatedEvaluations) {
@@ -116,7 +161,8 @@ export function useBulkGrade({
     );
     setError(null);
     setImportModalOpen(false);
-    router.refresh();
+    if (result.snapshotVersion) setSnapshotVersion(result.snapshotVersion);
+    if (result.gradingCounts) setGradingCounts(result.gradingCounts);
   }
 
   async function publishSavedResults(): Promise<void> {

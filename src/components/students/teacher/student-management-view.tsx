@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { StudentAdminDto } from "@/types/student";
 import type { TeacherStudentProfileDto } from "@/types/student-profile";
@@ -28,14 +28,13 @@ export function StudentManagementView({
   initialSearch: string;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const { push: toast } = useToast();
   const [students, setStudents] = useState<StudentAdminDto[]>(initialStudents);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const loading = isPending;
   const [search, setSearch] = useState(initialSearch);
-  const [debouncedSearch] = useState(initialSearch);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(initialMeta.page);
+  const [pageSize, setPageSize] = useState(initialMeta.pageSize);
   const [total, setTotal] = useState(initialMeta.total);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -43,7 +42,7 @@ export function StudentManagementView({
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Debounce tìm kiếm 300ms để chống spam request và race condition
+  // URL là nguồn sự thật; thay đổi từ khóa chỉ tạo một server navigation.
   useEffect(() => {
     const timer = setTimeout(() => {
       if (search === initialSearch) return;
@@ -55,6 +54,27 @@ export function StudentManagementView({
     }, 300);
     return () => clearTimeout(timer);
   }, [classSectionId, initialSearch, router, search]);
+
+  const [previousInitial, setPreviousInitial] = useState({
+    students: initialStudents,
+    meta: initialMeta,
+    search: initialSearch,
+  });
+  if (
+    previousInitial.students !== initialStudents ||
+    previousInitial.meta !== initialMeta ||
+    previousInitial.search !== initialSearch
+  ) {
+    setPreviousInitial({
+      students: initialStudents,
+      meta: initialMeta,
+      search: initialSearch,
+    });
+    setStudents(initialStudents);
+    setTotal(initialMeta.total);
+    setPage(initialMeta.page);
+    setPageSize(initialMeta.pageSize);
+  }
 
   // State sửa thông tin student
   const [editingStudent, setEditingStudent] = useState<StudentAdminDto | null>(
@@ -78,54 +98,6 @@ export function StudentManagementView({
   const [studentProfile, setStudentProfile] =
     useState<TeacherStudentProfileDto | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function load() {
-      setLoading(true);
-      try {
-        const query = debouncedSearch.trim()
-          ? `&search=${encodeURIComponent(debouncedSearch.trim())}`
-          : "";
-        const url = `/api/v1/teacher/class-sections/${classSectionId}/students?page=${page}&pageSize=${pageSize}${query}`;
-        const res = await fetch(url, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const body = (await res.json()) as ApiResult<StudentAdminDto[]>;
-
-        if (controller.signal.aborted) return;
-
-        if (!res.ok || !("data" in body)) {
-          throw new Error(
-            "error" in body
-              ? body.error.message
-              : "Không thể tải danh sách sinh viên",
-          );
-        }
-
-        setStudents(body.data);
-        if (body.meta) setTotal(body.meta.total);
-        setError(null);
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          setError(err instanceof Error ? err.message : "Lỗi kết nối");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    // Hủy bỏ request đang bay dở khi người dùng đổi từ khóa hoặc đổi trang
-    return () => {
-      controller.abort();
-    };
-  }, [classSectionId, page, pageSize, debouncedSearch, refreshKey]);
 
   function startEdit(st: StudentAdminDto) {
     setEditingStudent(st);
@@ -166,7 +138,7 @@ export function StudentManagementView({
       const updated = body.data;
       const matches = `${updated.mssv} ${updated.fullName} ${updated.nickname}`
         .toLowerCase()
-        .includes(initialSearch.toLowerCase());
+        .includes(search.trim().toLowerCase());
       setStudents((current) =>
         matches
           ? current.map((student) =>
@@ -174,8 +146,8 @@ export function StudentManagementView({
             )
           : current.filter((student) => student.id !== updated.id),
       );
-      if (!matches) setTotal((current) => Math.max(0, current - 1));
       setEditingStudent(null);
+      startTransition(() => router.refresh());
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Lưu thất bại");
     } finally {
@@ -295,118 +267,100 @@ export function StudentManagementView({
         </div>
       </div>
 
-      {error ? (
-        <p className="form-error">{error}</p>
-      ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>MSSV</th>
+              <th>Họ và tên</th>
+              <th>Nickname</th>
+              <th>Email</th>
+              <th>Trạng thái PIN</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody style={{ opacity: 1 }}>
+            {students.length === 0 ? (
               <tr>
-                <th>MSSV</th>
-                <th>Họ và tên</th>
-                <th>Nickname</th>
-                <th>Email</th>
-                <th>Trạng thái PIN</th>
-                <th>Thao tác</th>
+                <td
+                  colSpan={6}
+                  className="muted"
+                  style={{ textAlign: "center", padding: "32px 0" }}
+                >
+                  Không tìm thấy sinh viên nào trong lớp này.
+                </td>
               </tr>
-            </thead>
-            <tbody style={{ opacity: 1 }}>
-              {students.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="muted"
-                    style={{ textAlign: "center", padding: "40px 0" }}
-                  >
-                    <p style={{ marginBottom: "16px", fontSize: "15px" }}>
-                      {search.trim()
-                        ? "Không tìm thấy sinh viên nào phù hợp với từ khóa tìm kiếm."
-                        : "Lớp học phần chưa có sinh viên nào."}
-                    </p>
-                    {!search.trim() && (
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "center",
-                          gap: "12px",
-                        }}
-                      >
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setShowImportModal(true)}
-                        >
-                          Nhập file Excel/CSV
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          onClick={() => setShowAddModal(true)}
-                        >
-                          + Thêm sinh viên
-                        </Button>
-                      </div>
+            ) : (
+              students.map((st) => (
+                <tr key={st.id}>
+                  <td>{st.mssv}</td>
+                  <td>{st.fullName}</td>
+                  <td>{st.nickname}</td>
+                  <td className="muted">{st.email ?? "—"}</td>
+                  <td>
+                    {st.mustChangePin ? (
+                      <span className="status-text status-warning">
+                        Cần đổi PIN
+                      </span>
+                    ) : (
+                      <span className="status-text status-success">
+                        Bình thường
+                      </span>
                     )}
                   </td>
+                  <td>
+                    <button
+                      className="button button-secondary button-sm"
+                      onClick={() => void handleViewProfile(st)}
+                    >
+                      Hồ sơ
+                    </button>
+                    <button
+                      className="button button-secondary button-sm"
+                      onClick={() => startEdit(st)}
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      className="button button-secondary button-sm"
+                      onClick={() => void handleResetPin(st)}
+                    >
+                      Reset PIN
+                    </button>
+                  </td>
                 </tr>
-              ) : (
-                students.map((st) => (
-                  <tr key={st.id}>
-                    <td>{st.mssv}</td>
-                    <td>{st.fullName}</td>
-                    <td>{st.nickname}</td>
-                    <td className="muted">{st.email ?? "—"}</td>
-                    <td>
-                      {st.mustChangePin ? (
-                        <span className="status-text status-warning">
-                          Cần đổi PIN
-                        </span>
-                      ) : (
-                        <span className="status-text status-success">
-                          Bình thường
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <button
-                        className="button button-secondary button-sm"
-                        onClick={() => void handleViewProfile(st)}
-                      >
-                        Hồ sơ
-                      </button>
-                      <button
-                        className="button button-secondary button-sm"
-                        onClick={() => startEdit(st)}
-                      >
-                        Sửa
-                      </button>
-                      <button
-                        className="button button-secondary button-sm"
-                        onClick={() => void handleResetPin(st)}
-                      >
-                        Reset PIN
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {!error && total > 0 && (
+      {total > 0 && (
         <Pagination
           page={page}
           pageSize={pageSize}
           total={total}
           disabled={loading}
           onPageChange={(newPage) => {
-            setPage(newPage);
+            const params = new URLSearchParams();
+            if (search.trim()) params.set("q", search.trim());
+            if (newPage > 1) params.set("page", String(newPage));
+            if (pageSize !== 20) params.set("pageSize", String(pageSize));
+            startTransition(() => {
+              router.replace(
+                `/admin/classes/${classSectionId}/students${params.size ? `?${params}` : ""}`,
+              );
+            });
           }}
           onPageSizeChange={(newSize) => {
-            setPageSize(newSize);
-            setPage(1);
+            const params = new URLSearchParams();
+            if (search.trim()) params.set("q", search.trim());
+            if (newSize !== 20) params.set("pageSize", String(newSize));
+            startTransition(() => {
+              router.replace(
+                `/admin/classes/${classSectionId}/students${params.size ? `?${params}` : ""}`,
+              );
+            });
           }}
           pageSizeOptions={[20, 50, 100]}
         />

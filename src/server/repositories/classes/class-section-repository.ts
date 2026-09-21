@@ -239,6 +239,34 @@ export async function listClassSectionSummaries(
   };
   filterCounts: ClassSummaryFilterCounts;
 }> {
+  if (process.env.MINBACK_CLASS_DASHBOARD_RPC_V2 === "true") {
+    const { data, error } = await supabase.rpc("get_teacher_class_dashboard", {
+      p_teacher_id: teacherId,
+      p_offset: (query.page - 1) * query.pageSize,
+      p_limit: query.pageSize,
+      p_search: query.search || null,
+      p_progress: query.progress,
+      p_sort: query.sort,
+    });
+    if (error) {
+      throw new RepositoryError(
+        "CLASS_SECTION_SUMMARY_LIST_FAILED",
+        "Không thể lấy tóm tắt lớp học",
+        { cause: error },
+      );
+    }
+    const payload = (data ?? {}) as {
+      rows?: Array<Record<string, unknown>>;
+      facets?: Record<string, unknown>;
+      total?: number;
+    };
+    return mapClassSectionSummaryPayload(
+      payload.rows ?? [],
+      payload.facets ?? {},
+      Number(payload.total ?? 0),
+    );
+  }
+
   const fetchPage = async (offset: number, limit: number) =>
     supabase.rpc("list_class_section_summaries", {
       p_teacher_id: teacherId,
@@ -351,6 +379,50 @@ export async function listClassSectionSummaries(
       urgent: Number(facet?.urgent_count ?? 0),
       good: Number(facet?.good_count ?? 0),
       complete: Number(facet?.complete_count ?? 0),
+    },
+  };
+}
+
+function mapClassSectionSummaryPayload(
+  records: Array<Record<string, unknown>>,
+  facet: Record<string, unknown>,
+  total: number,
+) {
+  const rows: ClassSectionSummaryDto[] = records.map((row) => ({
+    id: String(row.id),
+    code: String(row.code),
+    name: String(row.name),
+    studentCount: Number(row.student_count),
+    assignmentCount: Number(row.assignment_count),
+    gradingProgress: {
+      completed: Number(row.completed_count),
+      total: Number(row.grading_total),
+      percentage: Number(row.grading_percentage),
+    },
+  }));
+  const studentCount = Number(facet.student_count ?? 0);
+  const assignmentCount = Number(facet.assignment_count ?? 0);
+  const completedCount = Number(facet.completed_count ?? 0);
+  const gradingTotal = Number(facet.grading_total ?? 0);
+  return {
+    total,
+    rows,
+    metrics: {
+      classCount: total,
+      studentCount,
+      assignmentCount,
+      completedCount,
+      gradingTotal,
+      gradingPercentage:
+        gradingTotal === 0
+          ? 0
+          : Math.round((completedCount / gradingTotal) * 100),
+    },
+    filterCounts: {
+      all: Number(facet.all_count ?? total),
+      urgent: Number(facet.urgent_count ?? 0),
+      good: Number(facet.good_count ?? 0),
+      complete: Number(facet.complete_count ?? 0),
     },
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
 
 import { GradeImportModal } from "@/components/evaluations/teacher/grade-import-modal";
 import { AppIcon } from "@/components/ui/app-icon";
@@ -19,6 +19,8 @@ export function BulkGradeView({
   studentMeta,
   initialSearch,
   evaluations: initialEvaluations,
+  gradingCounts: initialGradingCounts,
+  snapshotVersion,
 }: {
   classSectionId: string;
   assignment: AssignmentDto;
@@ -26,6 +28,14 @@ export function BulkGradeView({
   studentMeta: { page: number; pageSize: number; total: number };
   initialSearch: string;
   evaluations: EvaluationWithStudentDto[];
+  gradingCounts?: {
+    totalStudents: number;
+    gradedCount: number;
+    returnedCount: number;
+    evaluatedCount: number;
+    missingCount: number;
+  };
+  snapshotVersion?: string;
 }) {
   const {
     evaluations,
@@ -52,6 +62,8 @@ export function BulkGradeView({
     studentMeta,
     initialSearch,
     initialEvaluations,
+    initialGradingCounts,
+    initialSnapshotVersion: snapshotVersion,
   });
 
   return (

@@ -149,10 +149,12 @@ describe("Evaluation Import Service", () => {
     });
 
     expect(result.mode).toBe("save_draft");
-    // 250 items with batch size 100 -> 3 RPC calls (100, 100, 50)
-    expect(rpc).toHaveBeenCalledTimes(3);
+    // 250 items with batch size 100 -> 3 upsert calls plus one authoritative
+    // grading snapshot read.
+    expect(rpc).toHaveBeenCalledTimes(4);
     expect(rpc.mock.calls[0][1].p_rows.length).toBe(100);
     expect(rpc.mock.calls[1][1].p_rows.length).toBe(100);
     expect(rpc.mock.calls[2][1].p_rows.length).toBe(50);
+    expect(rpc.mock.calls[3][0]).toBe("get_teacher_grading_snapshot");
   });
 });

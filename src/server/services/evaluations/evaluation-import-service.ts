@@ -2,6 +2,7 @@ import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
 import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import { createEvaluationNotification } from "@/server/services/notifications/notification-service";
+import { getTeacherGradingSnapshot } from "@/server/services/evaluations/evaluation-service";
 import {
   deferBackgroundTask,
   runWithConcurrencyLimit,
@@ -346,6 +347,21 @@ export async function executeEvaluationImport(
     });
   }
 
+  let snapshotVersion: string | undefined;
+  let gradingCounts: EvaluationImportResultDto["gradingCounts"];
+  try {
+    const snapshot = await getTeacherGradingSnapshot(
+      assignmentId,
+      { teacherId: teacher.id, supabase },
+      { page: 1, pageSize: 1 },
+    );
+    snapshotVersion = snapshot.snapshotVersion;
+    gradingCounts = snapshot.gradingCounts;
+  } catch {
+    // The mutation already committed; a temporary consistency-read failure
+    // must not turn a successful mutation into a reported failure.
+  }
+
   return {
     count: rowsToUpsert.length,
     mode: input.mode,
@@ -355,6 +371,8 @@ export async function executeEvaluationImport(
       feedback: r.feedback,
       status: targetStatus as "graded" | "returned",
     })),
+    snapshotVersion,
+    gradingCounts,
     summary: {
       rows: rowsToUpsert.length,
       created: changed.filter((row) => row.change_type === "created").length,

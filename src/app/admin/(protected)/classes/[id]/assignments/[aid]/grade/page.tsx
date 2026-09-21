@@ -3,9 +3,7 @@ import { Suspense } from "react";
 import { BulkGradeView } from "@/components/evaluations/teacher/bulk-grade-view";
 import { handleTeacherPageError } from "@/server/navigation/page-errors";
 import { requireTeacher } from "@/server/auth/teacher-auth";
-import { getTeacherAssignment } from "@/server/services/assignments/assignment-service";
-import { listTeacherEvaluations } from "@/server/services/evaluations/evaluation-service";
-import { listStudentsInClass } from "@/server/services/students/student-management-service";
+import { getTeacherGradingSnapshot } from "@/server/services/evaluations/evaluation-service";
 import { Skeleton } from "@/components/ui/skeleton";
 export default async function GradePage({
   params,
@@ -44,24 +42,22 @@ async function BulkGradeData({
 }) {
   const parsedPage = Number(query.page);
   const search = query.q?.trim().slice(0, 100) ?? "";
-  let assignment: Awaited<ReturnType<typeof getTeacherAssignment>>;
-  let studentResult: Awaited<ReturnType<typeof listStudentsInClass>>;
-  let evaluations: Awaited<ReturnType<typeof listTeacherEvaluations>>;
+  let snapshot: Awaited<ReturnType<typeof getTeacherGradingSnapshot>>;
   try {
     const { teacher, supabase } = await requireTeacher();
-    [assignment, studentResult, evaluations] = await Promise.all([
-      getTeacherAssignment(assignmentId, teacher.id),
-      listStudentsInClass(classSectionId, {
+    snapshot = await getTeacherGradingSnapshot(
+      assignmentId,
+      {
+        teacherId: teacher.id,
+        supabase,
+      },
+      {
         page: Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1,
         pageSize: 100,
         search: search || undefined,
-      }),
-      listTeacherEvaluations(assignmentId, {
-        teacherId: teacher.id,
-        supabase,
-      }),
-    ]);
-    if (assignment.classSectionId !== classSectionId) {
+      },
+    );
+    if (snapshot.assignment.classSectionId !== classSectionId) {
       notFound();
     }
   } catch (error) {
@@ -69,13 +65,14 @@ async function BulkGradeData({
   }
   return (
     <BulkGradeView
-      key={`${assignmentId}:${studentResult.meta.page}:${search}`}
       classSectionId={classSectionId}
-      assignment={assignment}
-      students={studentResult.students}
-      studentMeta={studentResult.meta}
+      assignment={snapshot.assignment}
+      students={snapshot.students}
+      studentMeta={snapshot.studentMeta}
       initialSearch={search}
-      evaluations={evaluations}
+      evaluations={snapshot.evaluations}
+      gradingCounts={snapshot.gradingCounts}
+      snapshotVersion={snapshot.snapshotVersion}
     />
   );
 }
