@@ -221,6 +221,63 @@ export function useBulkGrade({
     }
   }
 
+  async function saveSingleEvaluation(
+    studentId: string,
+    score: number | null,
+    feedback: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const current = byStudentId.get(studentId);
+      let targetStatus: EvaluationStatus = "graded";
+      if (current?.status === "returned") {
+        targetStatus = "returned";
+      } else if (score === null && !feedback.trim()) {
+        targetStatus = "pending";
+      }
+
+      const response = await fetch(
+        `/api/v1/teacher/assignments/${assignment.id}/students/${studentId}/evaluation`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            score,
+            feedback,
+            status: targetStatus,
+          }),
+        },
+      );
+
+      const json = await response.json();
+      if (!response.ok || json.error) {
+        return {
+          success: false,
+          error: json.error?.message ?? "Không thể lưu điểm",
+        };
+      }
+
+      const saved = json.data;
+      setEvaluations((prev) => {
+        const next = new Map(prev.map((r) => [r.studentId, r]));
+        next.set(studentId, {
+          studentId,
+          score: saved.score,
+          feedback: saved.feedback ?? "",
+          status: saved.status,
+        });
+        return [...next.values()];
+      });
+
+      return { success: true };
+    } catch (cause) {
+      return {
+        success: false,
+        error:
+          cause instanceof Error ? cause.message : "Đã xảy ra lỗi hệ thống",
+      };
+    }
+  }
+
   return {
     evaluations,
     byStudentId,
@@ -239,5 +296,7 @@ export function useBulkGrade({
     pageHref,
     handleImportSuccess,
     publishSavedResults,
+    saveSingleEvaluation,
   };
 }
+

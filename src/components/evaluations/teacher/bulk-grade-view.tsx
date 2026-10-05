@@ -4,13 +4,13 @@ import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link
 
 import { GradeImportModal } from "@/components/evaluations/teacher/grade-import-modal";
 import { AppIcon } from "@/components/ui/app-icon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { AssignmentDto } from "@/types/assignment";
 import type { EvaluationWithStudentDto } from "@/types/evaluation";
 import type { StudentAdminDto } from "@/types/student";
 import { useBulkGrade } from "@/components/evaluations/teacher/use-bulk-grade";
+import { GradeRowItem } from "./grade-row-item";
 
 export function BulkGradeView({
   classSectionId,
@@ -55,6 +55,7 @@ export function BulkGradeView({
     pageHref,
     handleImportSuccess,
     publishSavedResults,
+    saveSingleEvaluation,
   } = useBulkGrade({
     classSectionId,
     assignment,
@@ -185,37 +186,20 @@ export function BulkGradeView({
                   <th>Điểm</th>
                   <th>Feedback</th>
                   <th>Trạng thái</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {students.map((student) => {
                   const result = byStudentId.get(student.id);
                   return (
-                    <tr key={student.id}>
-                      <td className="identity-mono">{student.mssv}</td>
-                      <td>{student.fullName}</td>
-                      <td>{result?.score ?? "—"}</td>
-                      <td className="grade-feedback-cell">
-                        {result?.feedback || "—"}
-                      </td>
-                      <td>
-                        <Badge
-                          variant={
-                            result?.status === "returned"
-                              ? "returned"
-                              : result?.status === "graded"
-                                ? "success"
-                                : "neutral"
-                          }
-                        >
-                          {result?.status === "returned"
-                            ? "Đã công bố"
-                            : result?.status === "graded"
-                              ? "Chưa công bố"
-                              : "Chưa có kết quả"}
-                        </Badge>
-                      </td>
-                    </tr>
+                    <GradeRowItem
+                      key={student.id}
+                      student={student}
+                      evaluation={result}
+                      maxScore={assignment.maxScore}
+                      onSave={saveSingleEvaluation}
+                    />
                   );
                 })}
               </tbody>
