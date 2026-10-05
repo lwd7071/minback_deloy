@@ -112,7 +112,16 @@ function parseStudentRecords(records: SourceRow[]): ParsedCsvRow[] {
 
   const mssvIndex = headerIndex.get("mssv")!;
   const fullNameIndex = headerIndex.get("họ tên")!;
-  const emailIndex = headerIndex.get("email");
+  // Nhận diện cột email chính xác hoặc cột bắt đầu bằng "email" (ví dụ: "Email (tùy chọn...)")
+  let emailIndex = headerIndex.get("email");
+  if (emailIndex === undefined) {
+    const matchedIndex = header.findIndex((col) =>
+      normalizeHeader(col).startsWith("email"),
+    );
+    if (matchedIndex !== -1) {
+      emailIndex = matchedIndex;
+    }
+  }
 
   const nonEmptyRows = dataRows.filter((row) =>
     row.cells.some((value) => value.trim().length > 0),

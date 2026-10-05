@@ -150,4 +150,22 @@ describe("ClassCreateFlow", () => {
     fireEvent.click(goToClass);
     expect(push).toHaveBeenCalledWith("/admin/classes/class-1");
   });
+
+  it("renders a download link for the sample template file at the roster step", () => {
+    render(<ClassCreateFlow />);
+    enterDetails();
+
+    const templateLink = screen.getByRole("link", {
+      name: /tải file mẫu/i,
+    });
+    expect(templateLink).toBeInTheDocument();
+    expect(templateLink).toHaveAttribute(
+      "href",
+      "/templates/mau-danh-sach-sinh-vien.xlsx",
+    );
+    expect(templateLink).toHaveAttribute(
+      "download",
+      "mau-danh-sach-sinh-vien.xlsx",
+    );
+  });
 });

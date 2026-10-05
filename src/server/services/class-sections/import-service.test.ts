@@ -14,11 +14,15 @@ vi.mock("@/server/repositories/classes/import-repository", () => ({
   bulkUpdateImportedStudents: vi.fn(),
 }));
 
+import fs from "fs";
+import path from "path";
+
 import {
   buildImportPreview,
   MAX_IMPORT_FILE_BYTES,
   generateInitialPin,
   parseStudentCsv,
+  parseStudentXlsx,
   validateImportFile,
 } from "./import-service";
 
@@ -73,6 +77,39 @@ describe("parseStudentCsv", () => {
     expect(rows).toEqual([
       expect.objectContaining({ row: 3, status: "skipped" }),
       expect.objectContaining({ row: 4, status: "skipped" }),
+    ]);
+  });
+
+  it("recognizes descriptive email headers like 'Email (Có thể không điền...)' and preserves provided email", () => {
+    const csv = [
+      'MSSV,Họ Tên,"Email (Có thể không điền, mặc định là mssv@student.hcmute.edu.vn)"',
+      "24110202,Nguyễn Văn A,",
+      "24110201,Nguyễn Văn B,nguyenvanB@gmail.com",
+    ].join("\n");
+
+    const rows = parseStudentCsv(csv);
+
+    expect(rows).toEqual([
+      {
+        row: 2,
+        status: "valid",
+        student: {
+          row: 2,
+          mssv: "24110202",
+          fullName: "Nguyễn Văn A",
+          email: undefined,
+        },
+      },
+      {
+        row: 3,
+        status: "valid",
+        student: {
+          row: 3,
+          mssv: "24110201",
+          fullName: "Nguyễn Văn B",
+          email: "nguyenvanB@gmail.com",
+        },
+      },
     ]);
   });
 });
@@ -162,5 +199,56 @@ describe("importTeacherClassSectionCsv optimization", () => {
         email: "an_new@example.com",
       },
     ]);
+  });
+
+  it("successfully parses the static template file mau-danh-sach-sinh-vien.xlsx", async () => {
+    const templatePath = path.resolve(
+      process.cwd(),
+      "public/templates/mau-danh-sach-sinh-vien.xlsx",
+    );
+    const fileBuffer = fs.readFileSync(templatePath);
+    const arrayBuffer = fileBuffer.buffer.slice(
+      fileBuffer.byteOffset,
+      fileBuffer.byteOffset + fileBuffer.byteLength,
+    );
+
+    const rows = await parseStudentXlsx(arrayBuffer);
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toEqual({
+      row: 2,
+      status: "valid",
+      student: {
+        row: 2,
+        mssv: "24110202",
+        fullName: "Nguyễn Văn A",
+        email: undefined,
+      },
+    });
+    expect(rows[1]).toEqual({
+      row: 3,
+      status: "valid",
+      student: {
+        row: 3,
+        mssv: "24110201",
+        fullName: "Nguyễn Văn B",
+        email: "nguyenvanB@gmail.com",
+      },
+    });
+    expect(rows[2]).toEqual({
+      row: 4,
+      status: "valid",
+      student: {
+        row: 4,
+        mssv: "24110200",
+        fullName: "Nguyễn Văn C",
+        email: undefined,
+      },
+    });
+
+    const { Workbook } = await import("exceljs");
+    const wb = new Workbook();
+    await wb.xlsx.load(Buffer.from(arrayBuffer) as never);
+    const ws = wb.worksheets[0];
+    expect(ws.getRow(1).font?.bold).toBe(true);
   });
 });

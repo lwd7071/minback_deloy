@@ -73,10 +73,21 @@ export function BulkGradeView({
           <p className="eyebrow">Kết quả bài tập</p>
           <h1 className="grade-page-title">{assignment.title}</h1>
         </div>
-        <Button type="button" onClick={() => setImportModalOpen(true)}>
-          <AppIcon name="upload" size={16} />
-          {evaluations.length ? "Nhập lại file điểm" : "Nhập file điểm"}
-        </Button>
+        <div className="grade-page-actions">
+          <a
+            href={`/api/v1/teacher/assignments/${assignment.id}/evaluations/import-template`}
+            download
+            className="btn btn-secondary"
+            aria-label="Tải file mẫu bảng điểm"
+          >
+            <AppIcon name="download" size={16} />
+            <span>Tải file mẫu</span>
+          </a>
+          <Button type="button" onClick={() => setImportModalOpen(true)}>
+            <AppIcon name="upload" size={16} />
+            {evaluations.length ? "Nhập lại file điểm" : "Nhập file điểm"}
+          </Button>
+        </div>
       </div>
 
       <div className="teacher-metrics-grid" aria-label="Tổng quan kết quả">

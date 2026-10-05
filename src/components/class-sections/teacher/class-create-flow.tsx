@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { AppIcon } from "@/components/ui/app-icon";
 import { STEPS, stepIndex, useClassCreateFlow } from "./use-class-create-flow";
 
 export function ClassCreateFlow() {
@@ -110,9 +111,20 @@ export function ClassCreateFlow() {
         <Card className="class-create-stage">
           <p className="eyebrow">Bước 2 / 4</p>
           <h2>Chuẩn bị danh sách sinh viên</h2>
-          <p className="muted">
-            CSV/XLSX cần có cột MSSV, Họ Tên; Email là tùy chọn.
-          </p>
+          <div className="class-create-template-bar">
+            <p className="muted">
+              CSV/XLSX cần có cột MSSV, Họ Tên; Email là tùy chọn.
+            </p>
+            <a
+              href="/templates/mau-danh-sach-sinh-vien.xlsx"
+              download="mau-danh-sach-sinh-vien.xlsx"
+              className="btn btn-secondary btn-sm class-create-template-btn"
+              aria-label="Tải file mẫu Excel danh sách sinh viên"
+            >
+              <AppIcon name="download" size={15} />
+              <span>Tải file mẫu (.xlsx)</span>
+            </a>
+          </div>
           <label className="class-create-file">
             <span className="form-label">Tệp danh sách</span>
             <input
