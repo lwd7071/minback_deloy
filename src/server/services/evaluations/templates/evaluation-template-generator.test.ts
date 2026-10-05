@@ -58,7 +58,8 @@ describe("Evaluation Template Generator", () => {
     expect(headerRow.getCell(4).value).toBe("Feedback");
 
     // Header không được tô màu nền (không có fgColor hoặc pattern là none)
-    const fill = headerRow.fill as { fgColor?: unknown; pattern?: string } | undefined;
+    const fill = headerRow.fill as
+      { fgColor?: unknown; pattern?: string } | undefined;
     expect(fill?.fgColor).toBeUndefined();
 
     // Có ít nhất 2 dòng mẫu khi danh sách sinh viên rỗng

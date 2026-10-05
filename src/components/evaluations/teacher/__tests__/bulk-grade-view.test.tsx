@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
-  usePathname: () => "/admin/classes/class-123/assignments/assignment-123/grade",
+  usePathname: () =>
+    "/admin/classes/class-123/assignments/assignment-123/grade",
 }));
 
 import { BulkGradeView } from "../bulk-grade-view";
@@ -20,13 +21,12 @@ describe("BulkGradeView", () => {
     classSectionId: "class-123",
     title: "BÀI MỚI",
     description: "Mô tả bài tập",
-    dueAt: null,
-    totalPoints: 10,
+    assignedDate: "2026-10-01T00:00:00.000Z",
+    dueDate: "2026-10-10T00:00:00.000Z",
+    maxScore: 10,
     status: "published",
     createdAt: "2026-10-05T00:00:00.000Z",
     updatedAt: "2026-10-05T00:00:00.000Z",
-    hasEvaluations: false,
-    evaluationsCount: 0,
   };
 
   it("renders a 'Tải file mẫu' download link next to the 'Nhập file điểm' button", () => {
