@@ -101,8 +101,8 @@ describe("parseStudentCsv", () => {
 });
 
 describe("generateInitialPin", () => {
-  it("generates six-digit values", () => {
-    expect(generateInitialPin()).toMatch(/^\d{6}$/);
+  it("generates a random secure placeholder token for unactivated students", () => {
+    expect(generateInitialPin()).toMatch(/^[0-9a-f]{32}$/);
   });
 });
 

@@ -14,7 +14,7 @@
 import "server-only";
 
 import { compare, hash } from "bcrypt";
-import { randomInt } from "crypto";
+import { randomBytes, randomInt } from "crypto";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
 import {
@@ -28,6 +28,7 @@ import {
   findClassSectionIdByCode,
   findStudentByIdentifierAndClass,
   findStudentByMssvAndClass,
+  findStudentByEmailAndClass,
   findStudentRowById,
   resetStudentFailedLogin,
   updateStudentNickname,
@@ -165,6 +166,16 @@ export async function loginStudent(
     );
   }
 
+  // Sinh viên chưa kích hoạt lần đầu qua Google OAuth (còn cờ must_change_pin) không thể đăng nhập bằng mã PIN
+  if (student.must_change_pin || !student.pin_hash) {
+    await incrementBothBuckets(ipHash, identifierHash);
+    throw new ApiError(
+      401,
+      API_ERROR_CODES.invalidCredentials,
+      "Tài khoản chưa được kích hoạt mã PIN. Vui lòng đăng nhập bằng Google để kích hoạt và tạo mã PIN.",
+    );
+  }
+
   // Verify BCrypt PIN
   const pinValid = await compare(pin, student.pin_hash);
 
@@ -189,6 +200,84 @@ export async function loginStudent(
   const accessLevel = needsCredentialChange ? "credential_change" : "full";
 
   // Bước 9: Tạo session
+  const rawToken = generateRawToken();
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = computeSessionExpiresAt();
+
+  const session = await createStudentSession({
+    studentId: student.id,
+    tokenHash,
+    accessLevel,
+    expiresAt,
+  });
+
+  const dto = await buildStudentSessionDto(
+    session.id,
+    student.id,
+    accessLevel,
+    session.expires_at,
+  );
+
+  return {
+    rawToken,
+    cookieOptions: SESSION_COOKIE_OPTIONS,
+    cookieName: STUDENT_SESSION_COOKIE,
+    dto,
+  };
+}
+
+/**
+ * Xử lý đăng nhập Sinh viên qua Google OAuth.
+ *
+ * Luồng:
+ * 1. Resolve classSectionId từ classCode
+ * 2. Tìm student theo email trong lớp học
+ * 3. Nếu không có: Quăng ApiError 403 (NOT_IN_ROSTER)
+ * 4. Nếu có: Tạo session với access_level phù hợp (credential_change nếu must_change_pin)
+ */
+export async function loginStudentViaGoogle(input: {
+  email: string;
+  classCode: string;
+}): Promise<{
+  rawToken: string;
+  cookieOptions: typeof SESSION_COOKIE_OPTIONS;
+  cookieName: string;
+  dto: StudentSessionDto;
+}> {
+  const normalizedClassCode = input.classCode.trim().toUpperCase();
+  const normalizedEmail = input.email.trim().toLowerCase();
+
+  const classSectionId = await findClassSectionIdByCode(normalizedClassCode);
+  if (!classSectionId) {
+    throw new ApiError(
+      404,
+      API_ERROR_CODES.notFound,
+      "Không tìm thấy lớp học phần",
+    );
+  }
+
+  const student = await findStudentByEmailAndClass(
+    normalizedEmail,
+    classSectionId,
+  );
+
+  if (!student) {
+    throw new ApiError(
+      403,
+      API_ERROR_CODES.forbidden,
+      `Email ${normalizedEmail} không có trong danh sách sinh viên của lớp này. Vui lòng liên hệ giảng viên.`,
+    );
+  }
+
+  // Reset failed login count nếu có
+  await resetStudentFailedLogin(student.id);
+
+  // Xác định access_level
+  const needsCredentialChange =
+    student.must_change_nickname || student.must_change_pin;
+  const accessLevel = needsCredentialChange ? "credential_change" : "full";
+
+  // Tạo session
   const rawToken = generateRawToken();
   const tokenHash = hashToken(rawToken);
   const expiresAt = computeSessionExpiresAt();
@@ -330,16 +419,18 @@ export async function logoutStudent(sessionId: string): Promise<void> {
 // ─── Reset PIN (by Teacher) ────────────────────────────────────────────────────
 
 /**
- * Teacher reset PIN của một Student về mã PIN mặc định 111111.
- * Bật cờ must_change_pin = true và revoke mọi session cũ.
+ * Teacher reset PIN của một Student.
+ * Xóa hiệu lực mã PIN cũ, bật cờ must_change_pin = true và revoke mọi session cũ.
+ * Sinh viên sẽ phải đăng nhập lại bằng Google để tạo PIN mới.
  */
 export async function resetStudentPinToDefault(
   studentId: string,
 ): Promise<{ studentId: string; mustChangePin: boolean }> {
-  const newPinHash = await hash(DEFAULT_INITIAL_PIN, BCRYPT_ROUNDS);
+  // Băm một chuỗi ngẫu nhiên không thể đoán được làm placeholder để PIN cũ không còn đăng nhập được
+  const placeholderPinHash = await hash(randomBytes(32).toString("hex"), BCRYPT_ROUNDS);
 
   await revokeAllSessionsByStudentId(studentId);
-  await updateStudentPinHash(studentId, newPinHash);
+  await updateStudentPinHash(studentId, placeholderPinHash);
   await revokeForgotPinChallenge(studentId);
 
   return { studentId, mustChangePin: true };

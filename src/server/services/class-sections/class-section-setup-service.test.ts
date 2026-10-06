@@ -71,7 +71,7 @@ describe("createTeacherClassSectionSetup", () => {
       email: "an@example.test",
       nickname: "SV01",
     });
-    expect(students[0].pinHash).toMatch(/^hash:\d{6}$/);
+    expect(students[0].pinHash).toMatch(/^hash:[0-9a-f]{32}$/);
     expect(result.data.import?.summary).toEqual({
       total: 3,
       created: 1,

@@ -119,6 +119,34 @@ export async function findStudentByMssvAndClass(
   return data as StudentRow | null;
 }
 
+/**
+ * Tìm Student theo Email (case-insensitive) + classSectionId.
+ * Dùng cho luồng đăng nhập Google OAuth.
+ */
+export async function findStudentByEmailAndClass(
+  email: string,
+  classSectionId: string,
+): Promise<StudentRow | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .ilike("email", email.trim())
+    .eq("class_section_id", classSectionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new RepositoryError(
+      "STUDENT_LOOKUP_FAILED",
+      "Không thể tìm kiếm sinh viên theo Email",
+      { cause: error },
+    );
+  }
+
+  return data as StudentRow | null;
+}
+
 // Bounded Context: Các hàm truy vấn class_sections đã được di chuyển về class-section-repository.ts
 import {
   findClassSectionIdByCode,

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { hash } from "bcrypt";
+import { randomBytes } from "crypto";
 import { Workbook } from "exceljs";
 import { z } from "zod";
 
@@ -274,14 +275,13 @@ export async function previewStudentXlsx(
   return buildImportPreview(await parseStudentXlsx(buffer));
 }
 
-export const DEFAULT_INITIAL_PIN = "111111";
-
 export function deriveInstitutionalEmail(mssv: string): string {
   return `${mssv.trim().toLowerCase()}@student.hcmute.edu.vn`;
 }
 
 export function generateInitialPin(): string {
-  return DEFAULT_INITIAL_PIN;
+  // Sinh placeholder PIN ngẫu nhiên bảo mật 32 ký tự, ngăn chặn đăng nhập PIN cho tới khi kích hoạt Google
+  return randomBytes(16).toString("hex");
 }
 
 export async function importTeacherClassSectionCsv(

@@ -151,11 +151,6 @@ export function StudentAddModal({
           />
         </div>
 
-        <p className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>
-          Sinh viên mới sẽ đăng nhập bằng MSSV và mã PIN mặc định là{" "}
-          <strong>111111</strong>.
-        </p>
-
         {error ? <Alert variant="error">{error}</Alert> : null}
 
         <div className="dialog-actions">

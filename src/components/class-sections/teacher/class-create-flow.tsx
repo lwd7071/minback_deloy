@@ -274,7 +274,7 @@ export function ClassCreateFlow() {
           </div>
           <Alert variant="info">
             Lớp và sinh viên chỉ được ghi vào hệ thống sau khi bạn xác nhận bên
-            dưới. Sinh viên mới dùng MSSV và PIN mặc định 111111.
+            dưới. Sinh viên đăng nhập lần đầu bằng Google để tạo mã PIN cá nhân.
           </Alert>
           <div className="class-create-actions is-split">
             <Button
@@ -318,8 +318,7 @@ export function ClassCreateFlow() {
           {(result.import?.summary.created ?? 0) > 0 ? (
             <Alert variant="info">
               <p>
-                Sinh viên có thể đăng nhập bằng <strong>MSSV</strong> và mã PIN
-                mặc định <strong>111111</strong> trong lần đầu tiên.
+                Sinh viên có thể đăng nhập bằng <strong>Google</strong> để kích hoạt tài khoản và tạo mã PIN trong lần đầu tiên.
               </p>
             </Alert>
           ) : null}

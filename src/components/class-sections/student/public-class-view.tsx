@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PinLoginForm } from "@/components/auth/student/pin-login-form";
+import { GoogleSignInButton } from "@/components/auth/student/google-sign-in-button";
 import { AuthCard } from "@/components/auth/auth-card";
 import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
+import { Alert } from "@/components/ui/alert";
 import type { PublicClassSectionDto } from "@/types/frontend-rebuild";
 
 export function PublicClassView({
@@ -12,6 +15,8 @@ export function PublicClassView({
   code: string;
   initialSection?: PublicClassSectionDto | null;
 }) {
+  const searchParams = useSearchParams();
+  const oauthError = searchParams.get("error");
   const hasInitialSection = initialSection !== undefined;
   const [section, setSection] = useState<PublicClassSectionDto | null>(
     initialSection ?? null,
@@ -93,7 +98,44 @@ export function PublicClassView({
         </Link>
       }
     >
-      <PinLoginForm classCode={section.code} />
+      <div className="form-stack">
+        {oauthError ? (
+          <div style={{ marginBottom: "8px" }}>
+            <Alert variant="error">{oauthError}</Alert>
+          </div>
+        ) : null}
+
+        <GoogleSignInButton classCode={section.code} />
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            margin: "4px 0",
+            color: "var(--color-text-secondary)",
+            fontSize: "0.8125rem",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              height: "1px",
+              background: "var(--color-border)",
+            }}
+          />
+          <span>hoặc dùng mã PIN</span>
+          <div
+            style={{
+              flex: 1,
+              height: "1px",
+              background: "var(--color-border)",
+            }}
+          />
+        </div>
+
+        <PinLoginForm classCode={section.code} />
+      </div>
     </AuthCard>
   );
 }

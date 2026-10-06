@@ -140,7 +140,7 @@ describe("ClassCreateFlow", () => {
           element?.tagName.toLowerCase() === "p" &&
           Boolean(
             element.textContent?.includes(
-              "mã PIN mặc định 111111 trong lần đầu tiên",
+              "kích hoạt tài khoản và tạo mã PIN",
             ),
           ),
       ),

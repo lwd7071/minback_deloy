@@ -86,11 +86,6 @@ export function StudentManagementView({
   const [editBusy, setEditBusy] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  // State Reset PIN
-  const [resetPinStudent, setResetPinStudent] =
-    useState<StudentAdminDto | null>(null);
-  const [resetBusy, setResetBusy] = useState(false);
-
   // State hồ sơ học tập Teacher xem trong đúng ClassSection hiện hành.
   const [profileStudent, setProfileStudent] = useState<StudentAdminDto | null>(
     null,
@@ -152,37 +147,6 @@ export function StudentManagementView({
       setEditError(err instanceof Error ? err.message : "Lưu thất bại");
     } finally {
       setEditBusy(false);
-    }
-  }
-
-  async function handleResetPin(st: StudentAdminDto) {
-    setResetPinStudent(st);
-    setResetBusy(true);
-
-    try {
-      const res = await fetch(
-        `/api/v1/teacher/class-sections/${classSectionId}/students/${st.id}/reset-pin`,
-        { method: "POST" },
-      );
-
-      const body = (await res.json()) as ApiResult<{ initialPin: string }>;
-      if (!res.ok || !("data" in body)) {
-        throw new Error(
-          "error" in body ? body.error.message : "Reset PIN thất bại",
-        );
-      }
-
-      toast("Đã đặt lại PIN về mặc định 111111", "success");
-      setStudents((current) =>
-        current.map((student) =>
-          student.id === st.id ? { ...student, mustChangePin: true } : student,
-        ),
-      );
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Lỗi reset PIN", "error");
-      setResetPinStudent(null);
-    } finally {
-      setResetBusy(false);
     }
   }
 
@@ -275,7 +239,7 @@ export function StudentManagementView({
               <th>Họ và tên</th>
               <th>Nickname</th>
               <th>Email</th>
-              <th>Trạng thái PIN</th>
+              <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
           </thead>
@@ -300,11 +264,11 @@ export function StudentManagementView({
                   <td>
                     {st.mustChangePin ? (
                       <span className="status-text status-warning">
-                        Cần đổi PIN
+                        Chưa kích hoạt
                       </span>
                     ) : (
                       <span className="status-text status-success">
-                        Bình thường
+                        Đã kích hoạt
                       </span>
                     )}
                   </td>
@@ -320,12 +284,6 @@ export function StudentManagementView({
                       onClick={() => startEdit(st)}
                     >
                       Sửa
-                    </button>
-                    <button
-                      className="button button-secondary button-sm"
-                      onClick={() => void handleResetPin(st)}
-                    >
-                      Reset PIN
                     </button>
                   </td>
                 </tr>
@@ -500,43 +458,6 @@ export function StudentManagementView({
               </button>
             </div>
           </form>
-        </div>
-      </Modal>
-
-      {/* Modal Hiển thị PIN Khởi tạo khi Reset PIN */}
-      <Modal
-        open={Boolean(resetPinStudent)}
-        onClose={() => {
-          setResetPinStudent(null);
-        }}
-        title="Reset PIN thành công"
-        size="sm"
-      >
-        <div className="settings-stack">
-          <p className="muted dialog-copy">
-            Đã đặt lại PIN cho <strong>{resetPinStudent?.fullName}</strong> (
-            {resetPinStudent?.mssv}).
-          </p>
-
-          {resetBusy ? (
-            <p className="muted">Đang đặt lại PIN…</p>
-          ) : (
-            <Alert variant="success">
-              PIN đã được đặt về mặc định 111111. Sinh viên sẽ đổi PIN sau lần
-              đăng nhập tiếp theo.
-            </Alert>
-          )}
-
-          <div className="dialog-actions">
-            <button
-              className="button"
-              onClick={() => {
-                setResetPinStudent(null);
-              }}
-            >
-              Đóng
-            </button>
-          </div>
         </div>
       </Modal>
 
