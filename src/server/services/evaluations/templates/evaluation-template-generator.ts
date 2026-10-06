@@ -49,6 +49,9 @@ export async function buildEvaluationTemplateWorkbook(
 
   const isSample = !students || students.length === 0;
 
+  // 10 cột tiêu chí C -> L
+  const criteriaCols = ["C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+
   dataList.forEach((student, index) => {
     const rowNum = index + 2;
     const mssvVal =
@@ -56,8 +59,13 @@ export async function buildEvaluationTemplateWorkbook(
         ? Number(student.mssv)
         : student.mssv;
 
-    // Cột 13 (Điểm): công thức Excel =ROUND((C{row}*20% + D{row}*30% + E{row}*50%), 1)
-    const formulaStr = `ROUND(C${rowNum}*20% + D${rowNum}*30% + E${rowNum}*50%, 1)`;
+    // Cột Điểm: Công thức tự trích xuất % trong ngoặc của Header dòng 1 (X$1)
+    // Nếu header không có % hoặc cell rỗng, IFERROR trả về 0. Giúp Excel tự nhảy khi sửa % ở header.
+    const terms = criteriaCols.map(
+      (col) =>
+        `IFERROR(VALUE(MID(${col}$1,FIND("(",${col}$1)+1,FIND("%",${col}$1)-FIND("(",${col}$1)-1))/100*${col}${rowNum},0)`,
+    );
+    const formulaStr = `ROUND(${terms.join("+")},1)`;
 
     // Nếu là sinh viên mẫu thì điền sẵn điểm tiêu chí để thấy ngay kết quả nhảy số
     const c1Score = isSample ? (index === 0 ? 8.5 : 9.0) : "";
@@ -105,7 +113,7 @@ export async function buildEvaluationTemplateWorkbook(
   guideSheet.addRow(["3. Tổng phần trăm của các cột tiêu chí có (xx%) phải bằng đúng 100%."]);
   guideSheet.addRow(["4. Các cột không có (xx%) như 'Tiêu chí 4'.. có thể để trống hoặc xóa bớt tùy ý."]);
   guideSheet.addRow(["5. Có thể tự do đổi tên tiêu chí (ví dụ: 'Thuyết trình (20%)', 'Code (40%)', 'Báo cáo (40%)')."]);
-  guideSheet.addRow(["6. Cột Điểm có sẵn công thức Excel tự tính. Hệ thống khi import cũng sẽ tự động tính lại chuẩn xác."]);
+  guideSheet.addRow(["6. Cột Điểm tự động trích xuất % từ tiêu đề cột để tính. Khi sửa lại % ở tiêu đề, điểm sẽ tự động nhảy theo."]);
 
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
   const safeTitle = assignmentTitle

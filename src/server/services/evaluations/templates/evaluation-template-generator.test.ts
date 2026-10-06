@@ -41,12 +41,14 @@ describe("Evaluation Template Generator", () => {
     expect(header.getCell(13).value).toBe("Điểm");
     expect(header.getCell(14).value).toBe("Feedback");
 
-    // Kiểm tra công thức ở cột Điểm (cột 13 / M)
+    // Kiểm tra công thức ở cột Điểm (cột 13 / M) tự trích xuất % từ header dòng 1
     const row2ScoreCell = sheet1.getRow(2).getCell(13);
     const scoreVal = row2ScoreCell.value as { formula?: string };
-    expect(scoreVal?.formula || row2ScoreCell.formula).toContain("C2*20%");
-    expect(scoreVal?.formula || row2ScoreCell.formula).toContain("D2*30%");
-    expect(scoreVal?.formula || row2ScoreCell.formula).toContain("E2*50%");
+    const formula = scoreVal?.formula || row2ScoreCell.formula;
+    expect(formula).toContain("MID(C$1");
+    expect(formula).toContain("C2");
+    expect(formula).toContain("MID(D$1");
+    expect(formula).toContain("D2");
 
     // Sheet Hướng Dẫn
     const sheet2 = workbook.getWorksheet("HuongDan")!;
