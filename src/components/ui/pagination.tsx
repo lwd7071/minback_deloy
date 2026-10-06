@@ -123,7 +123,7 @@ export function Pagination({
 
           {onPageSizeChange && (
             <label className="pagination-size-label">
-              <span>Hiển thị:</span>
+              <span style={{ whiteSpace: "nowrap" }}>Hiển thị:</span>
               <select
                 className="pagination-size-select"
                 value={pageSize}
