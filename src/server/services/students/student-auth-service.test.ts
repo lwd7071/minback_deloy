@@ -52,6 +52,7 @@ import {
   incrementBothBuckets,
 } from "@/server/repositories/students/login-rate-limit-repository";
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
+import type { StudentRow, StudentSessionRow } from "@/types/student";
 import {
   loginStudent,
   loginStudentViaGoogle,
@@ -104,7 +105,7 @@ describe("loginStudentViaGoogle", () => {
       locked_until: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    } as any);
+    } as unknown as StudentRow);
 
     vi.mocked(createStudentSession).mockResolvedValue({
       id: "session-1",
@@ -115,7 +116,7 @@ describe("loginStudentViaGoogle", () => {
       last_activity_at: new Date().toISOString(),
       revoked_at: null,
       created_at: new Date().toISOString(),
-    } as any);
+    } as unknown as StudentSessionRow);
 
     const result = await loginStudentViaGoogle({
       email: "student@gmail.com",
@@ -254,7 +255,7 @@ describe("loginStudent - Database Error vs Invalid Credentials", () => {
       locked_until: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    } as any);
+    } as unknown as StudentRow);
 
     const error = await loginStudent(
       { classCode: "TEST01", identifier: "SV01", pin: "111111" },

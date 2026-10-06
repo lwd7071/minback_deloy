@@ -37,6 +37,13 @@ export async function GET(request: NextRequest) {
       classCode,
     });
 
+    // Đăng xuất Supabase Auth session để không giữ cookie giảng viên trên trình duyệt sinh viên
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore signOut error
+    }
+
     // Set cookie phiên sinh viên của MinBack
     const cookieStore = await cookies();
     cookieStore.set(
