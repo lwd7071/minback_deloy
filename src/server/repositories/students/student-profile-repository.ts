@@ -35,6 +35,7 @@ type AssignmentRow = {
   due_date: string;
   status: AssignmentStatus;
   max_score: number | string;
+  criteria?: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -46,6 +47,7 @@ type EvaluationRow = {
   score: number | string | null;
   feedback: string;
   status: EvaluationStatus;
+  criteria_scores?: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -66,6 +68,9 @@ function toAssignmentDto(row: AssignmentRow): AssignmentDto {
     dueDate: row.due_date,
     status: row.status,
     maxScore: Number(row.max_score),
+    criteria: Array.isArray(row.criteria)
+      ? (row.criteria as import("@/lib/evaluation-criteria").Criterion[])
+      : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -79,6 +84,9 @@ function toEvaluationDto(row: EvaluationRow): EvaluationDto {
     score: row.score === null ? null : Number(row.score),
     feedback: row.feedback,
     status: row.status,
+    criteriaScores: Array.isArray(row.criteria_scores)
+      ? (row.criteria_scores as import("@/lib/evaluation-criteria").CriterionScore[])
+      : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -107,7 +115,7 @@ export async function findStudentProfileData(
       supabase
         .from("assignments")
         .select(
-          "id, class_section_id, title, description, assigned_date, due_date, status, max_score, created_at, updated_at",
+          "id, class_section_id, title, description, assigned_date, due_date, status, max_score, criteria, created_at, updated_at",
         )
         .eq("class_section_id", classSectionId)
         .in("status", ["published", "closed"])
@@ -141,7 +149,7 @@ export async function findStudentProfileData(
     supabase
       .from("evaluations")
       .select(
-        "id, student_id, assignment_id, score, feedback, status, created_at, updated_at",
+        "id, student_id, assignment_id, score, feedback, status, criteria_scores, created_at, updated_at",
       )
       .eq("student_id", studentId)
       .in("assignment_id", assignmentIds),

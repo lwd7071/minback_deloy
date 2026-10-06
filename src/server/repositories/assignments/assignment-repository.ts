@@ -21,12 +21,13 @@ type AssignmentRow = {
   due_date: string;
   status: AssignmentStatus;
   max_score: number | string;
+  criteria?: unknown;
   created_at: string;
   updated_at: string;
 };
 
 const ASSIGNMENT_COLUMNS =
-  "id, class_section_id, title, description, assigned_date, due_date, status, max_score, created_at, updated_at";
+  "id, class_section_id, title, description, assigned_date, due_date, status, max_score, criteria, created_at, updated_at";
 
 function toDto(row: AssignmentRow): AssignmentDto {
   return {
@@ -38,6 +39,9 @@ function toDto(row: AssignmentRow): AssignmentDto {
     dueDate: row.due_date,
     status: row.status,
     maxScore: Number(row.max_score),
+    criteria: Array.isArray(row.criteria)
+      ? (row.criteria as import("@/lib/evaluation-criteria").Criterion[])
+      : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

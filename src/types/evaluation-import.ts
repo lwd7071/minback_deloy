@@ -1,3 +1,5 @@
+import type { Criterion, CriterionScore } from "@/lib/evaluation-criteria";
+
 export type EvaluationImportPreviewRowDto = {
   rowNumber: number;
   mssv: string;
@@ -5,6 +7,8 @@ export type EvaluationImportPreviewRowDto = {
   studentId?: string;
   score: number | null;
   feedback: string | null;
+  // Điểm từng tiêu chí (chỉ có khi file dùng cột (xx%))
+  criteriaScores?: CriterionScore[];
   status: "valid" | "invalid" | "skipped";
   action?: "create" | "update" | "unchanged";
   warnings?: Array<{ field: string; message: string }>;
@@ -21,6 +25,10 @@ export type EvaluationImportPreviewDto = {
     update?: number;
     unchanged?: number;
   };
+  // Tiêu chí nhận diện từ file (rỗng = chế độ 1 cột điểm)
+  criteria?: Criterion[];
+  // Cảnh báo cấp file (ghi đè kết quả cũ, đổi tiêu chí...)
+  warnings?: Array<{ field: string; message: string }>;
   rows: EvaluationImportPreviewRowDto[];
 };
 
@@ -32,6 +40,7 @@ export type EvaluationImportResultDto = {
     score: number | null;
     feedback: string | null;
     status: "graded" | "returned";
+    criteriaScores?: CriterionScore[];
   }>;
   snapshotVersion?: string;
   gradingCounts?: {

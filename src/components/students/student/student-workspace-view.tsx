@@ -265,6 +265,63 @@ function ResultDetail({
           {result.score === null ? "—" : `${result.score} / ${result.maxScore}`}
         </p>
         <p className="muted">Đã công bố {formatDate(result.returnedAt)}</p>
+
+        {result.criteriaScores && result.criteriaScores.length > 0 ? (
+          <div
+            style={{
+              margin: "16px 0",
+              padding: "12px 14px",
+              background: "var(--color-surface-elevated, #f8fafc)",
+              borderRadius: "8px",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontSize: "0.9rem",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              Điểm theo tiêu chí đánh giá
+            </strong>
+            <div style={{ display: "grid", gap: "6px" }}>
+              {result.criteriaScores.map((c, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "6px 8px",
+                    background: "var(--color-surface)",
+                    borderRadius: "4px",
+                    border: "1px solid var(--color-border)",
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <span>
+                    <strong>{c.name}</strong>{" "}
+                    <span className="muted" style={{ fontSize: "0.8rem" }}>
+                      ({c.weight}%)
+                    </span>
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: "var(--color-primary)",
+                      fontFamily: "var(--font-mono, monospace)",
+                    }}
+                  >
+                    {c.score !== null ? c.score : "—"} / 10
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="form-notice">
           <strong>Feedback</strong>
           <p>{result.feedback || "Giảng viên chưa thêm feedback."}</p>

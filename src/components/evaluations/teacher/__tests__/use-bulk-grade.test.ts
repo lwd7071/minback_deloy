@@ -209,7 +209,7 @@ describe("useBulkGrade hook", () => {
       returned: 2,
       missing: 0,
     });
-    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
   it("thay state bằng snapshot mới khi URL chuyển sang trang khác", () => {

@@ -23,6 +23,7 @@ import type {
 
 function unexpected(error: unknown): never {
   if (error instanceof ApiError) throw error;
+  console.error("[assignment-service unexpected error]", error);
   throw new ApiError(500, API_ERROR_CODES.internal, "Đã xảy ra lỗi hệ thống");
 }
 

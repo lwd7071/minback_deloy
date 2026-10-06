@@ -12,7 +12,7 @@ export async function listStudentResults(
   let query = supabase
     .from("evaluations")
     .select(
-      "assignment_id, score, feedback, status, updated_at, assignments!inner(id, title, max_score, class_section_id, status)",
+      "assignment_id, score, feedback, status, criteria_scores, updated_at, assignments!inner(id, title, max_score, class_section_id, status)",
     )
     .eq("student_id", studentId)
     .eq("status", "returned")
@@ -37,6 +37,9 @@ export async function listStudentResults(
         score: row.score === null ? null : Number(row.score),
         feedback: row.feedback || null,
         status: "returned" as const,
+        criteriaScores: Array.isArray(row.criteria_scores)
+          ? (row.criteria_scores as import("@/lib/evaluation-criteria").CriterionScore[])
+          : undefined,
         returnedAt: row.updated_at,
         updatedAt: row.updated_at,
       };

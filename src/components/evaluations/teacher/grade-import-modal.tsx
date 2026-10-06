@@ -96,10 +96,12 @@ export function GradeImportModal({
     try {
       const payload = {
         mode,
+        criteria: preview.criteria,
         evaluations: validRows.map((r) => ({
           studentId: r.studentId!,
           score: r.score,
           feedback: r.feedback ?? "",
+          criteriaScores: r.criteriaScores,
         })),
       };
 
@@ -179,29 +181,63 @@ export function GradeImportModal({
 
         {/* Preview content */}
         {preview ? (
-          <div className="grade-import-preview-box">
-            <div className="preview-summary-grid">
-              <div>
-                <span className="muted">Tạo mới</span>
-                <strong>{preview.summary.create ?? 0}</strong>
+          <div>
+            {/* File-level Warnings (ghi đè kết quả, đổi tiêu chí) */}
+            {preview.warnings && preview.warnings.length > 0 ? (
+              <div
+                className="form-notice"
+                style={{
+                  margin: "12px 0",
+                  borderColor: "var(--color-warning)",
+                  backgroundColor: "var(--color-warning-soft)",
+                  color: "var(--color-text-primary)",
+                  padding: "10px 14px",
+                  borderRadius: "6px",
+                  fontSize: "0.88rem",
+                }}
+              >
+                {preview.warnings.map((w, idx) => (
+                  <div key={idx} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <span>⚠️</span>
+                    <span>{w.message}</span>
+                  </div>
+                ))}
               </div>
-              <div>
-                <span className="muted">Cập nhật</span>
-                <strong>{preview.summary.update ?? 0}</strong>
+            ) : null}
+
+            {/* Tiêu chí nhận diện (Rubric Chips) */}
+            {preview.criteria && preview.criteria.length > 0 ? (
+              <div
+                style={{
+                  margin: "12px 0 16px 0",
+                  padding: "10px 14px",
+                  background: "var(--color-surface-elevated, #f8fafc)",
+                  borderRadius: "6px",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: "6px" }}>
+                  TIÊU CHÍ CHẤM ĐIỂM ĐÃ NHẬN DIỆN ({preview.criteria.length} tiêu chí • Tổng 100%)
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {preview.criteria.map((c, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        padding: "3px 8px",
+                        fontSize: "0.82rem",
+                        fontWeight: 600,
+                        borderRadius: "4px",
+                        backgroundColor: "var(--color-secondary, #e2e8f0)",
+                        color: "var(--color-primary)",
+                      }}
+                    >
+                      {c.name}: {c.weight}%
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div>
-                <span className="muted">Không đổi</span>
-                <strong>{preview.summary.unchanged ?? 0}</strong>
-              </div>
-              <div>
-                <span className="muted">Lỗi</span>
-                <strong
-                  className={preview.summary.invalid > 0 ? "text-danger" : ""}
-                >
-                  {preview.summary.invalid}
-                </strong>
-              </div>
-            </div>
+            ) : null}
 
             <ImportPreviewTable rows={preview.rows} />
 

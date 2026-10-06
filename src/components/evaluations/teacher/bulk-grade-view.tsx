@@ -183,7 +183,17 @@ export function BulkGradeView({
                 <tr>
                   <th>MSSV</th>
                   <th>Họ tên</th>
-                  <th>Điểm</th>
+                  {assignment.criteria && assignment.criteria.length > 0 ? (
+                    assignment.criteria.map((c) => (
+                      <th
+                        key={c.name}
+                        style={{ textAlign: "right", minWidth: "100px" }}
+                      >
+                        {c.name} ({c.weight}%)
+                      </th>
+                    ))
+                  ) : null}
+                  <th style={{ textAlign: "right", minWidth: "80px" }}>Điểm</th>
                   <th>Feedback</th>
                   <th>Trạng thái</th>
                   <th>Thao tác</th>
@@ -198,6 +208,7 @@ export function BulkGradeView({
                       student={student}
                       evaluation={result}
                       maxScore={assignment.maxScore}
+                      criteria={assignment.criteria}
                       onSave={saveSingleEvaluation}
                     />
                   );

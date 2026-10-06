@@ -1,3 +1,5 @@
+import type { Criterion } from "@/lib/evaluation-criteria";
+
 export type AssignmentStatus = "draft" | "published" | "closed";
 
 export type AssignmentDto = {
@@ -9,6 +11,8 @@ export type AssignmentDto = {
   dueDate: string;
   status: AssignmentStatus;
   maxScore: number;
+  // Tiêu chí chấm điểm (rỗng/undefined = chấm kiểu 1 cột điểm)
+  criteria?: Criterion[];
   createdAt: string;
   updatedAt: string;
 };

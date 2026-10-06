@@ -1,3 +1,5 @@
+import type { CriterionScore } from "@/lib/evaluation-criteria";
+
 export type EvaluationStatus = "pending" | "graded" | "returned";
 
 export type EvaluationDto = {
@@ -7,6 +9,7 @@ export type EvaluationDto = {
   score: number | null;
   feedback: string;
   status: EvaluationStatus;
+  criteriaScores?: CriterionScore[];
   createdAt: string;
   updatedAt: string;
 };

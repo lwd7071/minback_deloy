@@ -3,7 +3,15 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { API_ERROR_CODES, ApiError } from "@/lib/api/errors";
-import { evaluationInputSchema } from "@/schemas/evaluation";
+import {
+  CRITERION_MAX_SCORE,
+  computeTotal,
+  type CriterionScore,
+} from "@/lib/evaluation-criteria";
+import {
+  evaluationInputSchema,
+  type EvaluationInput,
+} from "@/schemas/evaluation";
 import { findAssignmentById } from "@/server/repositories/assignments/assignment-repository";
 import {
   findEvaluationByPair,
@@ -36,6 +44,7 @@ type SnapshotAssignment = {
   due_date: string;
   status: AssignmentStatus;
   max_score: number | string;
+  criteria?: unknown;
   created_at: string;
   updated_at: string;
 };
@@ -59,6 +68,7 @@ type SnapshotEvaluation = {
   score: number | string | null;
   feedback: string;
   status: "pending" | "graded" | "returned";
+  criteria_scores?: unknown;
   created_at: string;
   updated_at: string;
   student: Pick<SnapshotStudent, "id" | "mssv" | "full_name" | "nickname">;
@@ -140,6 +150,9 @@ export async function getTeacherGradingSnapshot(
       dueDate: assignment.due_date,
       status: assignment.status,
       maxScore: Number(assignment.max_score),
+      criteria: Array.isArray(assignment.criteria)
+        ? (assignment.criteria as import("@/lib/evaluation-criteria").Criterion[])
+        : undefined,
       createdAt: assignment.created_at,
       updatedAt: assignment.updated_at,
     },
@@ -168,6 +181,9 @@ export async function getTeacherGradingSnapshot(
       score: evaluation.score === null ? null : Number(evaluation.score),
       feedback: evaluation.feedback,
       status: evaluation.status,
+      criteriaScores: Array.isArray(evaluation.criteria_scores)
+        ? (evaluation.criteria_scores as import("@/lib/evaluation-criteria").CriterionScore[])
+        : undefined,
       createdAt: evaluation.created_at,
       updatedAt: evaluation.updated_at,
       student: {
@@ -213,16 +229,66 @@ export async function upsertTeacherEvaluation(
     }
 
     const parsed = evaluationInputSchema.safeParse(input);
-    if (
-      !parsed.success ||
-      (parsed.data.score !== null && parsed.data.score > assignment.maxScore)
-    ) {
+    if (!parsed.success) {
       throw new ApiError(
         400,
         API_ERROR_CODES.validation,
         "Dữ liệu đánh giá không hợp lệ",
       );
     }
+
+    const criteria = assignment.criteria ?? [];
+    let computedScore = parsed.data.score;
+    let computedCriteriaScores: CriterionScore[] | undefined = undefined;
+
+    if (criteria.length > 0 && parsed.data.status !== "pending") {
+      const inputScores = parsed.data.criteriaScores;
+      if (!inputScores || inputScores.length !== criteria.length) {
+        throw new ApiError(
+          400,
+          API_ERROR_CODES.validation,
+          "Phải chấm đầy đủ tất cả các tiêu chí",
+        );
+      }
+
+      const validatedScores: CriterionScore[] = [];
+      for (const criterion of criteria) {
+        const found = inputScores.find((c) => c.name === criterion.name);
+        if (
+          !found ||
+          typeof found.score !== "number" ||
+          Number.isNaN(found.score) ||
+          found.score < 0 ||
+          found.score > CRITERION_MAX_SCORE
+        ) {
+          throw new ApiError(
+            400,
+            API_ERROR_CODES.validation,
+            `Điểm tiêu chí "${criterion.name}" phải từ 0 đến ${CRITERION_MAX_SCORE}`,
+          );
+        }
+        validatedScores.push({
+          name: criterion.name,
+          weight: criterion.weight,
+          score: found.score,
+        });
+      }
+
+      computedCriteriaScores = validatedScores;
+      computedScore = computeTotal(validatedScores, assignment.maxScore);
+    } else if (computedScore !== null && computedScore > assignment.maxScore) {
+      throw new ApiError(
+        400,
+        API_ERROR_CODES.validation,
+        "Điểm vượt quá điểm tối đa",
+      );
+    }
+
+    const payloadToSave: EvaluationInput = {
+      ...parsed.data,
+      score: computedScore,
+      criteriaScores: computedCriteriaScores,
+    };
 
     const current = await findEvaluationByPair(
       supabase,
@@ -231,16 +297,17 @@ export async function upsertTeacherEvaluation(
     );
     if (
       current &&
-      current.score === parsed.data.score &&
-      current.feedback === parsed.data.feedback &&
-      current.status === parsed.data.status
+      current.score === payloadToSave.score &&
+      current.feedback === payloadToSave.feedback &&
+      current.status === payloadToSave.status &&
+      JSON.stringify(current.criteriaScores) === JSON.stringify(payloadToSave.criteriaScores)
     ) {
       return current;
     }
 
     const saved = current
-      ? await updateEvaluation(supabase, current.id, parsed.data)
-      : await insertEvaluation(supabase, assignmentId, studentId, parsed.data);
+      ? await updateEvaluation(supabase, current.id, payloadToSave)
+      : await insertEvaluation(supabase, assignmentId, studentId, payloadToSave);
 
     deferBackgroundTask(async () => {
       try {
@@ -257,6 +324,8 @@ export async function upsertTeacherEvaluation(
 
     return saved;
   } catch (error) {
+    if (error instanceof ApiError) throw error;
+    if (error && typeof error === "object" && "status" in error && "code" in error) throw error;
     return unexpected(error);
   }
 }

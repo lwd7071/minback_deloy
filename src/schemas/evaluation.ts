@@ -13,9 +13,19 @@ export const evaluationInputSchema = z
       .nullable(),
     feedback: z.string().max(5_000, "Feedback không được quá 5.000 ký tự"),
     status: evaluationStatusSchema,
+    criteriaScores: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1),
+          weight: z.number().gt(0).max(100).optional(),
+          score: z.number(),
+        }),
+      )
+      .max(20)
+      .optional(),
   })
   .superRefine((value, context) => {
-    if (value.status !== "pending" && value.score === null) {
+    if (value.status !== "pending" && value.score === null && (!value.criteriaScores || value.criteriaScores.length === 0)) {
       context.addIssue({
         code: "custom",
         path: ["score"],

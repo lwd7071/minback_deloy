@@ -16,6 +16,7 @@ type EvaluationWithStudentRow = {
   score: number | string | null;
   feedback: string;
   status: EvaluationStatus;
+  criteria_scores?: unknown;
   created_at: string;
   updated_at: string;
   students: {
@@ -29,7 +30,7 @@ type EvaluationWithStudentRow = {
 type EvaluationRow = Omit<EvaluationWithStudentRow, "students">;
 
 const EVALUATION_COLUMNS =
-  "id, student_id, assignment_id, score, feedback, status, created_at, updated_at";
+  "id, student_id, assignment_id, score, feedback, status, criteria_scores, created_at, updated_at";
 
 function toEvaluationDto(row: EvaluationRow): EvaluationDto {
   return {
@@ -39,6 +40,9 @@ function toEvaluationDto(row: EvaluationRow): EvaluationDto {
     score: row.score === null ? null : Number(row.score),
     feedback: row.feedback,
     status: row.status,
+    criteriaScores: Array.isArray(row.criteria_scores)
+      ? (row.criteria_scores as import("@/lib/evaluation-criteria").CriterionScore[])
+      : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -53,6 +57,9 @@ function toDto(row: EvaluationWithStudentRow): EvaluationWithStudentDto {
     score: row.score === null ? null : Number(row.score),
     feedback: row.feedback,
     status: row.status,
+    criteriaScores: Array.isArray(row.criteria_scores)
+      ? (row.criteria_scores as import("@/lib/evaluation-criteria").CriterionScore[])
+      : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     student: {
@@ -71,7 +78,7 @@ export async function listEvaluationsWithStudents(
   const { data, error } = await supabase
     .from("evaluations")
     .select(
-      "id, student_id, assignment_id, score, feedback, status, created_at, updated_at, students!inner(id, mssv, full_name, nickname)",
+      "id, student_id, assignment_id, score, feedback, status, criteria_scores, created_at, updated_at, students!inner(id, mssv, full_name, nickname)",
     )
     .eq("assignment_id", assignmentId)
     .order("created_at", { ascending: true });
@@ -110,6 +117,7 @@ export async function insertEvaluation(
       score: input.score,
       feedback: input.feedback,
       status: input.status,
+      criteria_scores: input.criteriaScores ?? null,
     })
     .select(EVALUATION_COLUMNS)
     .single();
@@ -129,6 +137,7 @@ export async function updateEvaluation(
       score: input.score,
       feedback: input.feedback,
       status: input.status,
+      criteria_scores: input.criteriaScores ?? null,
     })
     .eq("id", evaluationId)
     .select(EVALUATION_COLUMNS)

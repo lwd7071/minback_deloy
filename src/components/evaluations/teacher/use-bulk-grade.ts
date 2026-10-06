@@ -7,6 +7,7 @@ import type {
   EvaluationWithStudentDto,
 } from "@/types/evaluation";
 import type { EvaluationImportResultDto } from "@/types/evaluation-import";
+import type { CriterionScore } from "@/lib/evaluation-criteria";
 import type { StudentAdminDto } from "@/types/student";
 
 type ApiResult<T> = { data: T } | { error: { message: string } };
@@ -16,6 +17,7 @@ export type ResultRow = {
   score: number | null;
   feedback: string;
   status: EvaluationStatus;
+  criteriaScores?: CriterionScore[];
 };
 
 export interface UseBulkGradeOptions {
@@ -51,6 +53,7 @@ export function useBulkGrade({
       score: evaluation.score,
       feedback: evaluation.feedback,
       status: evaluation.status,
+      criteriaScores: evaluation.criteriaScores,
     })),
   );
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -73,6 +76,7 @@ export function useBulkGrade({
         score: evaluation.score,
         feedback: evaluation.feedback,
         status: evaluation.status,
+        criteriaScores: evaluation.criteriaScores,
       })),
     );
     setGradingCounts(initialGradingCounts);
@@ -150,6 +154,7 @@ export function useBulkGrade({
           score: updated.score,
           feedback: updated.feedback ?? "",
           status: updated.status,
+          criteriaScores: updated.criteriaScores,
         });
       }
       return [...next.values()];
@@ -163,6 +168,7 @@ export function useBulkGrade({
     setImportModalOpen(false);
     if (result.snapshotVersion) setSnapshotVersion(result.snapshotVersion);
     if (result.gradingCounts) setGradingCounts(result.gradingCounts);
+    router.refresh();
   }
 
   async function publishSavedResults(): Promise<void> {
@@ -200,6 +206,7 @@ export function useBulkGrade({
               studentId: row.studentId,
               score: row.score,
               feedback: row.feedback,
+              criteriaScores: row.criteriaScores,
             })),
           }),
         },
@@ -225,13 +232,18 @@ export function useBulkGrade({
     studentId: string,
     score: number | null,
     feedback: string,
+    criteriaScores?: CriterionScore[],
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const current = byStudentId.get(studentId);
       let targetStatus: EvaluationStatus = "graded";
       if (current?.status === "returned") {
         targetStatus = "returned";
-      } else if (score === null && !feedback.trim()) {
+      } else if (
+        score === null &&
+        (!criteriaScores || criteriaScores.length === 0) &&
+        !feedback.trim()
+      ) {
         targetStatus = "pending";
       }
 
@@ -244,6 +256,9 @@ export function useBulkGrade({
             score,
             feedback,
             status: targetStatus,
+            ...(criteriaScores && criteriaScores.length > 0
+              ? { criteriaScores }
+              : {}),
           }),
         },
       );
@@ -264,6 +279,7 @@ export function useBulkGrade({
           score: saved.score,
           feedback: saved.feedback ?? "",
           status: saved.status,
+          criteriaScores: saved.criteriaScores,
         });
         return [...next.values()];
       });

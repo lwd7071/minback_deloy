@@ -41,6 +41,60 @@ export function StudentAssignmentModal({
                     : "—"}
                 </strong>
               </div>
+              {assignment.evaluation.criteriaScores &&
+              assignment.evaluation.criteriaScores.length > 0 ? (
+                <div
+                  style={{
+                    margin: "12px 0",
+                    padding: "10px 12px",
+                    background: "var(--color-surface)",
+                    borderRadius: "6px",
+                    border: "1px solid var(--color-border)",
+                  }}
+                >
+                  <strong
+                    style={{
+                      display: "block",
+                      marginBottom: "6px",
+                      fontSize: "0.85rem",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
+                    Điểm theo tiêu chí đánh giá:
+                  </strong>
+                  <div style={{ display: "grid", gap: "4px" }}>
+                    {assignment.evaluation.criteriaScores.map((c, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: "0.85rem",
+                          padding: "4px 6px",
+                          borderRadius: "4px",
+                          background: "var(--color-surface-elevated, transparent)",
+                        }}
+                      >
+                        <span>
+                          {c.name}{" "}
+                          <span className="muted" style={{ fontSize: "0.8rem" }}>
+                            ({c.weight}%)
+                          </span>
+                        </span>
+                        <strong
+                          style={{
+                            color: "var(--color-primary)",
+                            fontFamily: "var(--font-mono, monospace)",
+                          }}
+                        >
+                          {c.score !== null ? c.score : "—"} / 10
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {assignment.evaluation.feedback ? (
                 <div style={{ marginTop: "8px" }}>
                   <strong style={{ display: "block", marginBottom: "2px" }}>

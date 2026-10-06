@@ -323,6 +323,129 @@ describe("BulkGradeView", () => {
     );
     fetchSpy.mockRestore();
   });
+
+  it("renders criteria headers and inputs, calculates score realtime, and sends criteriaScores when assignment has criteria", async () => {
+    const assignmentWithCriteria: AssignmentDto = {
+      ...mockAssignment,
+      criteria: [
+        { name: "Tiêu chí 1", weight: 30 },
+        { name: "Tiêu chí 2", weight: 70 },
+      ],
+    };
+
+    const mockStudents = [
+      {
+        id: "student-1",
+        classSectionId: "class-123",
+        mssv: "24110200",
+        fullName: "Nguyễn Văn C",
+        email: null,
+        nickname: "C",
+        mustChangeNickname: false,
+        mustChangePin: false,
+        lockedUntil: null,
+        createdAt: "2026-10-01T00:00:00.000Z",
+        updatedAt: "2026-10-01T00:00:00.000Z",
+      },
+    ];
+
+    const mockEvaluations = [
+      {
+        id: "eval-1",
+        assignmentId: "assignment-123",
+        studentId: "student-1",
+        score: 8.6,
+        feedback: "Tốt",
+        status: "graded" as const,
+        criteriaScores: [
+          { name: "Tiêu chí 1", weight: 30, score: 8 },
+          { name: "Tiêu chí 2", weight: 70, score: 9 }, // 8*0.3 + 9*0.7 = 2.4 + 6.3 = 8.7 (or 8.6)
+        ],
+        createdAt: "2026-10-01T00:00:00.000Z",
+        updatedAt: "2026-10-01T00:00:00.000Z",
+        student: {
+          id: "student-1",
+          mssv: "24110200",
+          fullName: "Nguyễn Văn C",
+          nickname: "C",
+        },
+      },
+    ];
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: {
+            id: "eval-1",
+            assignmentId: "assignment-123",
+            studentId: "student-1",
+            score: 9.7,
+            feedback: "Rất tốt",
+            status: "graded",
+            criteriaScores: [
+              { name: "Tiêu chí 1", weight: 30, score: 9 },
+              { name: "Tiêu chí 2", weight: 70, score: 10 },
+            ],
+            createdAt: "2026-10-01T00:00:00.000Z",
+            updatedAt: "2026-10-01T00:00:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    render(
+      <BulkGradeView
+        classSectionId="class-123"
+        assignment={assignmentWithCriteria}
+        students={mockStudents}
+        studentMeta={{ page: 1, pageSize: 50, total: 1 }}
+        initialSearch=""
+        evaluations={mockEvaluations}
+      />,
+    );
+
+    // Kiểm tra header cột tiêu chí
+    expect(screen.getByText("Tiêu chí 1 (30%)")).toBeInTheDocument();
+    expect(screen.getByText("Tiêu chí 2 (70%)")).toBeInTheDocument();
+
+    const editButton = screen.getByRole("button", { name: /sửa/i });
+    fireEvent.click(editButton);
+
+    const tc1Input = screen.getByLabelText(/điểm tiêu chí 1 của nguyễn văn c/i);
+    const tc2Input = screen.getByLabelText(/điểm tiêu chí 2 của nguyễn văn c/i);
+
+    expect(tc1Input).toHaveValue(8);
+    expect(tc2Input).toHaveValue(9);
+
+    // Thay đổi điểm tiêu chí 1 thành 9, tiêu chí 2 thành 10 -> tổng điểm realtime = 9*0.3 + 10*0.7 = 9.7
+    fireEvent.change(tc1Input, { target: { value: "9" } });
+    fireEvent.change(tc2Input, { target: { value: "10" } });
+
+    // Kiểm tra điểm tổng tự tính hiển thị realtime 9.7
+    expect(screen.getByText("9.7")).toBeInTheDocument();
+
+    const saveButton = screen.getByRole("button", { name: /lưu/i });
+    fireEvent.click(saveButton);
+
+    await screen.findByText("9.7");
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/v1/teacher/assignments/assignment-123/students/student-1/evaluation",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          score: 9.7,
+          feedback: "Tốt",
+          status: "graded",
+          criteriaScores: [
+            { name: "Tiêu chí 1", weight: 30, score: 9 },
+            { name: "Tiêu chí 2", weight: 70, score: 10 },
+          ],
+        }),
+      }),
+    );
+    fetchSpy.mockRestore();
+  });
 });
 
 

@@ -14,6 +14,13 @@ import type {
   EvaluationImportResultDto,
 } from "@/types/evaluation-import";
 import {
+  CRITERION_MAX_SCORE,
+  computeTotal,
+  extractCriteria,
+  validateWeights,
+  type CriterionScore,
+} from "@/lib/evaluation-criteria";
+import {
   MAX_EVALUATION_IMPORT_FILE_BYTES,
   MAX_EVALUATION_IMPORT_DATA_ROWS,
   normalizeHeaderKey,
@@ -73,11 +80,24 @@ export async function previewEvaluationFile(
 
   const { mssvIndex, nameIndex, scoreIndex, feedbackIndex } =
     resolveEvaluationColumns(headerRow.cells);
+
+  // Quét các cột nằm giữa "Họ tên" và "Điểm", lấy cột có (xx%)
+  const { indexes: criteriaIndexes, criteria } = extractCriteria(
+    headerRow.cells,
+    Math.max(mssvIndex, nameIndex) + 1,
+    scoreIndex,
+  );
+  if (criteria.length > 0) {
+    const weightError = validateWeights(criteria);
+    if (weightError) validationError(weightError);
+  }
+
   const semanticIndexes = new Set([
     mssvIndex,
     nameIndex,
     scoreIndex,
     feedbackIndex,
+    ...criteriaIndexes,
   ]);
   const extraHeaderIndexes = headerRow.cells
     .map((_, index) => index)
@@ -177,7 +197,39 @@ export async function previewEvaluationFile(
     }
 
     let parsedScore: number | null = null;
-    if (rawScore !== "") {
+    const criteriaScores: CriterionScore[] = [];
+    if (criteria.length > 0) {
+      // Chế độ tiêu chí: bỏ qua cột Điểm trong file, tự tính lại ở Backend
+      let rowOk = true;
+      criteria.forEach((criterion, i) => {
+        const raw = (row.cells[criteriaIndexes[i]] ?? "").trim();
+        if (raw === "") {
+          errors.push({
+            field: `criteria.${criterion.name}`,
+            message: `Thiếu điểm ${criterion.name}`,
+          });
+          rowOk = false;
+          return;
+        }
+        const num = Number(raw.replace(",", "."));
+        if (
+          Number.isNaN(num) ||
+          num < 0 ||
+          num > CRITERION_MAX_SCORE
+        ) {
+          errors.push({
+            field: `criteria.${criterion.name}`,
+            message: `Điểm ${criterion.name} phải là số từ 0 đến ${CRITERION_MAX_SCORE}`,
+          });
+          rowOk = false;
+          return;
+        }
+        criteriaScores.push({ ...criterion, score: num });
+      });
+      if (rowOk) {
+        parsedScore = computeTotal(criteriaScores, assignment.maxScore);
+      }
+    } else if (rawScore !== "") {
       const numScore = Number(rawScore.replace(",", "."));
       if (Number.isNaN(numScore)) {
         errors.push({
@@ -238,6 +290,7 @@ export async function previewEvaluationFile(
         studentId: student!.id,
         score: parsedScore,
         feedback: parsedFeedback,
+        ...(criteria.length > 0 ? { criteriaScores } : {}),
         status: "valid",
         action,
         warnings,
@@ -247,6 +300,27 @@ export async function previewEvaluationFile(
 
   const validCount = parsedRows.filter((r) => r.status === "valid").length;
   const skippedCount = parsedRows.filter((r) => r.status === "invalid").length;
+
+  // Cảnh báo cấp file: ghi đè kết quả cũ / đổi tiêu chí so với lần trước
+  const fileWarnings: Array<{ field: string; message: string }> = [];
+  if (criteria.length > 0) {
+    if ((existingEvaluations ?? []).length > 0) {
+      fileWarnings.push({
+        field: "existing",
+        message: `Bài này đã có ${(existingEvaluations ?? []).length} kết quả, sẽ bị thay thế bằng dữ liệu trong file`,
+      });
+    }
+    const previous = assignment.criteria ?? [];
+    const changed =
+      previous.length > 0 &&
+      JSON.stringify(previous) !== JSON.stringify(criteria);
+    if (changed) {
+      fileWarnings.push({
+        field: "criteria",
+        message: "Tiêu chí thay đổi so với lần nhập trước",
+      });
+    }
+  }
 
   return {
     summary: {
@@ -258,6 +332,8 @@ export async function previewEvaluationFile(
       update: parsedRows.filter((r) => r.action === "update").length,
       unchanged: parsedRows.filter((r) => r.action === "unchanged").length,
     },
+    criteria,
+    warnings: fileWarnings,
     rows: parsedRows,
   };
 }
@@ -275,12 +351,57 @@ export async function executeEvaluationImport(
 
   const targetStatus = input.mode === "publish" ? "returned" : "graded";
 
-  const rowsToUpsert = input.evaluations.map((item) => ({
-    studentId: item.studentId,
-    score: item.score,
-    feedback: item.feedback ?? "",
-    status: targetStatus,
-  }));
+  // Chế độ tiêu chí: server tự kiểm tra và tính lại điểm, không tin score từ client
+  const criteria = input.criteria ?? [];
+  if (criteria.length > 0) {
+    const weightError = validateWeights(criteria);
+    if (weightError) validationError(weightError);
+  }
+
+  const rowsToUpsert = input.evaluations.map((item) => {
+    if (criteria.length === 0 || !item.criteriaScores) {
+      return {
+        studentId: item.studentId,
+        score: item.score,
+        feedback: item.feedback ?? "",
+        status: targetStatus,
+      };
+    }
+    const scores = criteria.map((criterion) => {
+      const found = item.criteriaScores!.find((c) => c.name === criterion.name);
+      if (
+        !found ||
+        found.score < 0 ||
+        found.score > CRITERION_MAX_SCORE
+      ) {
+        validationError(
+          `Điểm tiêu chí "${criterion.name}" phải từ 0 đến ${CRITERION_MAX_SCORE}`,
+        );
+      }
+      return { ...criterion, score: found.score };
+    });
+    return {
+      studentId: item.studentId,
+      score: computeTotal(scores, assignment.maxScore),
+      feedback: item.feedback ?? "",
+      status: targetStatus,
+      criteriaScores: scores,
+    };
+  });
+
+  if (criteria.length > 0) {
+    const { error: criteriaError } = await supabase
+      .from("assignments")
+      .update({ criteria })
+      .eq("id", assignmentId);
+    if (criteriaError) {
+      throw new ApiError(
+        500,
+        API_ERROR_CODES.internal,
+        "Không thể lưu tiêu chí chấm điểm",
+      );
+    }
+  }
 
   const BATCH_SIZE = 100;
   const changed: Array<{
@@ -370,6 +491,7 @@ export async function executeEvaluationImport(
       score: r.score,
       feedback: r.feedback,
       status: targetStatus as "graded" | "returned",
+      criteriaScores: r.criteriaScores,
     })),
     snapshotVersion,
     gradingCounts,
