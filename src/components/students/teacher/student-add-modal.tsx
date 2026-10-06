@@ -42,8 +42,13 @@ export function StudentAddModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!mssv.trim() || !fullName.trim()) {
-      setError("Vui lòng nhập MSSV và Họ tên sinh viên");
+    if (!mssv.trim() || !fullName.trim() || !email.trim()) {
+      setError("Vui lòng nhập đầy đủ MSSV, Họ tên và Email sinh viên");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Email không đúng định dạng");
       return;
     }
 
@@ -133,12 +138,13 @@ export function StudentAddModal({
         </div>
 
         <div>
-          <label className="form-label">Email (tùy chọn)</label>
+          <label className="form-label">Email *</label>
           <input
             type="email"
             className="form-input"
+            required
             autoComplete="off"
-            placeholder="VD: 21110001@student.hcmute.edu.vn"
+            placeholder="VD: sinhvien@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={busy}

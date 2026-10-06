@@ -405,14 +405,11 @@ export async function requestForgotPinOtp(
   // Tạo OTP và gửi email
   const { otp } = await createForgotPinChallenge(student.id);
 
-  const recipientEmail =
-    student.email && student.email.trim()
-      ? student.email.trim()
-      : `${student.mssv.toLowerCase()}@student.hcmute.edu.vn`;
-
-  void deliverEmailSafely(() =>
-    sendForgotPinOtpEmail(recipientEmail, student.full_name, otp),
-  );
+  if (student.email && student.email.trim()) {
+    void deliverEmailSafely(() =>
+      sendForgotPinOtpEmail(student.email!.trim(), student.full_name, otp),
+    );
+  }
 
   return {
     message: "Nếu thông tin chính xác, mã OTP đã được gửi đến email của bạn.",

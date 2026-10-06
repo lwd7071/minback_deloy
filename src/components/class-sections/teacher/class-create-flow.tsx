@@ -113,7 +113,7 @@ export function ClassCreateFlow() {
           <h2>Chuẩn bị danh sách sinh viên</h2>
           <div className="class-create-template-bar">
             <p className="muted">
-              CSV/XLSX cần có cột MSSV, Họ Tên; Email là tùy chọn.
+              CSV/XLSX cần có đủ 3 cột bắt buộc: <strong>MSSV</strong>, <strong>Họ Tên</strong> và <strong>Email</strong>.
             </p>
             <a
               href="/templates/mau-danh-sach-sinh-vien.xlsx"
@@ -184,6 +184,7 @@ export function ClassCreateFlow() {
                       <th>Dòng</th>
                       <th>MSSV</th>
                       <th>Họ tên</th>
+                      <th>Email</th>
                       <th>Trạng thái</th>
                     </tr>
                   </thead>
@@ -195,6 +196,7 @@ export function ClassCreateFlow() {
                         <td>
                           {row.student?.fullName ?? row.errors?.[0]?.message}
                         </td>
+                        <td>{row.student?.email ?? "—"}</td>
                         <td>
                           <span
                             className={`status-text ${row.status === "valid" ? "status-success" : "status-warning"}`}

@@ -16,14 +16,18 @@ import type { ImportResultDto, ImportRowDto } from "@/types/import";
 import type { ImportPreviewDto } from "@/types/frontend-rebuild";
 
 const BCRYPT_ROUNDS = 10;
-const REQUIRED_HEADERS = ["mssv", "họ tên"] as const;
+const REQUIRED_HEADERS = ["mssv", "họ tên", "email"] as const;
 export const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
 export const MAX_IMPORT_DATA_ROWS = 2_000;
 
 const importedStudentSchema = z.object({
-  mssv: z.string().trim().min(1).max(50),
-  fullName: z.string().trim().min(1).max(150),
-  email: z.string().trim().email().max(254).optional(),
+  mssv: z.string().trim().min(1, "MSSV không được để trống").max(50),
+  fullName: z.string().trim().min(1, "Họ tên không được để trống").max(150),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email không được để trống")
+    .pipe(z.string().email("Email không đúng định dạng").max(254)),
 });
 
 type ParsedStudentRow = z.infer<typeof importedStudentSchema> & { row: number };
@@ -106,13 +110,13 @@ function parseStudentRecords(records: SourceRow[]): ParsedCsvRow[] {
   );
   for (const requiredHeader of REQUIRED_HEADERS) {
     if (!headerIndex.has(requiredHeader)) {
-      validationError("Tệp CSV thiếu cột bắt buộc MSSV hoặc Họ Tên");
+      validationError("Tệp CSV thiếu cột bắt buộc MSSV, Họ Tên hoặc Email");
     }
   }
 
   const mssvIndex = headerIndex.get("mssv")!;
   const fullNameIndex = headerIndex.get("họ tên")!;
-  // Nhận diện cột email chính xác hoặc cột bắt đầu bằng "email" (ví dụ: "Email (tùy chọn...)")
+  // Nhận diện cột email chính xác hoặc cột bắt đầu bằng "email"
   let emailIndex = headerIndex.get("email");
   if (emailIndex === undefined) {
     const matchedIndex = header.findIndex((col) =>
@@ -136,9 +140,9 @@ function parseStudentRecords(records: SourceRow[]): ParsedCsvRow[] {
       mssv: row.cells[mssvIndex] ?? "",
       fullName: row.cells[fullNameIndex] ?? "",
       email:
-        emailIndex === undefined || !row.cells[emailIndex]?.trim()
-          ? undefined
-          : row.cells[emailIndex],
+        emailIndex === undefined
+          ? ""
+          : (row.cells[emailIndex] ?? "").trim(),
     });
     if (!parsed.success) {
       return {

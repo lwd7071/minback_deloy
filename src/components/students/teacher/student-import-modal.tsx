@@ -96,9 +96,19 @@ export function StudentImportModal({
       <form onSubmit={(e) => void handleSubmit(e)} className="dialog-form">
         <p className="muted dialog-copy">
           Hỗ trợ file Excel (<strong>.xlsx</strong>) hoặc <strong>.csv</strong>.
-          Cần có cột <strong>MSSV</strong>, <strong>Họ Tên</strong> (Email là
-          tùy chọn). Sinh viên mới dùng PIN mặc định <strong>111111</strong>.
+          Cần có đủ 3 cột bắt buộc: <strong>MSSV</strong>, <strong>Họ Tên</strong> và <strong>Email</strong>. Sinh viên mới dùng PIN mặc định <strong>111111</strong>.
         </p>
+
+        <div style={{ margin: "12px 0 16px" }}>
+          <a
+            href="/templates/mau-danh-sach-sinh-vien.xlsx"
+            download="mau-danh-sach-sinh-vien.xlsx"
+            className="btn btn-secondary btn-sm"
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+          >
+            <span>Tải file mẫu (.xlsx)</span>
+          </a>
+        </div>
 
         <div style={{ margin: "16px 0" }}>
           <input

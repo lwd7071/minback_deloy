@@ -32,12 +32,12 @@ describe("buildImportPreview", () => {
       {
         row: 2,
         status: "valid",
-        student: { row: 2, mssv: "SV01", fullName: "An" },
+        student: { row: 2, mssv: "SV01", fullName: "An", email: "an@gmail.com" },
       },
       {
         row: 3,
         status: "valid",
-        student: { row: 3, mssv: "SV01", fullName: "Bình" },
+        student: { row: 3, mssv: "SV01", fullName: "Bình", email: "binh@gmail.com" },
       },
     ]);
     expect(preview.summary).toEqual({ total: 2, valid: 1, skipped: 1 });
@@ -69,47 +69,33 @@ describe("parseStudentCsv", () => {
     ]);
   });
 
-  it("skips invalid data rows while ignoring blank rows", () => {
+  it("throws validation error if required Email header is missing", () => {
+    expect(() =>
+      parseStudentCsv("MSSV,Họ Tên\nSV001,Nguyễn Văn A\n"),
+    ).toThrow("Tệp CSV thiếu cột bắt buộc MSSV, Họ Tên hoặc Email");
+  });
+
+  it("skips invalid data rows (missing MSSV, wrong email, missing email) while ignoring blank rows", () => {
     const rows = parseStudentCsv(
-      "MSSV,Họ Tên,Email\n\n,Thiếu MSSV,x@example.test\nSV002,Đúng,wrong-email\n",
+      "MSSV,Họ Tên,Email\n\n,Thiếu MSSV,x@example.test\nSV002,Đúng,wrong-email\nSV003,Thiếu email,\n",
     );
 
     expect(rows).toEqual([
-      expect.objectContaining({ row: 3, status: "skipped" }),
-      expect.objectContaining({ row: 4, status: "skipped" }),
-    ]);
-  });
-
-  it("recognizes descriptive email headers like 'Email (Có thể không điền...)' and preserves provided email", () => {
-    const csv = [
-      'MSSV,Họ Tên,"Email (Có thể không điền, mặc định là mssv@student.hcmute.edu.vn)"',
-      "24110202,Nguyễn Văn A,",
-      "24110201,Nguyễn Văn B,nguyenvanB@gmail.com",
-    ].join("\n");
-
-    const rows = parseStudentCsv(csv);
-
-    expect(rows).toEqual([
-      {
-        row: 2,
-        status: "valid",
-        student: {
-          row: 2,
-          mssv: "24110202",
-          fullName: "Nguyễn Văn A",
-          email: undefined,
-        },
-      },
-      {
+      expect.objectContaining({
         row: 3,
-        status: "valid",
-        student: {
-          row: 3,
-          mssv: "24110201",
-          fullName: "Nguyễn Văn B",
-          email: "nguyenvanB@gmail.com",
-        },
-      },
+        status: "skipped",
+        errors: [{ field: "mssv", message: expect.any(String) }],
+      }),
+      expect.objectContaining({
+        row: 4,
+        status: "skipped",
+        errors: [{ field: "email", message: expect.any(String) }],
+      }),
+      expect.objectContaining({
+        row: 5,
+        status: "skipped",
+        errors: [{ field: "email", message: expect.any(String) }],
+      }),
     ]);
   });
 });
@@ -219,9 +205,9 @@ describe("importTeacherClassSectionCsv optimization", () => {
       status: "valid",
       student: {
         row: 2,
-        mssv: "24110202",
+        mssv: "24110001",
         fullName: "Nguyễn Văn A",
-        email: undefined,
+        email: "nguyenvana@gmail.com",
       },
     });
     expect(rows[1]).toEqual({
@@ -229,9 +215,9 @@ describe("importTeacherClassSectionCsv optimization", () => {
       status: "valid",
       student: {
         row: 3,
-        mssv: "24110201",
-        fullName: "Nguyễn Văn B",
-        email: "nguyenvanB@gmail.com",
+        mssv: "24110002",
+        fullName: "Trần Thị B",
+        email: "tranthib@gmail.com",
       },
     });
     expect(rows[2]).toEqual({
@@ -239,9 +225,9 @@ describe("importTeacherClassSectionCsv optimization", () => {
       status: "valid",
       student: {
         row: 4,
-        mssv: "24110200",
-        fullName: "Nguyễn Văn C",
-        email: undefined,
+        mssv: "24110003",
+        fullName: "Lê Văn C",
+        email: "levanc@gmail.com",
       },
     });
 

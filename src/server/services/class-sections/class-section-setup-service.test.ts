@@ -91,7 +91,10 @@ describe("createTeacherClassSectionSetup", () => {
   });
 
   it("rejects a file with zero valid rows before calling the repository", async () => {
-    const file = new File(["MSSV,Họ Tên\n,Thiếu MSSV\n"], "invalid.csv");
+    const file = new File(
+      ["MSSV,Họ Tên,Email\n,Thiếu MSSV,an@example.test\n"],
+      "invalid.csv",
+    );
 
     await expect(
       createTeacherClassSectionSetup({ code: "CS101", name: "Nhập môn" }, file),
@@ -115,7 +118,10 @@ describe("createTeacherClassSectionSetup", () => {
     await expect(
       createTeacherClassSectionSetup(
         { code: "CS101", name: "Nhập môn" },
-        new File(["MSSV,Họ Tên\nSV01,Nguyễn An\n"], "students.csv"),
+        new File(
+          ["MSSV,Họ Tên,Email\nSV01,Nguyễn An,an@example.test\n"],
+          "students.csv",
+        ),
       ),
     ).rejects.toMatchObject({ status: 500 });
   });
