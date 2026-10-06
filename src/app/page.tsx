@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
-import { ArrowUpRight } from "lucide-react";
 import { ClassLookupForm } from "@/components/auth/student/class-lookup-form";
 import styles from "./home.module.css";
 
@@ -16,9 +15,6 @@ export default function HomePage() {
       <header className={styles.header}>
         <Link className={styles.brand} href="/">
           MinBack
-        </Link>
-        <Link className={styles.teacher} href="/admin/login">
-          Dành cho giảng viên <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
       </header>
       <main className={styles.main}>

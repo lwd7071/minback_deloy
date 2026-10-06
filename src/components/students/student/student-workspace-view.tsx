@@ -131,12 +131,16 @@ export function StudentWorkspaceView({
             aria-label="Tổng quan lớp học"
           >
             <Card className="stat-card student-class-card">
-              <span className="signature-icon">
-                <AppIcon name="book" size={28} />
+              <span className="signature-icon" aria-hidden="true">
+                <AppIcon name="book" size={24} />
               </span>
-              <div>
-                <strong>{identity.classSection.code}</strong>
-                <small>{identity.classSection.name}</small>
+              <div className="student-class-info">
+                <small className="student-class-name" title={identity.classSection.name}>
+                  {identity.classSection.name}
+                </small>
+                <strong className="student-class-code" title={identity.classSection.code}>
+                  {identity.classSection.code}
+                </strong>
               </div>
             </Card>
             <Card className="stat-card">

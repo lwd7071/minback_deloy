@@ -878,37 +878,55 @@ label {
   min-height: 116px;
 }
 .student-class-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
   background: var(--color-surface);
   color: var(--color-primary);
+  min-width: 0;
+  overflow: hidden;
 }
 .student-class-card .signature-icon {
+  position: static !important;
   display: inline-flex;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  flex: 0 0 44px;
   border-radius: var(--radius-md);
   background: var(--color-accent);
   color: var(--color-text-primary);
 }
+.student-class-card .student-class-info,
 .student-class-card div {
-  display: grid;
-  gap: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
-.student-class-card strong {
+.student-class-card strong,
+.student-class-card .student-class-code {
   order: initial;
-  font-size: 1.25rem;
-}
-.student-class-card span,
-.student-class-card small {
-  color: var(--color-text-secondary);
-}
-.student-class-card strong {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
   color: var(--color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+.student-class-card small,
+.student-class-card .student-class-name {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 @media (max-width: 800px) {
   .student-summary-cards {
