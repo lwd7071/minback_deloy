@@ -75,10 +75,14 @@ export function useClassCreateFlow() {
     setSkipRoster(false);
     setError(null);
     setPreviewBusy(false);
+    if (nextFile) {
+      void inspectFile(nextFile);
+    }
   }
 
-  async function inspectFile() {
-    if (!file || previewBusy) return;
+  async function inspectFile(fileToInspect?: File | null) {
+    const targetFile = fileToInspect ?? file;
+    if (!targetFile || previewBusy) return;
     previewControllerRef.current?.abort();
     const controller = new AbortController();
     const sequence = previewSequenceRef.current + 1;
@@ -88,7 +92,7 @@ export function useClassCreateFlow() {
     setError(null);
     try {
       const formData = new FormData();
-      formData.set("file", file);
+      formData.set("file", targetFile);
       const response = await fetch(
         "/api/v1/teacher/class-section-import-previews",
         { method: "POST", body: formData, signal: controller.signal },

@@ -58,9 +58,11 @@ test.describe("Workflow 1: Teacher Flow", () => {
     );
     await page.setInputFiles('input[type="file"]', studentCsvPath);
 
-    // Bấm Kiểm tra tệp
+    // Tự động kiểm tra tệp (hoặc bấm nếu có nút)
     const checkFileBtn = page.locator('button:has-text("Kiểm tra tệp")');
-    await checkFileBtn.click();
+    if (await checkFileBtn.isVisible()) {
+      await checkFileBtn.click();
+    }
 
     // Chờ bản xem trước hiển thị (10 sinh viên hợp lệ)
     await expect(page.locator(".class-create-stats strong").first()).toHaveText(
@@ -140,9 +142,11 @@ test.describe("Workflow 1: Teacher Flow", () => {
     );
     await modal.locator('input[type="file"]').setInputFiles(gradeCsvPath);
 
-    // Click Kiểm tra tệp
+    // Tự động kiểm tra tệp (hoặc bấm nếu có nút)
     const checkGradeFileBtn = modal.locator('button:has-text("Kiểm tra tệp")');
-    await checkGradeFileBtn.click();
+    if (await checkGradeFileBtn.isVisible()) {
+      await checkGradeFileBtn.click();
+    }
 
     // Chờ xem trước load xong
     await expect(modal.locator("text=Tạo mới")).toBeVisible({
