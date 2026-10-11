@@ -163,6 +163,7 @@ export function getCellString(value: unknown): string {
         .join("")
         .trim();
     }
+    if ("formula" in value) return "";
     if (
       "text" in value &&
       typeof (value as { text: unknown }).text === "string"
@@ -189,7 +190,17 @@ export async function parseEvaluationXlsx(
   worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
     const cells: string[] = [];
     row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
-      const valStr = getCellString(cell.value);
+      let value = cell.value;
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "formula" in value &&
+        !("result" in value) &&
+        cell.result !== undefined
+      ) {
+        value = { ...value, result: cell.result };
+      }
+      const valStr = getCellString(value);
       cells[columnNumber - 1] = valStr !== "" ? valStr : (cell.text ?? "");
     });
     records.push({ row: rowNumber, cells });

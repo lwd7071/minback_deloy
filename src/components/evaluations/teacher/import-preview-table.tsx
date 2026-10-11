@@ -21,11 +21,7 @@ export function ImportPreviewTable({
         <tbody>
           {rows.map((row) => (
             <tr
-              className={
-                row.status === "invalid" || row.status === "skipped"
-                  ? "import-row-invalid"
-                  : ""
-              }
+              className={row.status === "invalid" ? "import-row-invalid" : ""}
               key={row.rowNumber}
             >
               <td>{row.rowNumber}</td>
@@ -39,6 +35,10 @@ export function ImportPreviewTable({
                 {row.status === "valid" ? (
                   <span className="badge badge-success">
                     {row.action ?? "Hợp lệ"}
+                  </span>
+                ) : row.status === "skipped" ? (
+                  <span className="badge badge-neutral">
+                    Chưa có điểm, bỏ qua
                   </span>
                 ) : (
                   <span className="badge badge-error">

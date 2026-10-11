@@ -53,6 +53,26 @@ describe("BulkGradeView", () => {
     expect(templateLink).toHaveAttribute("download");
   });
 
+  it("renders an export link for the current assignment's saved grades", () => {
+    render(
+      <BulkGradeView
+        classSectionId="class-123"
+        assignment={mockAssignment}
+        students={[]}
+        studentMeta={{ page: 1, pageSize: 50, total: 0 }}
+        initialSearch=""
+        evaluations={[]}
+      />,
+    );
+
+    const exportLink = screen.getByRole("link", { name: /xuất bảng điểm/i });
+    expect(exportLink).toHaveAttribute(
+      "href",
+      "/api/v1/teacher/assignments/assignment-123/evaluations/export",
+    );
+    expect(exportLink).toHaveAttribute("download");
+  });
+
   it("enters edit mode when clicking the edit button on a student row", async () => {
     const mockStudents = [
       {
@@ -167,7 +187,9 @@ describe("BulkGradeView", () => {
     const cancelButton = screen.getByRole("button", { name: /hủy/i });
     fireEvent.click(cancelButton);
 
-    expect(screen.queryByRole("button", { name: /hủy/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /hủy/i }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
     expect(screen.queryByText("9.5")).not.toBeInTheDocument();
   });
@@ -447,5 +469,3 @@ describe("BulkGradeView", () => {
     fetchSpy.mockRestore();
   });
 });
-
-

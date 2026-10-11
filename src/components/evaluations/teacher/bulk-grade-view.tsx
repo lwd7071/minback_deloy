@@ -76,6 +76,15 @@ export function BulkGradeView({
         </div>
         <div className="grade-page-actions">
           <a
+            href={`/api/v1/teacher/assignments/${assignment.id}/evaluations/export`}
+            download
+            className="btn btn-secondary"
+            aria-label="Xuất bảng điểm đã lưu"
+          >
+            <AppIcon name="download" size={16} />
+            <span>Xuất bảng điểm</span>
+          </a>
+          <a
             href={`/api/v1/teacher/assignments/${assignment.id}/evaluations/import-template`}
             download
             className="btn btn-secondary"
@@ -183,16 +192,16 @@ export function BulkGradeView({
                 <tr>
                   <th>MSSV</th>
                   <th>Họ tên</th>
-                  {assignment.criteria && assignment.criteria.length > 0 ? (
-                    assignment.criteria.map((c) => (
-                      <th
-                        key={c.name}
-                        style={{ textAlign: "right", minWidth: "100px" }}
-                      >
-                        {c.name} ({c.weight}%)
-                      </th>
-                    ))
-                  ) : null}
+                  {assignment.criteria && assignment.criteria.length > 0
+                    ? assignment.criteria.map((c) => (
+                        <th
+                          key={c.name}
+                          style={{ textAlign: "right", minWidth: "100px" }}
+                        >
+                          {c.name} ({c.weight}%)
+                        </th>
+                      ))
+                    : null}
                   <th style={{ textAlign: "right", minWidth: "80px" }}>Điểm</th>
                   <th>Feedback</th>
                   <th>Trạng thái</th>

@@ -111,6 +111,43 @@ describe("previewEvaluationFile với tiêu chí (xx%)", () => {
     expect(preview.rows[0].errors?.[0].message).toContain("Thiếu điểm B");
   });
 
+  it("bỏ qua roster row chưa chấm nhưng vẫn báo MSSV lạ và trùng", async () => {
+    mockAssignment({
+      criteria: [
+        { name: "A", weight: 40 },
+        { name: "B", weight: 60 },
+      ],
+    });
+    const preview = await previewEvaluationFile(
+      "as-1",
+      csv([
+        "MSSV,Họ tên,A (40%),B (60%),Điểm,Feedback",
+        "24110001,Vĩ Đông,8,8,,Đạt",
+        "24110002,Trần Thị B,,,,",
+        "99999999,Không thuộc lớp,,,,",
+        "24110002,Trần Thị B,,,,",
+      ]),
+      "a.csv",
+    );
+
+    expect(preview.rows.map((row) => row.status)).toEqual([
+      "valid",
+      "skipped",
+      "invalid",
+      "invalid",
+    ]);
+    expect(preview.rows[2].errors?.[0].message).toContain(
+      "không thuộc lớp học phần này",
+    );
+    expect(preview.rows[3].errors?.[0].message).toContain("trùng lặp");
+    expect(preview.summary).toMatchObject({
+      total: 4,
+      valid: 1,
+      skipped: 1,
+      invalid: 2,
+    });
+  });
+
   it("báo lỗi khi điểm tiêu chí ngoài khoảng 0-10 hoặc không phải số", async () => {
     const preview = await previewEvaluationFile(
       "as-1",
