@@ -196,6 +196,23 @@ export async function previewEvaluationFile(
       });
     }
 
+    const hasGradeContent =
+      rawScore !== "" ||
+      rawFeedback !== "" ||
+      criteriaIndexes.some((index) => (row.cells[index] ?? "").trim() !== "");
+    if (errors.length === 0 && !hasGradeContent) {
+      parsedRows.push({
+        rowNumber: row.row,
+        mssv: rawMssv,
+        fullName: student!.full_name || rawName,
+        studentId: student!.id,
+        score: null,
+        feedback: null,
+        status: "skipped",
+      });
+      continue;
+    }
+
     let parsedScore: number | null = null;
     const criteriaScores: CriterionScore[] = [];
     if (criteria.length > 0) {
@@ -212,11 +229,7 @@ export async function previewEvaluationFile(
           return;
         }
         const num = Number(raw.replace(",", "."));
-        if (
-          Number.isNaN(num) ||
-          num < 0 ||
-          num > CRITERION_MAX_SCORE
-        ) {
+        if (Number.isNaN(num) || num < 0 || num > CRITERION_MAX_SCORE) {
           errors.push({
             field: `criteria.${criterion.name}`,
             message: `Điểm ${criterion.name} phải là số từ 0 đến ${CRITERION_MAX_SCORE}`,
@@ -299,7 +312,8 @@ export async function previewEvaluationFile(
   }
 
   const validCount = parsedRows.filter((r) => r.status === "valid").length;
-  const skippedCount = parsedRows.filter((r) => r.status === "invalid").length;
+  const invalidCount = parsedRows.filter((r) => r.status === "invalid").length;
+  const skippedCount = parsedRows.filter((r) => r.status === "skipped").length;
 
   // Cảnh báo cấp file: ghi đè kết quả cũ / đổi tiêu chí so với lần trước
   const fileWarnings: Array<{ field: string; message: string }> = [];
@@ -327,7 +341,7 @@ export async function previewEvaluationFile(
       total: parsedRows.length,
       valid: validCount,
       skipped: skippedCount,
-      invalid: skippedCount,
+      invalid: invalidCount,
       create: parsedRows.filter((r) => r.action === "create").length,
       update: parsedRows.filter((r) => r.action === "update").length,
       unchanged: parsedRows.filter((r) => r.action === "unchanged").length,
@@ -369,11 +383,7 @@ export async function executeEvaluationImport(
     }
     const scores = criteria.map((criterion) => {
       const found = item.criteriaScores!.find((c) => c.name === criterion.name);
-      if (
-        !found ||
-        found.score < 0 ||
-        found.score > CRITERION_MAX_SCORE
-      ) {
+      if (!found || found.score < 0 || found.score > CRITERION_MAX_SCORE) {
         validationError(
           `Điểm tiêu chí "${criterion.name}" phải từ 0 đến ${CRITERION_MAX_SCORE}`,
         );
