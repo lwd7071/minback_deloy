@@ -1,12 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import exceljs from "exceljs";
 import {
-  MAX_EVALUATION_IMPORT_FILE_BYTES,
   normalizeHeaderKey,
   parseCsvRecords,
   parseEvaluationCsv,
   resolveEvaluationColumns,
   getCellString,
+  parseEvaluationXlsx,
 } from "./evaluation-file-parser";
+
+const { Workbook } = exceljs;
 
 describe("Evaluation File Parser", () => {
   describe("normalizeHeaderKey", () => {
@@ -83,8 +86,38 @@ describe("Evaluation File Parser", () => {
       expect(getCellString("  hello ")).toBe("hello");
       expect(getCellString({ result: 9.5 })).toBe("9.5");
       expect(
+        getCellString({ formula: "IFNA(VLOOKUP(...), 0)", result: 0 }),
+      ).toBe("0");
+      expect(getCellString({ formula: "A1+B1" })).toBe("");
+      expect(
         getCellString({ richText: [{ text: "Hello " }, { text: "World" }] }),
       ).toBe("Hello World");
     });
+  });
+
+  it("preserves a cached zero formula result when parsing XLSX", async () => {
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet("Grades");
+    worksheet.addRow(["MSSV", "Họ tên", "Điểm", "Feedback"]);
+    worksheet.addRow([
+      "2011001",
+      "Nguyễn An",
+      { formula: "IFNA(1, 0)", result: 0 },
+      "",
+    ]);
+    const output = await workbook.xlsx.writeBuffer();
+    const nodeBuffer = output as unknown as {
+      buffer: ArrayBufferLike;
+      byteOffset: number;
+      byteLength: number;
+    };
+    const buffer = nodeBuffer.buffer.slice(
+      nodeBuffer.byteOffset,
+      nodeBuffer.byteOffset + nodeBuffer.byteLength,
+    ) as ArrayBuffer;
+
+    const rows = await parseEvaluationXlsx(buffer);
+
+    expect(rows[1].cells[2]).toBe("0");
   });
 });
