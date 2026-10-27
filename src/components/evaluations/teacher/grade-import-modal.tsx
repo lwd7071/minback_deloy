@@ -27,6 +27,7 @@ export function GradeImportModal({
   const [submitBusy, setSubmitBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const [confirmSkipInvalid, setConfirmSkipInvalid] = useState(false);
 
   function resetState() {
     setFile(null);
@@ -35,6 +36,7 @@ export function GradeImportModal({
     setPreviewBusy(false);
     setSubmitBusy(false);
     setConfirmPublish(false);
+    setConfirmSkipInvalid(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -50,6 +52,7 @@ export function GradeImportModal({
     setPreview(null);
     setError(null);
     setConfirmPublish(false);
+    setConfirmSkipInvalid(false);
     if (selected) {
       void inspectFile(selected);
     }
@@ -220,9 +223,24 @@ export function GradeImportModal({
                 }}
               >
                 {preview.warnings.map((w, idx) => (
-                  <div key={idx} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <span>⚠️</span>
-                    <span>{w.message}</span>
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "flex-start",
+                      marginBottom: idx < preview.warnings!.length - 1 ? "6px" : 0,
+                    }}
+                  >
+                    <span>{w.field === "criteria" ? "🚨" : "⚠️"}</span>
+                    <div>
+                      {w.field === "criteria" ? (
+                        <strong style={{ color: "var(--color-warning)" }}>
+                          Cảnh báo thay đổi tiêu chí:{" "}
+                        </strong>
+                      ) : null}
+                      <span>{w.message}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -264,6 +282,59 @@ export function GradeImportModal({
 
             <ImportPreviewTable rows={preview.rows} />
 
+            {/* Cảnh báo khi có dòng lỗi (Invalid rows) */}
+            {preview.summary.invalid > 0 ? (
+              <div
+                className="form-notice"
+                style={{
+                  margin: "14px 0",
+                  borderColor: "var(--color-error)",
+                  backgroundColor: "var(--color-error-soft)",
+                  color: "var(--color-text-primary)",
+                  padding: "12px 14px",
+                  borderRadius: "6px",
+                  fontSize: "0.88rem",
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 600,
+                    color: "var(--color-error)",
+                    marginBottom: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <span>⚠️</span>
+                  <span>
+                    Tệp có {preview.summary.invalid} dòng bị lỗi không thể lưu:
+                  </span>
+                </div>
+                <p style={{ margin: "0 0 10px 0", color: "var(--color-text-secondary)" }}>
+                  Các dòng lỗi được tô đỏ ở bảng trên sẽ <strong>không được lưu</strong> vào bảng điểm. Bạn nên sửa lại tệp Excel theo các hướng dẫn lỗi ở bảng rồi tải lại, hoặc tích vào ô bên dưới nếu bạn chỉ muốn lưu {preview.summary.valid} dòng hợp lệ.
+                </p>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "pointer",
+                    fontWeight: 500,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={confirmSkipInvalid}
+                    onChange={(e) => setConfirmSkipInvalid(e.target.checked)}
+                  />
+                  <span>
+                    Tôi xác nhận bỏ qua {preview.summary.invalid} dòng lỗi và chỉ lưu {preview.summary.valid} dòng hợp lệ
+                  </span>
+                </label>
+              </div>
+            ) : null}
+
             {/* Confirmation when publishing */}
             {confirmPublish ? (
               <div
@@ -286,6 +357,7 @@ export function GradeImportModal({
                     type="button"
                     variant="primary"
                     loading={submitBusy}
+                    disabled={preview.summary.valid === 0 || submitBusy || (preview.summary.invalid > 0 && !confirmSkipInvalid)}
                     onClick={() => void executeImport("publish")}
                   >
                     Xác nhận công bố
@@ -321,7 +393,7 @@ export function GradeImportModal({
                     type="button"
                     variant="secondary"
                     loading={submitBusy}
-                    disabled={preview.summary.valid === 0}
+                    disabled={preview.summary.valid === 0 || submitBusy || (preview.summary.invalid > 0 && !confirmSkipInvalid)}
                     onClick={() => void executeImport("save_draft")}
                   >
                     Lưu chưa công bố
@@ -329,7 +401,7 @@ export function GradeImportModal({
                   <Button
                     type="button"
                     variant="primary"
-                    disabled={preview.summary.valid === 0 || submitBusy}
+                    disabled={preview.summary.valid === 0 || submitBusy || (preview.summary.invalid > 0 && !confirmSkipInvalid)}
                     onClick={() => setConfirmPublish(true)}
                   >
                     Công bố kết quả

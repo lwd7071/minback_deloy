@@ -181,4 +181,81 @@ describe("GradeImportModal (Auto-inspect & UI/UX)", () => {
       expect(screen.getByText("Phạm Phúc Hưng")).toBeInTheDocument();
     });
   });
+
+  it("disables save and publish buttons when file has invalid rows until confirmed", async () => {
+    const mockPreviewWithInvalid: EvaluationImportPreviewDto = {
+      summary: {
+        total: 2,
+        valid: 1,
+        skipped: 0,
+        invalid: 1,
+        create: 1,
+        update: 0,
+        unchanged: 0,
+      },
+      criteria: [{ name: "Tiêu chí 1", weight: 100 }],
+      warnings: [],
+      rows: [
+        {
+          rowNumber: 2,
+          mssv: "21110275",
+          fullName: "Phạm Phúc Hưng",
+          studentId: "student-1",
+          score: 7,
+          feedback: "",
+          status: "valid",
+          action: "create",
+        },
+        {
+          rowNumber: 3,
+          mssv: "21110276",
+          fullName: "Nguyễn Văn Lỗi",
+          score: null,
+          feedback: null,
+          status: "invalid",
+          errors: [{ field: "score", message: "Điểm không hợp lệ" }],
+        },
+      ],
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: mockPreviewWithInvalid }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <GradeImportModal
+        open={true}
+        onClose={vi.fn()}
+        assignmentId="assignment-1"
+        classSectionId="class-1"
+        maxScore={10}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["dummy"], "grades.xlsx");
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/tệp có 1 dòng bị lỗi không thể lưu/i)).toBeInTheDocument();
+    });
+
+    const saveDraftBtn = screen.getByRole("button", { name: /lưu chưa công bố/i });
+    const publishBtn = screen.getByRole("button", { name: /công bố kết quả/i });
+
+    // Ban đầu khi chưa tick checkbox, cả 2 nút phải bị disable
+    expect(saveDraftBtn).toBeDisabled();
+    expect(publishBtn).toBeDisabled();
+
+    // Tick vào checkbox xác nhận bỏ qua dòng lỗi
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+
+    // Sau khi tick, 2 nút được kích hoạt
+    expect(saveDraftBtn).not.toBeDisabled();
+    expect(publishBtn).not.toBeDisabled();
+  });
 });

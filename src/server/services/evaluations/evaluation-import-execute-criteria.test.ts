@@ -31,6 +31,8 @@ describe("executeEvaluationImport với tiêu chí", () => {
   const rpc = vi.fn();
   const assignmentEq = vi.fn();
   const assignmentUpdate = vi.fn();
+  const evaluationsEq = vi.fn();
+  const evaluationsSelect = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,10 +42,18 @@ describe("executeEvaluationImport với tiêu chí", () => {
     });
     assignmentEq.mockResolvedValue({ error: null });
     assignmentUpdate.mockReturnValue({ eq: assignmentEq });
+    evaluationsEq.mockResolvedValue({ data: [] });
+    evaluationsSelect.mockReturnValue({ eq: evaluationsEq });
+
     vi.mocked(requireTeacher).mockResolvedValue({
       supabase: {
         rpc,
-        from: () => ({ update: assignmentUpdate }),
+        from: (table: string) => {
+          if (table === "evaluations") {
+            return { select: evaluationsSelect };
+          }
+          return { update: assignmentUpdate };
+        },
       } as never,
       teacher: { id: "t-1" } as never,
     });
@@ -130,5 +140,45 @@ describe("executeEvaluationImport với tiêu chí", () => {
     expect(rows[0].score).toBe(8);
     expect(rows[0].criteriaScores).toBeUndefined();
     expect(assignmentUpdate).not.toHaveBeenCalled();
+  });
+
+  it("bảo toàn criteriaScores khi assignment đã có criteria nhưng input.criteria bị bỏ qua (publish saved results)", async () => {
+    vi.mocked(findAssignmentById).mockResolvedValue({
+      id: assignmentId,
+      classSectionId: "cs-1",
+      title: "Bài tập",
+      description: "",
+      assignedDate: "",
+      dueDate: "",
+      status: "published",
+      maxScore: 10,
+      criteria,
+      createdAt: "",
+      updatedAt: "",
+    } as never);
+
+    await executeEvaluationImport(assignmentId, {
+      mode: "publish",
+      evaluations: [{ studentId, score: 7.4, feedback: "Tốt", criteriaScores }],
+    } as never);
+
+    const rows = rpc.mock.calls[0][1].p_rows;
+    expect(rows[0].score).toBe(7.4);
+    expect(rows[0].criteriaScores).toEqual(criteriaScores);
+    expect(assignmentUpdate).not.toHaveBeenCalled();
+  });
+
+  it("giữ nguyên trạng thái 'returned' cho sinh viên đã công bố khi lưu nháp (save_draft)", async () => {
+    evaluationsEq.mockResolvedValue({
+      data: [{ student_id: studentId, status: "returned" }],
+    });
+
+    await executeEvaluationImport(assignmentId, {
+      mode: "save_draft",
+      evaluations: [{ studentId, score: 8, feedback: "Đã duyệt" }],
+    } as never);
+
+    const rows = rpc.mock.calls[0][1].p_rows;
+    expect(rows[0].status).toBe("returned");
   });
 });

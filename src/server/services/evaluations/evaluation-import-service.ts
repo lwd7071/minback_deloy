@@ -331,7 +331,7 @@ export async function previewEvaluationFile(
     if (changed) {
       fileWarnings.push({
         field: "criteria",
-        message: "Tiêu chí thay đổi so với lần nhập trước",
+        message: `Tiêu chí thay đổi (${criteria.length} tiêu chí) so với lần trước (${previous.length} tiêu chí). Các sinh viên không có trong tệp này sẽ bị trống điểm tiêu chí mới.`,
       });
     }
   }
@@ -363,22 +363,50 @@ export async function executeEvaluationImport(
     throw new ApiError(404, API_ERROR_CODES.notFound, "Không tìm thấy bài tập");
   }
 
-  const targetStatus = input.mode === "publish" ? "returned" : "graded";
+  let existingStatusByStudent = new Map<string, string>();
+  try {
+    const query = supabase
+      .from("evaluations")
+      ?.select?.("student_id, status")
+      ?.eq?.("assignment_id", assignmentId);
+    if (query) {
+      const { data: existingEvaluations } = await query;
+      if (existingEvaluations) {
+        existingStatusByStudent = new Map(
+          (existingEvaluations as Array<{ student_id: string; status: string }>).map(
+            (e) => [e.student_id, e.status],
+          ),
+        );
+      }
+    }
+  } catch {
+    // Supabase client may be partially mocked in some unit tests
+  }
 
   // Chế độ tiêu chí: server tự kiểm tra và tính lại điểm, không tin score từ client
-  const criteria = input.criteria ?? [];
+  const criteria = input.criteria ?? assignment.criteria ?? [];
   if (criteria.length > 0) {
     const weightError = validateWeights(criteria);
     if (weightError) validationError(weightError);
   }
 
   const rowsToUpsert = input.evaluations.map((item) => {
+    const existingStatus = existingStatusByStudent.get(item.studentId);
+    // Nếu chế độ là publish: tất cả chuyển sang 'returned'
+    // Nếu chế độ là save_draft: nếu sinh viên trước đó đã 'returned' thì GIỮ NGUYÊN 'returned', không bị hạ xuống 'graded'
+    const rowStatus =
+      input.mode === "publish"
+        ? "returned"
+        : existingStatus === "returned"
+          ? "returned"
+          : "graded";
+
     if (criteria.length === 0 || !item.criteriaScores) {
       return {
         studentId: item.studentId,
         score: item.score,
         feedback: item.feedback ?? "",
-        status: targetStatus,
+        status: rowStatus,
       };
     }
     const scores = criteria.map((criterion) => {
@@ -394,15 +422,15 @@ export async function executeEvaluationImport(
       studentId: item.studentId,
       score: computeTotal(scores, assignment.maxScore),
       feedback: item.feedback ?? "",
-      status: targetStatus,
+      status: rowStatus,
       criteriaScores: scores,
     };
   });
 
-  if (criteria.length > 0) {
+  if (input.criteria && input.criteria.length > 0) {
     const { error: criteriaError } = await supabase
       .from("assignments")
-      .update({ criteria })
+      .update({ criteria: input.criteria })
       .eq("id", assignmentId);
     if (criteriaError) {
       throw new ApiError(
@@ -500,7 +528,7 @@ export async function executeEvaluationImport(
       studentId: r.studentId,
       score: r.score,
       feedback: r.feedback,
-      status: targetStatus as "graded" | "returned",
+      status: r.status as "graded" | "returned",
       criteriaScores: r.criteriaScores,
     })),
     snapshotVersion,

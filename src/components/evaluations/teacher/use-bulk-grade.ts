@@ -202,6 +202,9 @@ export function useBulkGrade({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             mode: "publish",
+            ...(assignment.criteria && assignment.criteria.length > 0
+              ? { criteria: assignment.criteria }
+              : {}),
             evaluations: gradedRows.map((row) => ({
               studentId: row.studentId,
               score: row.score,

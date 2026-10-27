@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -466,6 +466,127 @@ describe("BulkGradeView", () => {
         }),
       }),
     );
+    fetchSpy.mockRestore();
+  });
+
+  it("sends criteria and criteriaScores when publishing saved results for an assignment with criteria", async () => {
+    const assignmentWithCriteria: AssignmentDto = {
+      ...mockAssignment,
+      criteria: [
+        { name: "Tiêu chí 1", weight: 30 },
+        { name: "Tiêu chí 2", weight: 70 },
+      ],
+    };
+
+    const mockStudents = [
+      {
+        id: "student-1",
+        classSectionId: "class-123",
+        mssv: "24110200",
+        fullName: "Nguyễn Văn C",
+        email: null,
+        nickname: "C",
+        mustChangeNickname: false,
+        mustChangePin: false,
+        lockedUntil: null,
+        createdAt: "2026-10-01T00:00:00.000Z",
+        updatedAt: "2026-10-01T00:00:00.000Z",
+      },
+    ];
+
+    const mockEvaluations = [
+      {
+        id: "eval-1",
+        assignmentId: "assignment-123",
+        studentId: "student-1",
+        score: 8.6,
+        feedback: "Tốt",
+        status: "graded" as const,
+        criteriaScores: [
+          { name: "Tiêu chí 1", weight: 30, score: 8 },
+          { name: "Tiêu chí 2", weight: 70, score: 9 },
+        ],
+        createdAt: "2026-10-01T00:00:00.000Z",
+        updatedAt: "2026-10-01T00:00:00.000Z",
+        student: {
+          id: "student-1",
+          mssv: "24110200",
+          fullName: "Nguyễn Văn C",
+          nickname: "C",
+        },
+      },
+    ];
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: {
+            count: 1,
+            mode: "publish",
+            updatedEvaluations: [
+              {
+                studentId: "student-1",
+                score: 8.6,
+                feedback: "Tốt",
+                status: "returned",
+                criteriaScores: [
+                  { name: "Tiêu chí 1", weight: 30, score: 8 },
+                  { name: "Tiêu chí 2", weight: 70, score: 9 },
+                ],
+              },
+            ],
+            summary: { rows: 1, created: 0, updated: 1, unchanged: 0 },
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    render(
+      <BulkGradeView
+        classSectionId="class-123"
+        assignment={assignmentWithCriteria}
+        students={mockStudents}
+        studentMeta={{ page: 1, pageSize: 50, total: 1 }}
+        initialSearch=""
+        evaluations={mockEvaluations}
+      />,
+    );
+
+    const publishTrigger = screen.getByRole("button", {
+      name: /công bố 1 kết quả/i,
+    });
+    fireEvent.click(publishTrigger);
+
+    const confirmBtn = screen.getByRole("button", {
+      name: /xác nhận công bố/i,
+    });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/v1/teacher/assignments/assignment-123/evaluations/import",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            mode: "publish",
+            criteria: assignmentWithCriteria.criteria,
+            evaluations: [
+              {
+                studentId: "student-1",
+                score: 8.6,
+                feedback: "Tốt",
+                criteriaScores: [
+                  { name: "Tiêu chí 1", weight: 30, score: 8 },
+                  { name: "Tiêu chí 2", weight: 70, score: 9 },
+                ],
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
     fetchSpy.mockRestore();
   });
 });
