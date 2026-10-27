@@ -52,6 +52,7 @@ export function ClassAssignmentsView({
     selectedAssignmentId,
     setSelectedAssignmentId,
     handleAssignmentSaved,
+    handleAssignmentDeleted,
   } = useClassAssignments({
     classSectionId,
     initialAssignments,
@@ -322,6 +323,7 @@ export function ClassAssignmentsView({
               (row) => row.id === selectedAssignmentId,
             )}
             onSaved={handleAssignmentSaved}
+            onDeleted={handleAssignmentDeleted}
             onClose={() => setSelectedAssignmentId(null)}
           />
         ) : null}

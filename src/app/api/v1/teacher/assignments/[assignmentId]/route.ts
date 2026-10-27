@@ -76,7 +76,8 @@ export async function DELETE(
     const { teacher } = await requireTeacher();
     assertSameOrigin(request);
     const { assignmentId } = await params;
-    await deleteTeacherAssignment(parseId(assignmentId), teacher.id);
+    const force = request.nextUrl.searchParams.get("force") === "true";
+    await deleteTeacherAssignment(parseId(assignmentId), teacher.id, { force });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

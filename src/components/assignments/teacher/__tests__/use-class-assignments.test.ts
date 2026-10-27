@@ -102,4 +102,19 @@ describe("useClassAssignments", () => {
     expect(result.current.sortBy).toBe("newest");
     expect(result.current.page).toBe(1);
   });
+
+  it("removes assignment from rows when handleAssignmentDeleted is called", () => {
+    const { result } = renderHook(() =>
+      useClassAssignments({
+        classSectionId: "class-1",
+        initialAssignments: rows,
+      }),
+    );
+    expect(result.current.rows).toHaveLength(3);
+    act(() => {
+      result.current.handleAssignmentDeleted("assign-2");
+    });
+    expect(result.current.rows).toHaveLength(2);
+    expect(result.current.rows.map((r) => r.id)).not.toContain("assign-2");
+  });
 });

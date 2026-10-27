@@ -131,6 +131,14 @@ export function useClassAssignments({
     );
   };
 
+  // Xóa bài tập khỏi state
+  const handleAssignmentDeleted = (deletedId: string) => {
+    setRows((current) => current.filter((row) => row.id !== deletedId));
+    if (selectedAssignmentId === deletedId) {
+      setSelectedAssignmentId(null);
+    }
+  };
+
   // Setters kèm reset về trang 1
   const setGradingFilter = (st: GradingFilter) => {
     setGradingFilterState(st);
@@ -243,6 +251,7 @@ export function useClassAssignments({
     setSelectedAssignmentId,
     selectedAssignment,
     handleAssignmentSaved,
+    handleAssignmentDeleted,
     refresh: () => undefined,
   };
 }

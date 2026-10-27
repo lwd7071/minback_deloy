@@ -287,3 +287,36 @@ export async function deleteDraftAssignment(
   }
   return true;
 }
+
+export async function deleteAssignmentWithEvaluations(
+  assignmentId: string,
+): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { error: evalError } = await supabase
+    .from("evaluations")
+    .delete()
+    .eq("assignment_id", assignmentId);
+
+  if (evalError) {
+    throw new RepositoryError(
+      "ASSIGNMENT_EVALUATIONS_DELETE_FAILED",
+      "Không thể xóa các đánh giá liên quan đến bài tập",
+      { cause: evalError },
+    );
+  }
+
+  const { error } = await supabase
+    .from("assignments")
+    .delete()
+    .eq("id", assignmentId);
+
+  if (error) {
+    throw new RepositoryError(
+      "ASSIGNMENT_DELETE_FAILED",
+      "Không thể xóa bài tập",
+      { cause: error },
+    );
+  }
+  return true;
+}
+

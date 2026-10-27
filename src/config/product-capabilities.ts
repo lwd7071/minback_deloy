@@ -3,7 +3,7 @@ export const PRODUCT_CAPABILITIES = {
   teacher: {
     assignmentDeadline: false,
     assignmentAttachments: false,
-    assignmentDelete: false,
+    assignmentDelete: true,
     assignmentTechnicalStatus: false,
     gradebook: false,
     evaluationImport: true,

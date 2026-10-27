@@ -35,33 +35,39 @@ export const assignmentMaxScoreSchema = z
     message: "Điểm tối đa chỉ có một chữ số thập phân",
   });
 
-const assignmentFieldsSchema = z.object({
+const assignmentCoreSchema = z.object({
   title: assignmentTitleSchema,
-  description: assignmentDescriptionSchema.default(""),
+  description: assignmentDescriptionSchema,
   assignedDate: assignmentDateSchema,
   dueDate: assignmentDateSchema,
-  status: assignmentStatusSchema.default("draft"),
-  maxScore: assignmentMaxScoreSchema.default(10),
+  status: assignmentStatusSchema,
+  maxScore: assignmentMaxScoreSchema,
 });
 
-export const assignmentCreateSchema = assignmentFieldsSchema.refine(
-  (value) => {
-    const dueTime = new Date(
-      value.dueDate.includes("T")
-        ? value.dueDate
-        : `${value.dueDate}T23:59:59.999+07:00`,
-    ).getTime();
-    const assignedTime = new Date(
-      value.assignedDate.includes("T")
-        ? value.assignedDate
-        : `${value.assignedDate}T00:00:00+07:00`,
-    ).getTime();
-    return dueTime >= assignedTime;
-  },
-  { message: "Hạn nộp phải sau hoặc bằng ngày giao", path: ["dueDate"] },
-);
+export const assignmentCreateSchema = assignmentCoreSchema
+  .extend({
+    description: assignmentDescriptionSchema.default(""),
+    status: assignmentStatusSchema.default("draft"),
+    maxScore: assignmentMaxScoreSchema.default(10),
+  })
+  .refine(
+    (value) => {
+      const dueTime = new Date(
+        value.dueDate.includes("T")
+          ? value.dueDate
+          : `${value.dueDate}T23:59:59.999+07:00`,
+      ).getTime();
+      const assignedTime = new Date(
+        value.assignedDate.includes("T")
+          ? value.assignedDate
+          : `${value.assignedDate}T00:00:00+07:00`,
+      ).getTime();
+      return dueTime >= assignedTime;
+    },
+    { message: "Hạn nộp phải sau hoặc bằng ngày giao", path: ["dueDate"] },
+  );
 
-export const assignmentUpdateSchema = assignmentFieldsSchema
+export const assignmentUpdateSchema = assignmentCoreSchema
   .partial()
   .refine((value) => Object.values(value).some((item) => item !== undefined), {
     message: "Phải cung cấp dữ liệu để cập nhật",

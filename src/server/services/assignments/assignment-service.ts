@@ -8,6 +8,7 @@ import {
 import { findClassSectionById } from "@/server/repositories/classes/class-section-repository";
 import {
   createAssignment,
+  deleteAssignmentWithEvaluations,
   deleteDraftAssignment,
   findAssignmentById,
   hasEvaluations,
@@ -216,6 +217,7 @@ export async function updateTeacherAssignment(
 export async function deleteTeacherAssignment(
   assignmentId: string,
   teacherId: string,
+  options?: { force?: boolean },
 ): Promise<void> {
   try {
     const assignment = await findAssignmentById(assignmentId, teacherId);
@@ -226,12 +228,17 @@ export async function deleteTeacherAssignment(
         "Không tìm thấy bài tập",
       );
     }
-    if (await hasEvaluations(assignmentId)) {
-      throw new ApiError(
-        409,
-        API_ERROR_CODES.conflict,
-        "Không thể xóa bài tập đã có bài nộp hoặc đánh giá",
-      );
+    const evaluationsExist = await hasEvaluations(assignmentId);
+    if (evaluationsExist) {
+      if (!options?.force) {
+        throw new ApiError(
+          409,
+          API_ERROR_CODES.conflict,
+          "Không thể xóa bài tập đã có bài nộp hoặc đánh giá",
+        );
+      }
+      await deleteAssignmentWithEvaluations(assignmentId);
+      return;
     }
     if (!(await deleteDraftAssignment(assignmentId))) {
       throw new ApiError(

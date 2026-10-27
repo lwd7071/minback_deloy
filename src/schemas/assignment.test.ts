@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assignmentCreateSchema } from "./assignment";
+import { assignmentCreateSchema, assignmentUpdateSchema } from "./assignment";
 
 describe("Assignment validation", () => {
   it("normalizes title and applies draft/max-score defaults", () => {
@@ -34,5 +34,17 @@ describe("Assignment validation", () => {
         maxScore: 10.25,
       }),
     ).toThrow();
+  });
+
+  it("does not inject default status or empty values when updating only title", () => {
+    const updated = assignmentUpdateSchema.parse({
+      title: "  Giữa kỳ  ",
+    });
+    expect(updated).toEqual({
+      title: "Giữa kỳ",
+    });
+    expect(updated.status).toBeUndefined();
+    expect(updated.description).toBeUndefined();
+    expect(updated.maxScore).toBeUndefined();
   });
 });

@@ -6,6 +6,7 @@ vi.mock("@/server/repositories/classes/class-section-repository", () => ({
 }));
 vi.mock("@/server/repositories/assignments/assignment-repository", () => ({
   createAssignment: vi.fn(),
+  deleteAssignmentWithEvaluations: vi.fn(),
   deleteDraftAssignment: vi.fn(),
   findAssignmentById: vi.fn(),
   hasEvaluations: vi.fn(),
@@ -17,12 +18,16 @@ vi.mock("@/server/repositories/assignments/assignment-repository", () => ({
 import { findClassSectionById } from "@/server/repositories/classes/class-section-repository";
 import {
   createAssignment,
+  deleteAssignmentWithEvaluations,
+  deleteDraftAssignment,
   findAssignmentById,
+  hasEvaluations,
   listAssignmentsByClassSection,
   updateAssignment,
 } from "@/server/repositories/assignments/assignment-repository";
 import {
   createTeacherAssignment,
+  deleteTeacherAssignment,
   isAllowedAssignmentStatusTransition,
   updateTeacherAssignment,
 } from "./assignment-service";
@@ -116,5 +121,81 @@ describe("Assignment title uniqueness", () => {
     ).resolves.toEqual(current);
 
     expect(listAssignmentsByClassSection).toHaveBeenCalledWith(classSectionId);
+  });
+
+  it("allows renaming a published assignment without error", async () => {
+    const publishedAssignment = { ...current, status: "published" as const };
+    vi.mocked(findAssignmentById).mockResolvedValue(publishedAssignment);
+    vi.mocked(listAssignmentsByClassSection).mockResolvedValue([publishedAssignment]);
+    vi.mocked(updateAssignment).mockResolvedValue({
+      ...publishedAssignment,
+      title: "Giữa kỳ",
+    });
+
+    const result = await updateTeacherAssignment(
+      "assignment-1",
+      { title: "Giữa kỳ" },
+      teacherId,
+    );
+
+    expect(result.title).toBe("Giữa kỳ");
+    expect(updateAssignment).toHaveBeenCalledWith("assignment-1", {
+      title: "Giữa kỳ",
+    });
+  });
+});
+
+describe("Assignment deletion", () => {
+  const teacherId = "teacher-1";
+  const assignment = {
+    id: "assignment-1",
+    classSectionId: "class-1",
+    title: "Giữa kỳ",
+    description: "",
+    assignedDate: "2026-10-01",
+    dueDate: "2026-10-10",
+    status: "published" as const,
+    maxScore: 10,
+    createdAt: "",
+    updatedAt: "",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("deletes an assignment without evaluations", async () => {
+    vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(hasEvaluations).mockResolvedValue(false);
+    vi.mocked(deleteDraftAssignment).mockResolvedValue(true);
+
+    await expect(
+      deleteTeacherAssignment("assignment-1", teacherId),
+    ).resolves.toBeUndefined();
+
+    expect(deleteDraftAssignment).toHaveBeenCalledWith("assignment-1");
+  });
+
+  it("rejects deleting an assignment with evaluations if force is not set", async () => {
+    vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(hasEvaluations).mockResolvedValue(true);
+
+    await expect(
+      deleteTeacherAssignment("assignment-1", teacherId),
+    ).rejects.toMatchObject({ status: 409, code: "CONFLICT" });
+
+    expect(deleteAssignmentWithEvaluations).not.toHaveBeenCalled();
+  });
+
+  it("deletes an assignment with evaluations when force is true", async () => {
+    vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(hasEvaluations).mockResolvedValue(true);
+    vi.mocked(deleteAssignmentWithEvaluations).mockResolvedValue(true);
+
+    await expect(
+      deleteTeacherAssignment("assignment-1", teacherId, { force: true }),
+    ).resolves.toBeUndefined();
+
+    expect(deleteAssignmentWithEvaluations).toHaveBeenCalledWith("assignment-1");
   });
 });
