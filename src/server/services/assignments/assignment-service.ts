@@ -84,6 +84,28 @@ async function requireOwnedClassSection(
   }
 }
 
+async function assertUniqueAssignmentTitle(
+  classSectionId: string,
+  title: string,
+  excludeAssignmentId?: string,
+): Promise<void> {
+  const normalizedTitle = title.trim().toLocaleLowerCase();
+  const assignments = await listAssignmentsByClassSection(classSectionId);
+  const duplicate = assignments.some(
+    (assignment) =>
+      assignment.id !== excludeAssignmentId &&
+      assignment.title.trim().toLocaleLowerCase() === normalizedTitle,
+  );
+
+  if (duplicate) {
+    throw new ApiError(
+      409,
+      API_ERROR_CODES.conflict,
+      "Tên bài tập đã tồn tại trong lớp học phần này",
+    );
+  }
+}
+
 export async function listTeacherAssignments(
   classSectionId: string,
   teacherId: string,
@@ -123,6 +145,7 @@ export async function createTeacherAssignment(
         "Dữ liệu không hợp lệ",
       );
     }
+    await assertUniqueAssignmentTitle(classSectionId, parsed.data.title);
     return await createAssignment(classSectionId, parsed.data);
   } catch (error) {
     return unexpected(error);
@@ -168,6 +191,13 @@ export async function updateTeacherAssignment(
         400,
         API_ERROR_CODES.validation,
         "Dữ liệu không hợp lệ",
+      );
+    }
+    if (parsed.data.title !== undefined) {
+      await assertUniqueAssignmentTitle(
+        current.classSectionId,
+        parsed.data.title,
+        current.id,
       );
     }
     if (parsed.data.status !== undefined) {

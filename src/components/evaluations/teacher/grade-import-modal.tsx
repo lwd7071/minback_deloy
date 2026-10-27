@@ -50,15 +50,19 @@ export function GradeImportModal({
     setPreview(null);
     setError(null);
     setConfirmPublish(false);
+    if (selected) {
+      void inspectFile(selected);
+    }
   }
 
-  async function inspectFile() {
-    if (!file || previewBusy) return;
+  async function inspectFile(fileToInspect?: File | null) {
+    const targetFile = fileToInspect ?? file;
+    if (!targetFile || previewBusy) return;
     setPreviewBusy(true);
     setError(null);
     try {
       const formData = new FormData();
-      formData.set("file", file);
+      formData.set("file", targetFile);
       const response = await fetch(
         `/api/v1/teacher/assignments/${assignmentId}/evaluations/import-preview`,
         { method: "POST", body: formData },
@@ -145,7 +149,10 @@ export function GradeImportModal({
         </p>
 
         {/* Input file */}
-        <div className="grade-import-picker">
+        <div
+          className="grade-import-picker"
+          style={{ display: "flex", alignItems: "center", gap: "12px" }}
+        >
           <input
             ref={fileInputRef}
             className="form-input"
@@ -154,14 +161,15 @@ export function GradeImportModal({
             onChange={handleFileChange}
             disabled={previewBusy || submitBusy}
           />
-          <Button
-            type="button"
-            loading={previewBusy}
-            disabled={!file || submitBusy}
-            onClick={() => void inspectFile()}
-          >
-            Kiểm tra tệp
-          </Button>
+          {previewBusy ? (
+            <span
+              className="status-text muted"
+              style={{ fontSize: "0.88rem", whiteSpace: "nowrap" }}
+              aria-live="polite"
+            >
+              Đang kiểm tra tệp…
+            </span>
+          ) : null}
         </div>
 
         {error ? (
@@ -172,10 +180,25 @@ export function GradeImportModal({
               padding: "10px 14px",
               borderRadius: "6px",
               background: "var(--color-error-soft)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "12px",
             }}
             role="alert"
           >
-            {error}
+            <span>{error}</span>
+            {file ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={previewBusy}
+                onClick={() => void inspectFile(file)}
+                style={{ padding: "4px 8px", fontSize: "0.85rem" }}
+              >
+                Thử lại
+              </Button>
+            ) : null}
           </div>
         ) : null}
 

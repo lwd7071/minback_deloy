@@ -126,7 +126,7 @@ describe("ClassCreateFlow", () => {
     fireEvent.change(screen.getByLabelText(/Tệp danh sách/), {
       target: { files: [file] },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Kiểm tra tệp" }));
+    // Auto-inspect triggers automatically without clicking "Kiểm tra tệp"
     await screen.findByText("Nguyễn An");
     fireEvent.click(screen.getByRole("button", { name: "Tiếp tục xác nhận" }));
     fireEvent.click(
@@ -149,6 +149,54 @@ describe("ClassCreateFlow", () => {
     expect(goToClass).toBeEnabled();
     fireEvent.click(goToClass);
     expect(push).toHaveBeenCalledWith("/admin/classes/class-1");
+  });
+
+  it("does not render obsolete 'Kiểm tra tệp' button and places 'Bỏ qua, thêm sau' directly in actions bar", () => {
+    render(<ClassCreateFlow />);
+    enterDetails();
+
+    expect(
+      screen.queryByRole("button", { name: "Kiểm tra tệp" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Bỏ qua, thêm sau" }),
+    ).toBeInTheDocument();
+  });
+
+  it("displays error and allows retry when auto-inspection fails", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        jsonResponse({ error: { message: "Tệp không hợp lệ" } }, 400),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: {
+            summary: { total: 1, valid: 1, skipped: 0 },
+            rows: [
+              {
+                row: 2,
+                status: "valid",
+                student: { mssv: "SV01", fullName: "Nguyễn An" },
+              },
+            ],
+          },
+        }),
+      );
+
+    render(<ClassCreateFlow />);
+    enterDetails();
+
+    const file = new File(["dummy"], "students.csv");
+    fireEvent.change(screen.getByLabelText(/Tệp danh sách/), {
+      target: { files: [file] },
+    });
+
+    await screen.findByText("Tệp không hợp lệ");
+    const retryBtn = screen.getByRole("button", { name: /thử lại/i });
+    expect(retryBtn).toBeInTheDocument();
+
+    fireEvent.click(retryBtn);
+    await screen.findByText("Nguyễn An");
   });
 
   it("renders a download link for the sample template file at the roster step", () => {

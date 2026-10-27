@@ -130,13 +130,20 @@ export function ClassCreateFlow() {
             <input
               type="file"
               accept=".csv,.xlsx"
+              disabled={previewBusy}
               onChange={(event) => changeFile(event.target.files?.[0] ?? null)}
             />
-            <small>
-              {file
-                ? `${file.name} · ${Math.ceil(file.size / 1024)} KB`
-                : "Tối đa 5 MB và 2.000 dòng dữ liệu"}
-            </small>
+            {previewBusy ? (
+              <small className="status-text muted" aria-live="polite">
+                Đang kiểm tra tệp…
+              </small>
+            ) : (
+              <small>
+                {file
+                  ? `${file.name} · ${Math.ceil(file.size / 1024)} KB`
+                  : "Tối đa 5 MB và 2.000 dòng dữ liệu"}
+              </small>
+            )}
           </label>
           <div className="class-create-actions is-split">
             <Button
@@ -146,23 +153,13 @@ export function ClassCreateFlow() {
             >
               Quay lại
             </Button>
-            <div className="cluster">
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={continueWithoutRoster}
-              >
-                Bỏ qua, thêm sau
-              </Button>
-              <Button
-                type="button"
-                loading={previewBusy}
-                disabled={!file}
-                onClick={() => void inspectFile()}
-              >
-                Kiểm tra tệp
-              </Button>
-            </div>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={continueWithoutRoster}
+            >
+              Bỏ qua, thêm sau
+            </Button>
           </div>
           {preview ? (
             <div className="class-create-preview">
@@ -335,9 +332,29 @@ export function ClassCreateFlow() {
       ) : null}
 
       {error ? (
-        <p className="form-error class-create-error" role="alert">
-          {error}
-        </p>
+        <div
+          className="form-error class-create-error"
+          role="alert"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          <span>{error}</span>
+          {step === "roster" && file ? (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={previewBusy}
+              onClick={() => void inspectFile(file)}
+              style={{ padding: "4px 8px", fontSize: "0.85rem" }}
+            >
+              Thử lại
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
