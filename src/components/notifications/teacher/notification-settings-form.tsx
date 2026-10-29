@@ -94,35 +94,20 @@ export function NotificationSettingsForm({
   }
 
   return (
-    <div className="settings-stack" aria-live="polite">
-      <>
-        {/* Main Email Toggle Section */}
-        <div
-          className="settings-row"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: "16px",
-          }}
-        >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Mail size={18} className="text-primary" />
-              <strong style={{ fontSize: "15px" }}>
-                Gửi email khi công bố kết quả
-              </strong>
-            </div>
-            <p
-              className="muted settings-help"
-              style={{ marginTop: "4px", fontSize: "13px" }}
-            >
-              Tự động gửi email thông báo tới sinh viên khi bài tập chuyển sang
-              trạng thái <strong>Công bố (returned)</strong>. Điểm số và nhận
-              xét chi tiết được bảo mật, sinh viên chỉ xem sau khi đăng nhập
-              MinBack.
-            </p>
+    <div className="notification-settings" aria-live="polite">
+      <section className="notification-settings-toggle">
+        <div className="notification-settings-copy">
+          <div className="notification-settings-title">
+            <Mail size={20} aria-hidden="true" />
+            <h2>Gửi email khi công bố kết quả</h2>
           </div>
+          <p>
+            Tự động thông báo cho sinh viên khi bài tập chuyển sang trạng thái
+            <strong> Công bố</strong>. Điểm và nhận xét chỉ xem được sau khi
+            đăng nhập MinBack.
+          </p>
+        </div>
+        <div className="notification-settings-control">
           <Toggle
             checked={settings.emailEnabled}
             disabled={isToggling || isSendingTest}
@@ -130,65 +115,54 @@ export function NotificationSettingsForm({
             onChange={() => void toggleEmail()}
           />
         </div>
+      </section>
 
-        {/* Brevo Service & Sender Details */}
-        <dl className="settings-details">
-          <div style={{ marginBottom: "12px" }}>
-            <dt>Trạng thái cấu hình Brevo</dt>
-            <dd
-              style={{
-                margin: "4px 0 0",
-                fontSize: "14px",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              {settings.brevoConfigured ? (
-                <span className="settings-state is-success">
-                  <CheckCircle2 size={16} /> Đã cấu hình trên máy chủ
-                </span>
-              ) : (
-                <span className="settings-state is-warning">
-                  <AlertTriangle size={16} /> Chưa cấu hình đầy đủ (Thiếu API
-                  Key/Sender Email)
-                </span>
-              )}
-            </dd>
+      <section
+        className="notification-provider"
+        aria-labelledby="provider-title"
+      >
+        <div className="notification-section-heading">
+          <div>
+            <h3 id="provider-title">Dịch vụ gửi email</h3>
+            <p className="muted">
+              Thông tin cấu hình do quản trị hệ thống quản lý.
+            </p>
           </div>
-          <div style={{ marginBottom: "12px" }}>
-            <dt>Tên người gửi (Sender Name)</dt>
-            <dd style={{ margin: "4px 0 0", fontSize: "14px" }}>
-              {settings.senderName ?? "—"}
-            </dd>
+          <span
+            className={`notification-provider-status ${settings.brevoConfigured ? "is-success" : "is-warning"}`}
+          >
+            {settings.brevoConfigured ? (
+              <>
+                <CheckCircle2 size={16} aria-hidden="true" /> Đã sẵn sàng
+              </>
+            ) : (
+              <>
+                <AlertTriangle size={16} aria-hidden="true" /> Chưa cấu hình đầy
+                đủ
+              </>
+            )}
+          </span>
+        </div>
+
+        <dl className="notification-sender-details">
+          <div>
+            <dt>Tên người gửi</dt>
+            <dd>{settings.senderName ?? "—"}</dd>
           </div>
           <div>
-            <dt>Địa chỉ người gửi (Sender Email)</dt>
-            <dd
-              style={{
-                margin: "4px 0 0",
-                fontSize: "14px",
-                fontFamily: "monospace",
-              }}
-            >
+            <dt>Email người gửi</dt>
+            <dd className="notification-sender-email">
               {settings.senderEmail ?? "—"}
             </dd>
           </div>
         </dl>
 
-        {/* Test Email Action Button */}
-        <div>
+        <div className="notification-test-action">
           <button
             className="button button-secondary"
             type="button"
             disabled={isSendingTest || isToggling || !settings.brevoConfigured}
             onClick={() => void sendTest()}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
           >
             {isSendingTest ? (
               <RefreshCw size={14} className="spin" />
@@ -198,15 +172,12 @@ export function NotificationSettingsForm({
             {isSendingTest ? "Đang gửi email thử…" : "Gửi email thử nghiệm"}
           </button>
           {!settings.brevoConfigured && (
-            <span
-              className="muted"
-              style={{ marginLeft: "12px", fontSize: "13px" }}
-            >
-              (Cần cấu hình Brevo server env trước khi gửi thử)
-            </span>
+            <p className="muted">
+              Cần cấu hình Brevo trên máy chủ trước khi gửi thử.
+            </p>
           )}
         </div>
-      </>
+      </section>
 
       {/* Success Alert */}
       {message ? <Alert variant="success">{message}</Alert> : null}
