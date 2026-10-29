@@ -1,4 +1,5 @@
 import type { CriterionScore } from "@/lib/evaluation-criteria";
+import type { GradebookScoreSummary } from "@/lib/gradebook";
 
 export type StudentResultDto = {
   assignmentId: string;
@@ -7,6 +8,8 @@ export type StudentResultDto = {
   score: number | null;
   feedback: string | null;
   status: "returned";
+  includedInFinal: boolean;
+  weight: number | null;
   criteriaScores?: CriterionScore[];
   returnedAt: string;
   updatedAt: string;
@@ -14,4 +17,5 @@ export type StudentResultDto = {
 
 export type StudentResultsResponseDto = {
   results: StudentResultDto[];
+  total: GradebookScoreSummary;
 };

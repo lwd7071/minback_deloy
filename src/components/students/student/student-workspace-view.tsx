@@ -9,6 +9,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
 import { IntentPrefetchLink } from "@/components/ui/intent-prefetch-link";
 import type { StudentResultDto } from "@/types/student-results";
+import type { GradebookScoreSummary } from "@/lib/gradebook";
 
 export type Section =
   "overview" | "assignments" | "submissions" | "grades" | "notifications";
@@ -25,10 +26,17 @@ export function StudentWorkspaceView({
   section,
   initialAssignmentId,
   initialResults = [],
+  initialTotal = {
+    score: null,
+    status: "unavailable",
+    publishedCount: 0,
+    includedCount: 0,
+  },
 }: {
   section: Section;
   initialAssignmentId?: string;
   initialResults?: StudentResultDto[];
+  initialTotal?: GradebookScoreSummary;
 }) {
   const { identity, loading, refresh } = useStudentWorkspace();
   const router = useRouter();
@@ -64,21 +72,6 @@ export function StudentWorkspaceView({
       </div>
     );
   }
-
-  const average = results.length
-    ? Math.round(
-        (results.reduce(
-          (sum, result) =>
-            sum +
-            (result.score === null
-              ? 0
-              : (result.score / result.maxScore) * 100),
-          0,
-        ) /
-          results.length) *
-          10,
-      ) / 10
-    : null;
 
   return (
     <div className="student-workspace-view">
@@ -135,10 +128,16 @@ export function StudentWorkspaceView({
                 <AppIcon name="book" size={24} />
               </span>
               <div className="student-class-info">
-                <small className="student-class-name" title={identity.classSection.name}>
+                <small
+                  className="student-class-name"
+                  title={identity.classSection.name}
+                >
                   {identity.classSection.name}
                 </small>
-                <strong className="student-class-code" title={identity.classSection.code}>
+                <strong
+                  className="student-class-code"
+                  title={identity.classSection.code}
+                >
                   {identity.classSection.code}
                 </strong>
               </div>
@@ -148,8 +147,16 @@ export function StudentWorkspaceView({
               <span className="muted">Đã công bố</span>
             </Card>
             <Card className="stat-card">
-              <strong>{average === null ? "—" : `${average}%`}</strong>
-              <span className="muted">Điểm trung bình</span>
+              <strong>
+                {initialTotal.score === null ? "—" : `${initialTotal.score}/10`}
+              </strong>
+              <span className="muted">
+                {initialTotal.status === "final"
+                  ? "Điểm tổng kết"
+                  : initialTotal.status === "temporary"
+                    ? "Tổng tạm tính"
+                    : "Chưa có tổng kết"}
+              </span>
             </Card>
           </section>
           <Card className="workspace-panel">
@@ -167,6 +174,7 @@ export function StudentWorkspaceView({
       ) : (
         <Card className="workspace-panel workspace-table-panel">
           <PanelTitle icon="gradebook" title="Kết quả" />
+          <GradeSummary total={initialTotal} />
           <input
             className="form-input"
             placeholder="Tìm theo tên bài tập…"
@@ -181,6 +189,24 @@ export function StudentWorkspaceView({
         <ResultDetail result={selected} onClose={() => setSelectedId(null)} />
       ) : null}
     </div>
+  );
+}
+
+function GradeSummary({ total }: { total: GradebookScoreSummary }) {
+  return (
+    <p className="form-notice" aria-live="polite">
+      <strong>
+        {total.score === null
+          ? "Chưa có điểm tổng kết"
+          : `Tổng kết ${total.score}/10`}
+      </strong>
+      {total.score !== null ? (
+        <span>
+          {total.status === "final" ? " · Chính thức" : " · Tạm tính"}
+          {` · ${total.publishedCount}/${total.includedCount} cột được công bố`}
+        </span>
+      ) : null}
+    </p>
   );
 }
 
@@ -235,6 +261,11 @@ function ResultRows({
               ? "—"
               : `${result.score} / ${result.maxScore} điểm`}
           </span>
+          <small className="muted">
+            {result.includedInFinal
+              ? `Trọng số ${result.weight ?? 0}%`
+              : "Không tính vào tổng kết"}
+          </small>
         </button>
       ))}
     </div>

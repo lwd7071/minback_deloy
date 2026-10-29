@@ -2,12 +2,14 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GradebookQuery } from "@/schemas/frontend-rebuild";
+import type { AssignmentStatus } from "@/types/assignment";
 import type {
   GradebookDto,
   GradebookEvaluationMatrixDto,
   GradebookStudentColumnDto,
   GradebookAssignmentHeaderDto,
 } from "@/types/gradebook";
+import { calculateGradebookScore } from "@/lib/gradebook";
 
 /**
  * Truy vấn ma trận bảng điểm cho một lớp học phần (Domain Gradebook).
@@ -31,11 +33,13 @@ export async function getGradebookRows(
       .range(studentFrom, studentFrom + query.studentPageSize - 1),
     supabase
       .from("assignments")
-      .select("id, title, max_score, status", { count: "exact" })
+      .select(
+        "id, title, max_score, status, gradebook_included, gradebook_weight",
+        { count: "exact" },
+      )
       .eq("class_section_id", classSectionId)
-      .in("status", ["published", "closed"])
       .order("assigned_date", { ascending: false })
-      .range(assignmentFrom, assignmentFrom + query.assignmentPageSize - 1),
+      .order("id"),
   ]);
 
   if (studentResult.error || assignmentResult.error) {
@@ -43,9 +47,15 @@ export async function getGradebookRows(
   }
 
   const studentIds = (studentResult.data ?? []).map((row) => row.id as string);
-  const assignmentIds = (assignmentResult.data ?? []).map(
-    (row) => row.id as string,
+  const allAssignments = assignmentResult.data ?? [];
+  const pageAssignments = allAssignments.slice(
+    assignmentFrom,
+    assignmentFrom + query.assignmentPageSize,
   );
+  const pageAssignmentIds = new Set(
+    pageAssignments.map((assignment) => assignment.id),
+  );
+  const assignmentIds = allAssignments.map((row) => row.id as string);
 
   // Truy vấn ma trận điểm đánh giá giao giữa danh sách sinh viên và bài tập trang hiện tại
   const evaluationResult =
@@ -62,13 +72,30 @@ export async function getGradebookRows(
   }
 
   const evaluations: GradebookEvaluationMatrixDto = {};
+  const evaluationsByStudent = new Map<
+    string,
+    Map<
+      string,
+      { score: number | null; status: "pending" | "graded" | "returned" }
+    >
+  >();
   for (const row of evaluationResult.data ?? []) {
     const studentId = row.student_id as string;
-    evaluations[studentId] ??= {};
-    evaluations[studentId][row.assignment_id as string] = {
-      id: row.id as string,
+    const assignmentId = row.assignment_id as string;
+    const evaluation = {
       score: row.score === null ? null : Number(row.score),
       status: row.status as "pending" | "graded" | "returned",
+    };
+    const studentEvaluations = evaluationsByStudent.get(studentId) ?? new Map();
+    studentEvaluations.set(assignmentId, evaluation);
+    evaluationsByStudent.set(studentId, studentEvaluations);
+    if (!pageAssignmentIds.has(assignmentId)) {
+      continue;
+    }
+    evaluations[studentId] ??= {};
+    evaluations[studentId][assignmentId] = {
+      id: row.id as string,
+      ...evaluation,
     };
   }
 
@@ -81,19 +108,55 @@ export async function getGradebookRows(
     }),
   );
 
-  const assignments: GradebookAssignmentHeaderDto[] = (
-    assignmentResult.data ?? []
-  ).map((row) => ({
-    id: row.id as string,
-    title: row.title as string,
-    maxScore: Number(row.max_score),
-    status: row.status as "published" | "closed",
-  }));
+  const assignments: GradebookAssignmentHeaderDto[] = pageAssignments.map(
+    (row) => ({
+      id: row.id as string,
+      title: row.title as string,
+      maxScore: Number(row.max_score),
+      status: row.status as AssignmentStatus,
+      included: Boolean(row.gradebook_included),
+      weight:
+        row.gradebook_weight === null ? null : Number(row.gradebook_weight),
+    }),
+  );
+
+  const totals = Object.fromEntries(
+    (studentResult.data ?? []).map((student) => {
+      const studentEvaluations = evaluationsByStudent.get(student.id as string);
+      return [
+        student.id as string,
+        calculateGradebookScore(
+          allAssignments.map((assignment) => {
+            const evaluation = studentEvaluations?.get(assignment.id as string);
+            return {
+              assignmentId: assignment.id as string,
+              maxScore: Number(assignment.max_score),
+              score: evaluation?.score ?? null,
+              status: evaluation?.status ?? "pending",
+              included: Boolean(assignment.gradebook_included),
+              weight:
+                assignment.gradebook_weight === null
+                  ? null
+                  : Number(assignment.gradebook_weight),
+            };
+          }),
+        ),
+      ];
+    }),
+  );
 
   return {
     students,
     assignments,
     evaluations,
+    totals,
+    assignmentsConfig: allAssignments.map((row) => ({
+      id: row.id as string,
+      title: row.title as string,
+      included: Boolean(row.gradebook_included),
+      weight:
+        row.gradebook_weight === null ? null : Number(row.gradebook_weight),
+    })),
     meta: {
       students: {
         page: query.studentPage,

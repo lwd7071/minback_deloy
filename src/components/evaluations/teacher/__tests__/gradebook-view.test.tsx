@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GradebookDto } from "@/types/gradebook";
 import {
   GradebookCell,
@@ -7,6 +7,10 @@ import {
   GradebookRow,
   GradebookView,
 } from "../gradebook-view";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 const mockGradebookData: GradebookDto = {
   students: [
@@ -29,12 +33,16 @@ const mockGradebookData: GradebookDto = {
       title: "Bài tập 1",
       maxScore: 10,
       status: "published",
+      included: true,
+      weight: 60,
     },
     {
       id: "assign-2",
       title: "Bài tập 2",
       maxScore: 100,
       status: "closed",
+      included: true,
+      weight: 40,
     },
   ],
   evaluations: {
@@ -53,6 +61,24 @@ const mockGradebookData: GradebookDto = {
       },
     },
   },
+  totals: {
+    "student-1": {
+      score: 9.5,
+      status: "temporary",
+      publishedCount: 1,
+      includedCount: 2,
+    },
+    "student-2": {
+      score: 4.5,
+      status: "temporary",
+      publishedCount: 1,
+      includedCount: 2,
+    },
+  },
+  assignmentsConfig: [
+    { id: "assign-1", title: "Bài tập 1", included: true, weight: 60 },
+    { id: "assign-2", title: "Bài tập 2", included: true, weight: 40 },
+  ],
   meta: {
     students: { page: 1, pageSize: 20, total: 2 },
     assignments: { page: 1, pageSize: 20, total: 2 },
@@ -67,7 +93,10 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
   it("GradebookHeader chỉ nhận assignments và render chính xác", () => {
     render(
       <table>
-        <GradebookHeader assignments={mockGradebookData.assignments} />
+        <GradebookHeader
+          assignments={mockGradebookData.assignments}
+          classSectionId="class-test"
+        />
       </table>,
     );
 
@@ -98,6 +127,7 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
             student={mockGradebookData.students[0]}
             assignments={mockGradebookData.assignments}
             evaluationsByAssignment={mockGradebookData.evaluations["student-1"]}
+            classSectionId="class-test"
           />
         </tbody>
       </table>,
@@ -106,7 +136,7 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
     expect(screen.getByText("SV001")).toBeInTheDocument();
     expect(screen.getByText("Nguyễn Văn A")).toBeInTheDocument();
     expect(screen.getByText("9.5/10")).toBeInTheDocument();
-    expect(screen.getByText("—")).toBeInTheDocument(); // assign-2 chưa chấm
+    expect(screen.getAllByText("—")).toHaveLength(2); // ô chưa chấm và tổng chưa có
   });
 
   it("GradebookView kết hợp các sub-components phân rã thành bảng hoàn chỉnh", () => {
@@ -138,6 +168,8 @@ describe("Gradebook Components (Interface Segregation Principle - ISP)", () => {
       students: totals.students ? mockGradebookData.students : [],
       assignments: totals.assignments ? mockGradebookData.assignments : [],
       evaluations: {},
+      totals: {},
+      assignmentsConfig: [],
       meta: {
         students: { page: 1, pageSize: 20, total: totals.students },
         assignments: { page: 1, pageSize: 20, total: totals.assignments },

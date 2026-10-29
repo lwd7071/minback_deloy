@@ -21,6 +21,8 @@ export interface GradebookAssignmentHeaderDto {
   title: string;
   maxScore: number;
   status: AssignmentStatus;
+  included: boolean;
+  weight: number | null;
 }
 
 /**
@@ -58,5 +60,12 @@ export interface GradebookDto {
   students: GradebookStudentColumnDto[];
   assignments: GradebookAssignmentHeaderDto[];
   evaluations: GradebookEvaluationMatrixDto;
+  totals: Record<string, import("@/lib/gradebook").GradebookScoreSummary>;
+  assignmentsConfig: Array<{
+    id: string;
+    title: string;
+    included: boolean;
+    weight: number | null;
+  }>;
   meta: GradebookPaginationMetaDto;
 }

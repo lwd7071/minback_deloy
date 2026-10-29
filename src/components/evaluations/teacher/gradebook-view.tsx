@@ -1,6 +1,9 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { IntentPrefetchLink as Link } from "@/components/ui/intent-prefetch-link";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import type {
@@ -17,8 +20,10 @@ import type {
  */
 export function GradebookHeader({
   assignments,
+  classSectionId,
 }: {
   assignments: GradebookAssignmentHeaderDto[];
+  classSectionId: string;
 }) {
   return (
     <thead>
@@ -26,9 +31,19 @@ export function GradebookHeader({
         <th className="table-sticky-col">Sinh viên</th>
         {assignments.map((assignment) => (
           <th key={assignment.id} title={assignment.title}>
-            {assignment.title}
+            <Link
+              href={`/admin/classes/${classSectionId}/assignments/${assignment.id}/grade`}
+            >
+              {assignment.title}
+            </Link>
+            <small className="muted" style={{ display: "block" }}>
+              {assignment.included
+                ? `${assignment.weight}% tổng kết`
+                : "Không tính tổng"}
+            </small>
           </th>
         ))}
+        <th>Tổng kết /10</th>
       </tr>
     </thead>
   );
@@ -65,10 +80,14 @@ export function GradebookRow({
   student,
   assignments,
   evaluationsByAssignment,
+  total,
+  classSectionId,
 }: {
   student: GradebookStudentColumnDto;
   assignments: GradebookAssignmentHeaderDto[];
   evaluationsByAssignment?: Record<string, GradebookCellEvaluationDto>;
+  total?: GradebookDto["totals"][string];
+  classSectionId: string;
 }) {
   return (
     <tr>
@@ -79,12 +98,27 @@ export function GradebookRow({
       </td>
       {assignments.map((assignment) => (
         <td key={assignment.id}>
-          <GradebookCell
-            evaluation={evaluationsByAssignment?.[assignment.id]}
-            maxScore={assignment.maxScore}
-          />
+          <Link
+            href={`/admin/classes/${classSectionId}/assignments/${assignment.id}/grade`}
+            aria-label={`Mở chấm điểm ${assignment.title} cho ${student.fullName}`}
+          >
+            <GradebookCell
+              evaluation={evaluationsByAssignment?.[assignment.id]}
+              maxScore={assignment.maxScore}
+            />
+          </Link>
         </td>
       ))}
+      <td>
+        <strong>
+          {total?.score === null || !total ? "—" : total.score.toFixed(1)}
+        </strong>
+        {total?.score !== null && total ? (
+          <small className="muted" style={{ display: "block" }}>
+            {total.status === "final" ? "Chính thức" : "Tạm tính"}
+          </small>
+        ) : null}
+      </td>
     </tr>
   );
 }
@@ -169,6 +203,79 @@ export function GradebookView({
   classSectionId: string;
   data: GradebookDto;
 }) {
+  const router = useRouter();
+  const [configuration, setConfiguration] = useState(data.assignmentsConfig);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const originalConfiguration = useMemo(
+    () => JSON.stringify(data.assignmentsConfig),
+    [data.assignmentsConfig],
+  );
+  const includedWeight = configuration.reduce(
+    (sum, item) => sum + (item.included ? (item.weight ?? 0) : 0),
+    0,
+  );
+  const configValid =
+    !configuration.some(
+      (item) => item.included && (item.weight === null || item.weight <= 0),
+    ) &&
+    (includedWeight === 0 || Math.abs(includedWeight - 100) <= 0.01);
+  const dirty = JSON.stringify(configuration) !== originalConfiguration;
+
+  async function saveConfiguration(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const response = await fetch(
+        `/api/v1/teacher/class-sections/${classSectionId}/gradebook/config`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            assignments: configuration.map((item) => ({
+              assignmentId: item.id,
+              included: item.included,
+              weight: item.weight,
+            })),
+          }),
+        },
+      );
+      const body = (await response.json()) as {
+        error?: { message?: string };
+      };
+      if (!response.ok) {
+        throw new Error(
+          body.error?.message ?? "Không thể lưu cấu hình bảng điểm",
+        );
+      }
+      setSaved(true);
+      router.refresh();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Không thể lưu cấu hình bảng điểm",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateConfiguration(
+    assignmentId: string,
+    update: Partial<(typeof configuration)[number]>,
+  ) {
+    setConfiguration((current) =>
+      current.map((item) =>
+        item.id === assignmentId ? { ...item, ...update } : item,
+      ),
+    );
+    setSaved(false);
+  }
+
   const hasStudents = data.meta.students.total > 0;
   const hasAssignments = data.meta.assignments.total > 0;
 
@@ -186,14 +293,43 @@ export function GradebookView({
           ? "Thêm sinh viên vào lớp để bắt đầu nhập điểm."
           : "Tạo bài tập cho lớp để bắt đầu nhập điểm.";
 
-    return <EmptyState icon="book" title={title} description={description} />;
+    return (
+      <div className="stack">
+        <GradebookConfiguration
+          assignments={configuration}
+          includedWeight={includedWeight}
+          valid={configValid}
+          dirty={dirty}
+          saving={saving}
+          saved={saved}
+          error={error}
+          onUpdate={updateConfiguration}
+          onSave={saveConfiguration}
+        />
+        <EmptyState icon="book" title={title} description={description} />
+      </div>
+    );
   }
 
   return (
-    <>
+    <div className="stack">
+      <GradebookConfiguration
+        assignments={configuration}
+        includedWeight={includedWeight}
+        valid={configValid}
+        dirty={dirty}
+        saving={saving}
+        saved={saved}
+        error={error}
+        onUpdate={updateConfiguration}
+        onSave={saveConfiguration}
+      />
       <div className="table-wrap">
         <table>
-          <GradebookHeader assignments={data.assignments} />
+          <GradebookHeader
+            assignments={data.assignments}
+            classSectionId={classSectionId}
+          />
           <tbody>
             {data.students.map((student) => (
               <GradebookRow
@@ -201,12 +337,113 @@ export function GradebookView({
                 student={student}
                 assignments={data.assignments}
                 evaluationsByAssignment={data.evaluations[student.id]}
+                total={data.totals[student.id]}
+                classSectionId={classSectionId}
               />
             ))}
           </tbody>
         </table>
       </div>
       <GradebookPagination meta={data.meta} classSectionId={classSectionId} />
-    </>
+    </div>
+  );
+}
+
+function GradebookConfiguration({
+  assignments,
+  includedWeight,
+  valid,
+  dirty,
+  saving,
+  saved,
+  error,
+  onUpdate,
+  onSave,
+}: {
+  assignments: GradebookDto["assignmentsConfig"];
+  includedWeight: number;
+  valid: boolean;
+  dirty: boolean;
+  saving: boolean;
+  saved: boolean;
+  error: string | null;
+  onUpdate: (
+    assignmentId: string,
+    update: Partial<GradebookDto["assignmentsConfig"][number]>,
+  ) => void;
+  onSave: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+}) {
+  return (
+    <form className="card stack" onSubmit={onSave}>
+      <div>
+        <h2>Cấu hình điểm tổng kết</h2>
+        <p className="muted">
+          Chọn bài được tính và đặt trọng số. Tổng trọng số cần bằng 100%; bài
+          mới mặc định không tính.
+        </p>
+      </div>
+      {assignments.length ? (
+        <div className="stack">
+          {assignments.map((assignment) => (
+            <div className="cluster" key={assignment.id}>
+              <label className="cluster" style={{ flex: 1 }}>
+                <input
+                  type="checkbox"
+                  checked={assignment.included}
+                  onChange={(event) =>
+                    onUpdate(assignment.id, { included: event.target.checked })
+                  }
+                />
+                <span>{assignment.title}</span>
+              </label>
+              <label className="cluster">
+                <span>Trọng số (%)</span>
+                <input
+                  aria-label={`Trọng số ${assignment.title}`}
+                  className="form-input"
+                  type="number"
+                  min="0.01"
+                  max="100"
+                  step="0.01"
+                  value={assignment.weight ?? ""}
+                  disabled={!assignment.included}
+                  onChange={(event) =>
+                    onUpdate(assignment.id, {
+                      weight:
+                        event.target.value === ""
+                          ? null
+                          : Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+            </div>
+          ))}
+          <p className={valid ? "muted" : "form-error"} aria-live="polite">
+            Tổng trọng số đang chọn: {includedWeight.toFixed(2)}%
+            {!valid ? " · Cần bằng 100% trước khi lưu." : ""}
+          </p>
+        </div>
+      ) : (
+        <p className="muted">Tạo bài tập để thêm cột vào bảng điểm.</p>
+      )}
+      {error ? (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {saved ? (
+        <p className="form-success" role="status">
+          Đã lưu cấu hình bảng điểm.
+        </p>
+      ) : null}
+      <Button
+        type="submit"
+        disabled={!dirty || !valid || !assignments.length}
+        loading={saving}
+      >
+        Lưu cấu hình
+      </Button>
+    </form>
   );
 }

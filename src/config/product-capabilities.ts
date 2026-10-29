@@ -5,7 +5,7 @@ export const PRODUCT_CAPABILITIES = {
     assignmentAttachments: false,
     assignmentDelete: true,
     assignmentTechnicalStatus: false,
-    gradebook: false,
+    gradebook: true,
     evaluationImport: true,
   },
   student: {

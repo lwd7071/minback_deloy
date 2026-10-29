@@ -76,3 +76,7 @@ Schema, dữ liệu, repository, route handler và logic backend cũ không bị
 - Đã hoàn thành implementation feedback-first cho Teacher Assignment/Evaluation và Student Results, capability/redirect, notification deep-link, loading skeleton/progress và tài liệu liên quan.
 - Backend/schema tương thích vẫn được giữ nguyên; không có migration hoặc seed thay đổi trong đợt này.
 - Commit/push: sẽ được ghi nhận ở commit release feedback-first sau khi đối chiếu diff; file `simpleplan.md` là untracked có sẵn và không thuộc commit này.
+
+## Khôi phục Gradebook (2026-10-29)
+
+Gradebook được bật lại tại `/admin/classes/:id/gradebook`. Assignment tự động xuất hiện thành cột; Teacher cấu hình bài được tính và trọng số tổng 100%. Tổng thang 10 tính từ Evaluation `returned`, là tạm tính khi thiếu cột đã công bố và chính thức khi đủ. Student Results hiển thị các cột đã công bố, trọng số và tổng tương ứng. Schema/API và acceptance criteria được mô tả trong `docs/brief.md`.

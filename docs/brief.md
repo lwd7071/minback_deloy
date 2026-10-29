@@ -89,6 +89,15 @@ Mỗi lần xác thực thành công chỉ mở **một hồ sơ học tập duy
 - Viết nhận xét (feedback).
 - Xem lịch sử đánh giá.
 
+### Gradebook Management
+- Mỗi Assignment trong ClassSection tự động là một cột của bảng điểm; chấm điểm và feedback vẫn thực hiện ở màn hình Assignment.
+- Teacher bật/tắt Assignment tham gia điểm tổng kết và đặt trọng số. Các trọng số đang bật phải cộng thành 100%; Assignment mới mặc định chưa tham gia.
+- Không xóa Assignment đang được tính vào tổng kết; Teacher cần bỏ bài khỏi công thức và lưu lại trọng số hợp lệ trước.
+- Điểm từng Assignment được chuẩn hóa theo `score / max_score`, nhân trọng số; tổng được quy đổi về thang 10 và làm tròn một chữ số thập phân.
+- Chỉ Evaluation `returned` được tính. Nếu Student chưa có kết quả công bố ở tất cả Assignment đang tính, hệ thống chuẩn hóa theo trọng số các kết quả đã công bố và hiển thị tổng tạm tính. Khi đủ kết quả, tổng trở thành chính thức.
+- Student chỉ xem các cột Evaluation `returned`; Assignment không tham gia tổng vẫn có thể công bố điểm và feedback.
+- Điểm tổng kết là giá trị tính toán, không tạo Evaluation hoặc Assignment “Tổng kết” riêng.
+
 ### Student Academic Profile
 - Thông tin lớp học phần, danh sách kết quả, feedback, điểm, tiến độ học tập.
 
@@ -173,6 +182,7 @@ Evaluation
 | BR-011 *(mới)* | Hệ thống phải lưu lại lịch sử thay đổi điểm/feedback (không chỉ giá trị hiện hành) — đáp ứng EVA-005 |
 | BR-012 *(mới)* | Tiến độ học tập (progress) được tính từ `Evaluation.status` theo từng Assignment trong lớp, không cần entity Submission riêng ở MVP |
 | BR-013 *(release feedback-first)* | Student chỉ xem Evaluation `returned`; Teacher chọn Assignment để import/save/publish điểm và feedback |
+| BR-014 *(Gradebook)* | Mỗi Assignment là một cột điểm; Teacher cấu hình trọng số tổng 100%; Gradebook tính tổng thang 10 chỉ từ Evaluation `returned` và phân biệt tổng tạm tính/chính thức |
 
 ---
 

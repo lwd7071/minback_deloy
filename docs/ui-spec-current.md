@@ -677,21 +677,26 @@ createPortal(
 ### 10. Bảng điểm tổng hợp của lớp — `/admin/classes/[id]/gradebook`
 - **File:** `src/app/admin/(protected)/classes/[id]/gradebook/page.tsx`
 - **Mục đích:** Ma trận bảng điểm 2 chiều (Sinh viên × Bài tập) của lớp học phần.
-- **Trạng thái hiện tại:** Đã implement UI hoàn chỉnh.
+- **Trạng thái hiện tại:** Active. Mỗi Assignment là một cột; cấu hình trọng số và điểm tổng kết nằm trên trang này.
 - **Bố cục:**
   - Tiêu đề `h1` "Bảng điểm".
   - Ma trận bảng dữ liệu trong `.table-wrap`:
     - Cột đầu: Danh sách sinh viên (MSSV in đậm, Họ tên).
     - Các cột sau: Tương ứng từng bài tập trong lớp (header hiển thị tên bài).
     - Mỗi ô (cell): Hiển thị điểm số dạng `X/Max` kèm `Badge` thể hiện trạng thái (pending, graded, returned), hoặc dấu `—` nếu chưa có điểm.
+    - Cột cuối hiển thị tổng kết thang 10 và nhãn chính thức/tạm tính.
+    - Bấm tên bài hoặc ô điểm để mở màn hình chấm bài tương ứng.
+  - Khối cấu hình cho phép chọn Assignment được tính vào tổng và đặt trọng số; tổng trọng số được bật phải bằng 100% trước khi lưu.
   - Phân trang độc lập 2 chiều dưới chân bảng: Phân trang danh sách sinh viên (`studentPage`) và phân trang danh sách bài tập (`assignmentPage`).
 - **Component con sử dụng:**
   - `GradebookView` (`src/components/evaluations/teacher/gradebook-view.tsx`)
   - `Badge`
 - **API gọi trên trang:**
   - Server fetch: `getTeacherGradebook(classSectionId, { studentPage, studentPageSize: 20, assignmentPage, assignmentPageSize: 20 })`.
+  - Lưu cấu hình: `PUT /api/v1/teacher/class-sections/:classSectionId/gradebook/config` với `{ assignments: [{ assignmentId, included, weight }] }`.
 - **Empty state:** Render bảng rỗng hoặc dấu `—` tại các cell chưa có điểm.
 - **Responsive:** Bảng ma trận tự động cuộn ngang mượt mà khi số lượng cột bài tập vượt quá độ rộng màn hình.
+- **Sinh viên:** `/class/:code/grades` hiển thị Evaluation `returned`, trọng số và tổng thang 10; tổng tạm tính khi chưa đủ các cột tham gia.
 
 ---
 

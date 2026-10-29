@@ -10,6 +10,7 @@ vi.mock("@/server/repositories/assignments/assignment-repository", () => ({
   deleteDraftAssignment: vi.fn(),
   findAssignmentById: vi.fn(),
   hasEvaluations: vi.fn(),
+  isAssignmentIncludedInGradebook: vi.fn(),
   listAssignmentsByClassSection: vi.fn(),
   listTeacherAssignmentSummaries: vi.fn(),
   updateAssignment: vi.fn(),
@@ -22,6 +23,7 @@ import {
   deleteDraftAssignment,
   findAssignmentById,
   hasEvaluations,
+  isAssignmentIncludedInGradebook,
   listAssignmentsByClassSection,
   updateAssignment,
 } from "@/server/repositories/assignments/assignment-repository";
@@ -73,7 +75,9 @@ describe("Assignment title uniqueness", () => {
   });
 
   it("rejects a duplicate title in the same class when creating", async () => {
-    vi.mocked(findClassSectionById).mockResolvedValue({ id: classSectionId } as never);
+    vi.mocked(findClassSectionById).mockResolvedValue({
+      id: classSectionId,
+    } as never);
     vi.mocked(listAssignmentsByClassSection).mockResolvedValue([current]);
 
     await expect(
@@ -105,7 +109,11 @@ describe("Assignment title uniqueness", () => {
     ]);
 
     await expect(
-      updateTeacherAssignment("assignment-1", { title: " bài cuối kỳ " }, teacherId),
+      updateTeacherAssignment(
+        "assignment-1",
+        { title: " bài cuối kỳ " },
+        teacherId,
+      ),
     ).rejects.toMatchObject({ status: 409, code: "CONFLICT" });
 
     expect(updateAssignment).not.toHaveBeenCalled();
@@ -126,7 +134,9 @@ describe("Assignment title uniqueness", () => {
   it("allows renaming a published assignment without error", async () => {
     const publishedAssignment = { ...current, status: "published" as const };
     vi.mocked(findAssignmentById).mockResolvedValue(publishedAssignment);
-    vi.mocked(listAssignmentsByClassSection).mockResolvedValue([publishedAssignment]);
+    vi.mocked(listAssignmentsByClassSection).mockResolvedValue([
+      publishedAssignment,
+    ]);
     vi.mocked(updateAssignment).mockResolvedValue({
       ...publishedAssignment,
       title: "Giữa kỳ",
@@ -166,6 +176,7 @@ describe("Assignment deletion", () => {
 
   it("deletes an assignment without evaluations", async () => {
     vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(isAssignmentIncludedInGradebook).mockResolvedValue(false);
     vi.mocked(hasEvaluations).mockResolvedValue(false);
     vi.mocked(deleteDraftAssignment).mockResolvedValue(true);
 
@@ -178,6 +189,7 @@ describe("Assignment deletion", () => {
 
   it("rejects deleting an assignment with evaluations if force is not set", async () => {
     vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(isAssignmentIncludedInGradebook).mockResolvedValue(false);
     vi.mocked(hasEvaluations).mockResolvedValue(true);
 
     await expect(
@@ -189,6 +201,7 @@ describe("Assignment deletion", () => {
 
   it("deletes an assignment with evaluations when force is true", async () => {
     vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(isAssignmentIncludedInGradebook).mockResolvedValue(false);
     vi.mocked(hasEvaluations).mockResolvedValue(true);
     vi.mocked(deleteAssignmentWithEvaluations).mockResolvedValue(true);
 
@@ -196,6 +209,18 @@ describe("Assignment deletion", () => {
       deleteTeacherAssignment("assignment-1", teacherId, { force: true }),
     ).resolves.toBeUndefined();
 
-    expect(deleteAssignmentWithEvaluations).toHaveBeenCalledWith("assignment-1");
+    expect(deleteAssignmentWithEvaluations).toHaveBeenCalledWith(
+      "assignment-1",
+    );
+  });
+
+  it("requires removing an Assignment from the final grade before deletion", async () => {
+    vi.mocked(findAssignmentById).mockResolvedValue(assignment);
+    vi.mocked(isAssignmentIncludedInGradebook).mockResolvedValue(true);
+
+    await expect(
+      deleteTeacherAssignment("assignment-1", teacherId, { force: true }),
+    ).rejects.toMatchObject({ status: 409, code: "CONFLICT" });
+    expect(hasEvaluations).not.toHaveBeenCalled();
   });
 });

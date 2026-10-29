@@ -8,6 +8,7 @@ import { Trash2 } from "lucide-react";
 import { AppIcon } from "@/components/ui/app-icon";
 import { Card } from "@/components/ui/card";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { PRODUCT_CAPABILITIES } from "@/config/product-capabilities";
 
 export function ClassOverviewView({
   classSectionId,
@@ -37,6 +38,16 @@ export function ClassOverviewView({
       title: "Bài tập",
       description: "Tạo, đổi tên và nhập điểm kèm feedback cho lớp.",
     },
+    ...(PRODUCT_CAPABILITIES.teacher.gradebook
+      ? [
+          {
+            href: `/admin/classes/${classSectionId}/gradebook`,
+            icon: "gradebook" as const,
+            title: "Bảng điểm",
+            description: "Theo dõi các cột điểm và cấu hình điểm tổng kết.",
+          },
+        ]
+      : []),
   ];
 
   async function handleDeleteClass() {

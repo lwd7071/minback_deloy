@@ -9,12 +9,13 @@ export default async function StudentGradesPage({
 }) {
   const query = searchParams ? await searchParams : {};
   const session = await requireFullStudentSession();
-  const { results } = await getStudentResults(session);
+  const { results, total } = await getStudentResults(session);
   return (
     <StudentWorkspaceView
       section="grades"
       initialAssignmentId={query.assignment}
       initialResults={results}
+      initialTotal={total}
     />
   );
 }

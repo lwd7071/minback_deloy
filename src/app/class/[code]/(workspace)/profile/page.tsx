@@ -4,6 +4,12 @@ import { getStudentResults } from "@/server/services/students/student-results-se
 
 export default async function StudentProfilePage() {
   const session = await requireFullStudentSession();
-  const { results } = await getStudentResults(session);
-  return <StudentWorkspaceView section="overview" initialResults={results} />;
+  const { results, total } = await getStudentResults(session);
+  return (
+    <StudentWorkspaceView
+      section="overview"
+      initialResults={results}
+      initialTotal={total}
+    />
+  );
 }

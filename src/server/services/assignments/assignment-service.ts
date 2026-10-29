@@ -12,6 +12,7 @@ import {
   deleteDraftAssignment,
   findAssignmentById,
   hasEvaluations,
+  isAssignmentIncludedInGradebook,
   listAssignmentsByClassSection,
   listTeacherAssignmentSummaries as listAssignmentSummaries,
   updateAssignment,
@@ -226,6 +227,13 @@ export async function deleteTeacherAssignment(
         404,
         API_ERROR_CODES.notFound,
         "Không tìm thấy bài tập",
+      );
+    }
+    if (await isAssignmentIncludedInGradebook(assignmentId)) {
+      throw new ApiError(
+        409,
+        API_ERROR_CODES.conflict,
+        "Hãy bỏ bài khỏi điểm tổng kết trước khi xóa",
       );
     }
     const evaluationsExist = await hasEvaluations(assignmentId);

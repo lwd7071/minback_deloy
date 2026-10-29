@@ -269,6 +269,24 @@ export async function hasEvaluations(assignmentId: string): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
+export async function isAssignmentIncludedInGradebook(
+  assignmentId: string,
+): Promise<boolean> {
+  const { data, error } = await createAdminClient()
+    .from("assignments")
+    .select("gradebook_included")
+    .eq("id", assignmentId)
+    .single();
+  if (error) {
+    throw new RepositoryError(
+      "ASSIGNMENT_GRADEBOOK_LOOKUP_FAILED",
+      "Không thể kiểm tra cấu hình bảng điểm",
+      { cause: error },
+    );
+  }
+  return Boolean(data.gradebook_included);
+}
+
 export async function deleteDraftAssignment(
   assignmentId: string,
 ): Promise<boolean> {
@@ -319,4 +337,3 @@ export async function deleteAssignmentWithEvaluations(
   }
   return true;
 }
-
