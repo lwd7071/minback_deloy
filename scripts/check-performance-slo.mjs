@@ -1,23 +1,32 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY,
-  { auth: { persistSession: false, autoRefreshToken: false } },
-);
-
 const now = Date.now();
 const windows = [
   { from: new Date(now - 30 * 60_000), to: new Date(now - 15 * 60_000) },
   { from: new Date(now - 15 * 60_000), to: new Date(now) },
 ];
 
-const { data, error } = await supabase
-  .from("performance_samples")
-  .select("route_template, metric, duration_ms, created_at")
-  .gte("created_at", windows[0].from.toISOString())
-  .lt("created_at", windows[1].to.toISOString());
-if (error) throw error;
+let data = null;
+let needsSynthetic = false;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY?.trim();
+
+if (supabaseUrl && supabaseSecretKey) {
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(supabaseUrl, supabaseSecretKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const result = await supabase
+    .from("performance_samples")
+    .select("route_template, metric, duration_ms, created_at")
+    .gte("created_at", windows[0].from.toISOString())
+    .lt("created_at", windows[1].to.toISOString());
+  if (result.error) throw result.error;
+  data = result.data;
+} else {
+  console.warn(
+    "WARN Supabase telemetry is unavailable; configure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY to query performance samples",
+  );
+  needsSynthetic = true;
+}
 
 const thresholds = {
   "/admin/classes": 1500,
@@ -35,7 +44,6 @@ function percentile(values, p) {
 }
 
 const exceededByWindow = [];
-let needsSynthetic = false;
 for (const window of windows) {
   const rows = (data ?? []).filter((row) => {
     const time = new Date(row.created_at);
@@ -72,6 +80,10 @@ if (needsSynthetic) {
     console.warn(
       "WARN SYNTHETIC_MONITOR_URL is not configured; sample-based SLO check was not used",
     );
+    console.error(
+      "Performance SLO check cannot run without Supabase telemetry credentials or SYNTHETIC_MONITOR_URL",
+    );
+    process.exitCode = 1;
   } else {
     try {
       const response = await fetch(syntheticUrl, {
