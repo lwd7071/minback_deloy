@@ -63,7 +63,7 @@ describe("Pagination", () => {
     expect(select).toHaveValue("20");
 
     // Thao tác đổi page size
-    fireEvent.change(select, { target: {value: "50" } });
+    fireEvent.change(select, { target: { value: "50" } });
     expect(handlePageSizeChange).toHaveBeenCalledWith(50);
   });
 });

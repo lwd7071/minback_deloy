@@ -139,9 +139,7 @@ describe("ClassCreateFlow", () => {
         (_content, element) =>
           element?.tagName.toLowerCase() === "p" &&
           Boolean(
-            element.textContent?.includes(
-              "kích hoạt tài khoản và tạo mã PIN",
-            ),
+            element.textContent?.includes("kích hoạt tài khoản và tạo mã PIN"),
           ),
       ),
     ).toBeInTheDocument();

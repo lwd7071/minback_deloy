@@ -25,7 +25,11 @@ export const evaluationInputSchema = z
       .optional(),
   })
   .superRefine((value, context) => {
-    if (value.status !== "pending" && value.score === null && (!value.criteriaScores || value.criteriaScores.length === 0)) {
+    if (
+      value.status !== "pending" &&
+      value.score === null &&
+      (!value.criteriaScores || value.criteriaScores.length === 0)
+    ) {
       context.addIssue({
         code: "custom",
         path: ["score"],

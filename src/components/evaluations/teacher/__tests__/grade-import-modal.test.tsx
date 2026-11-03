@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GradeImportModal } from "../grade-import-modal";
 import type { EvaluationImportPreviewDto } from "@/types/evaluation-import";
@@ -70,7 +76,9 @@ describe("GradeImportModal (Auto-inspect & UI/UX)", () => {
       />,
     );
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     expect(fileInput).toBeInTheDocument();
 
     const file = new File(["dummy content"], "test.xlsx", {
@@ -116,7 +124,9 @@ describe("GradeImportModal (Auto-inspect & UI/UX)", () => {
       />,
     );
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const file = new File(["dummy"], "grades.xlsx");
 
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -161,7 +171,9 @@ describe("GradeImportModal (Auto-inspect & UI/UX)", () => {
       />,
     );
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const file = new File(["dummy"], "grades.xlsx");
 
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -235,15 +247,21 @@ describe("GradeImportModal (Auto-inspect & UI/UX)", () => {
       />,
     );
 
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const file = new File(["dummy"], "grades.xlsx");
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText(/tệp có 1 dòng bị lỗi không thể lưu/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/tệp có 1 dòng bị lỗi không thể lưu/i),
+      ).toBeInTheDocument();
     });
 
-    const saveDraftBtn = screen.getByRole("button", { name: /lưu chưa công bố/i });
+    const saveDraftBtn = screen.getByRole("button", {
+      name: /lưu chưa công bố/i,
+    });
     const publishBtn = screen.getByRole("button", { name: /công bố kết quả/i });
 
     // Ban đầu khi chưa tick checkbox, cả 2 nút phải bị disable

@@ -71,7 +71,9 @@ test.describe("Workflow 3: Re-import Grade, Draft Isolation & Student Realtime S
     await expect(
       teacherPage.locator("text=Chuẩn bị danh sách sinh viên"),
     ).toBeVisible();
-    const checkRosterBtn = teacherPage.locator('button:has-text("Kiểm tra tệp")');
+    const checkRosterBtn = teacherPage.locator(
+      'button:has-text("Kiểm tra tệp")',
+    );
     if (await checkRosterBtn.isVisible()) await checkRosterBtn.click();
 
     // Chờ bản xem trước hiển thị (10 sinh viên)

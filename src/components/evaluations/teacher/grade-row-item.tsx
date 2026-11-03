@@ -50,7 +50,9 @@ export function GradeRowItem({
       for (const c of criteria) {
         const found = existingScores.find((es) => es.name === c.name);
         initialMap[c.name] =
-          found !== undefined && found.score !== null ? String(found.score) : "";
+          found !== undefined && found.score !== null
+            ? String(found.score)
+            : "";
       }
       setDraftCriteriaScores(initialMap);
     } else {
@@ -74,22 +76,23 @@ export function GradeRowItem({
   }
 
   // Tính tổng điểm động realtime khi có criteria
-  const computedLiveScore = hasCriteria && criteria
-    ? (() => {
-        const allBlank = criteria.every(
-          (c) => (draftCriteriaScores[c.name] ?? "").trim() === "",
-        );
-        if (allBlank) return null;
-        const validCriteria: CriterionScore[] = [];
-        for (const c of criteria) {
-          const val = (draftCriteriaScores[c.name] ?? "").trim();
-          const num = Number(val);
-          if (val === "" || Number.isNaN(num)) return null;
-          validCriteria.push({ ...c, score: num });
-        }
-        return computeTotal(validCriteria, maxScore);
-      })()
-    : null;
+  const computedLiveScore =
+    hasCriteria && criteria
+      ? (() => {
+          const allBlank = criteria.every(
+            (c) => (draftCriteriaScores[c.name] ?? "").trim() === "",
+          );
+          if (allBlank) return null;
+          const validCriteria: CriterionScore[] = [];
+          for (const c of criteria) {
+            const val = (draftCriteriaScores[c.name] ?? "").trim();
+            const num = Number(val);
+            if (val === "" || Number.isNaN(num)) return null;
+            validCriteria.push({ ...c, score: num });
+          }
+          return computeTotal(validCriteria, maxScore);
+        })()
+      : null;
 
   async function handleSave() {
     setError(null);
@@ -103,7 +106,12 @@ export function GradeRowItem({
         // Xóa trắng điểm
         setSaving(true);
         try {
-          const result = await onSave(student.id, null, draftFeedback.trim(), []);
+          const result = await onSave(
+            student.id,
+            null,
+            draftFeedback.trim(),
+            [],
+          );
           if (result.success) {
             setEditing(false);
           } else {
@@ -195,7 +203,11 @@ export function GradeRowItem({
 
     setSaving(true);
     try {
-      const result = await onSave(student.id, parsedScore, draftFeedback.trim());
+      const result = await onSave(
+        student.id,
+        parsedScore,
+        draftFeedback.trim(),
+      );
       if (result.success) {
         setEditing(false);
       } else {
@@ -252,10 +264,10 @@ export function GradeRowItem({
                     onKeyDown={handleKeyDown}
                     aria-label={`Điểm ${c.name} của ${student.fullName}`}
                   />
+                ) : existingScore !== undefined && existingScore !== null ? (
+                  existingScore
                 ) : (
-                  existingScore !== undefined && existingScore !== null
-                    ? existingScore
-                    : "—"
+                  "—"
                 )}
               </td>
             );
@@ -304,7 +316,7 @@ export function GradeRowItem({
             ) : null}
           </div>
         ) : (
-          evaluation?.score ?? "—"
+          (evaluation?.score ?? "—")
         )}
       </td>
 

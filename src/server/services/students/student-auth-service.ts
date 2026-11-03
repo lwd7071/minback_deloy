@@ -427,7 +427,10 @@ export async function resetStudentPinToDefault(
   studentId: string,
 ): Promise<{ studentId: string; mustChangePin: boolean }> {
   // Băm một chuỗi ngẫu nhiên không thể đoán được làm placeholder để PIN cũ không còn đăng nhập được
-  const placeholderPinHash = await hash(randomBytes(32).toString("hex"), BCRYPT_ROUNDS);
+  const placeholderPinHash = await hash(
+    randomBytes(32).toString("hex"),
+    BCRYPT_ROUNDS,
+  );
 
   await revokeAllSessionsByStudentId(studentId);
   await updateStudentPinHash(studentId, placeholderPinHash);

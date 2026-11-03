@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import type { AssignmentDto, TeacherAssignmentSummaryDto } from "@/types/assignment";
+import type {
+  AssignmentDto,
+  TeacherAssignmentSummaryDto,
+} from "@/types/assignment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PRODUCT_CAPABILITIES } from "@/config/product-capabilities";
 

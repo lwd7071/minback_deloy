@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { mockExchangeCodeForSession, mockSignOut, mockCookiesSet } = vi.hoisted(() => ({
-  mockExchangeCodeForSession: vi.fn(),
-  mockSignOut: vi.fn(),
-  mockCookiesSet: vi.fn(),
-}));
+const { mockExchangeCodeForSession, mockSignOut, mockCookiesSet } = vi.hoisted(
+  () => ({
+    mockExchangeCodeForSession: vi.fn(),
+    mockSignOut: vi.fn(),
+    mockCookiesSet: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
@@ -35,7 +37,9 @@ describe("Auth Callback Route Handler", () => {
   });
 
   it("redirects to root when classCode query parameter is missing", async () => {
-    const req = new NextRequest("http://localhost:3000/auth/callback?code=oauth-code-123");
+    const req = new NextRequest(
+      "http://localhost:3000/auth/callback?code=oauth-code-123",
+    );
     const response = await GET(req);
 
     expect(response.status).toBe(307);
@@ -43,7 +47,9 @@ describe("Auth Callback Route Handler", () => {
   });
 
   it("redirects to class login with error when code is missing", async () => {
-    const req = new NextRequest("http://localhost:3000/auth/callback?classCode=WEB101");
+    const req = new NextRequest(
+      "http://localhost:3000/auth/callback?classCode=WEB101",
+    );
     const response = await GET(req);
 
     expect(response.status).toBe(307);

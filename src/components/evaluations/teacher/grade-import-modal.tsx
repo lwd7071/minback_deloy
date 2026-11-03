@@ -229,7 +229,8 @@ export function GradeImportModal({
                       display: "flex",
                       gap: "8px",
                       alignItems: "flex-start",
-                      marginBottom: idx < preview.warnings!.length - 1 ? "6px" : 0,
+                      marginBottom:
+                        idx < preview.warnings!.length - 1 ? "6px" : 0,
                     }}
                   >
                     <span>{w.field === "criteria" ? "🚨" : "⚠️"}</span>
@@ -257,8 +258,16 @@ export function GradeImportModal({
                   border: "1px solid var(--color-border)",
                 }}
               >
-                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--color-text-secondary)", marginBottom: "6px" }}>
-                  TIÊU CHÍ CHẤM ĐIỂM ĐÃ NHẬN DIỆN ({preview.criteria.length} tiêu chí • Tổng 100%)
+                <div
+                  style={{
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    color: "var(--color-text-secondary)",
+                    marginBottom: "6px",
+                  }}
+                >
+                  TIÊU CHÍ CHẤM ĐIỂM ĐÃ NHẬN DIỆN ({preview.criteria.length}{" "}
+                  tiêu chí • Tổng 100%)
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {preview.criteria.map((c, idx) => (
@@ -311,8 +320,17 @@ export function GradeImportModal({
                     Tệp có {preview.summary.invalid} dòng bị lỗi không thể lưu:
                   </span>
                 </div>
-                <p style={{ margin: "0 0 10px 0", color: "var(--color-text-secondary)" }}>
-                  Các dòng lỗi được tô đỏ ở bảng trên sẽ <strong>không được lưu</strong> vào bảng điểm. Bạn nên sửa lại tệp Excel theo các hướng dẫn lỗi ở bảng rồi tải lại, hoặc tích vào ô bên dưới nếu bạn chỉ muốn lưu {preview.summary.valid} dòng hợp lệ.
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  Các dòng lỗi được tô đỏ ở bảng trên sẽ{" "}
+                  <strong>không được lưu</strong> vào bảng điểm. Bạn nên sửa lại
+                  tệp Excel theo các hướng dẫn lỗi ở bảng rồi tải lại, hoặc tích
+                  vào ô bên dưới nếu bạn chỉ muốn lưu {preview.summary.valid}{" "}
+                  dòng hợp lệ.
                 </p>
                 <label
                   style={{
@@ -329,7 +347,8 @@ export function GradeImportModal({
                     onChange={(e) => setConfirmSkipInvalid(e.target.checked)}
                   />
                   <span>
-                    Tôi xác nhận bỏ qua {preview.summary.invalid} dòng lỗi và chỉ lưu {preview.summary.valid} dòng hợp lệ
+                    Tôi xác nhận bỏ qua {preview.summary.invalid} dòng lỗi và
+                    chỉ lưu {preview.summary.valid} dòng hợp lệ
                   </span>
                 </label>
               </div>
@@ -357,7 +376,11 @@ export function GradeImportModal({
                     type="button"
                     variant="primary"
                     loading={submitBusy}
-                    disabled={preview.summary.valid === 0 || submitBusy || (preview.summary.invalid > 0 && !confirmSkipInvalid)}
+                    disabled={
+                      preview.summary.valid === 0 ||
+                      submitBusy ||
+                      (preview.summary.invalid > 0 && !confirmSkipInvalid)
+                    }
                     onClick={() => void executeImport("publish")}
                   >
                     Xác nhận công bố
@@ -393,7 +416,11 @@ export function GradeImportModal({
                     type="button"
                     variant="secondary"
                     loading={submitBusy}
-                    disabled={preview.summary.valid === 0 || submitBusy || (preview.summary.invalid > 0 && !confirmSkipInvalid)}
+                    disabled={
+                      preview.summary.valid === 0 ||
+                      submitBusy ||
+                      (preview.summary.invalid > 0 && !confirmSkipInvalid)
+                    }
                     onClick={() => void executeImport("save_draft")}
                   >
                     Lưu chưa công bố
@@ -401,7 +428,11 @@ export function GradeImportModal({
                   <Button
                     type="button"
                     variant="primary"
-                    disabled={preview.summary.valid === 0 || submitBusy || (preview.summary.invalid > 0 && !confirmSkipInvalid)}
+                    disabled={
+                      preview.summary.valid === 0 ||
+                      submitBusy ||
+                      (preview.summary.invalid > 0 && !confirmSkipInvalid)
+                    }
                     onClick={() => setConfirmPublish(true)}
                   >
                     Công bố kết quả

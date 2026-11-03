@@ -373,9 +373,9 @@ export async function executeEvaluationImport(
       const { data: existingEvaluations } = await query;
       if (existingEvaluations) {
         existingStatusByStudent = new Map(
-          (existingEvaluations as Array<{ student_id: string; status: string }>).map(
-            (e) => [e.student_id, e.status],
-          ),
+          (
+            existingEvaluations as Array<{ student_id: string; status: string }>
+          ).map((e) => [e.student_id, e.status]),
         );
       }
     }

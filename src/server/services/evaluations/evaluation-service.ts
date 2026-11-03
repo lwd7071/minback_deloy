@@ -300,14 +300,20 @@ export async function upsertTeacherEvaluation(
       current.score === payloadToSave.score &&
       current.feedback === payloadToSave.feedback &&
       current.status === payloadToSave.status &&
-      JSON.stringify(current.criteriaScores) === JSON.stringify(payloadToSave.criteriaScores)
+      JSON.stringify(current.criteriaScores) ===
+        JSON.stringify(payloadToSave.criteriaScores)
     ) {
       return current;
     }
 
     const saved = current
       ? await updateEvaluation(supabase, current.id, payloadToSave)
-      : await insertEvaluation(supabase, assignmentId, studentId, payloadToSave);
+      : await insertEvaluation(
+          supabase,
+          assignmentId,
+          studentId,
+          payloadToSave,
+        );
 
     deferBackgroundTask(async () => {
       try {
@@ -325,7 +331,13 @@ export async function upsertTeacherEvaluation(
     return saved;
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    if (error && typeof error === "object" && "status" in error && "code" in error) throw error;
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      "code" in error
+    )
+      throw error;
     return unexpected(error);
   }
 }

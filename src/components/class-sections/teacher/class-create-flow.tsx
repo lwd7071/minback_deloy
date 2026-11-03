@@ -113,7 +113,8 @@ export function ClassCreateFlow() {
           <h2>Chuẩn bị danh sách sinh viên</h2>
           <div className="class-create-template-bar">
             <p className="muted">
-              CSV/XLSX cần có đủ 3 cột bắt buộc: <strong>MSSV</strong>, <strong>Họ Tên</strong> và <strong>Email</strong>.
+              CSV/XLSX cần có đủ 3 cột bắt buộc: <strong>MSSV</strong>,{" "}
+              <strong>Họ Tên</strong> và <strong>Email</strong>.
             </p>
             <a
               href="/templates/mau-danh-sach-sinh-vien.xlsx"
@@ -315,7 +316,8 @@ export function ClassCreateFlow() {
           {(result.import?.summary.created ?? 0) > 0 ? (
             <Alert variant="info">
               <p>
-                Sinh viên có thể đăng nhập bằng <strong>Google</strong> để kích hoạt tài khoản và tạo mã PIN trong lần đầu tiên.
+                Sinh viên có thể đăng nhập bằng <strong>Google</strong> để kích
+                hoạt tài khoản và tạo mã PIN trong lần đầu tiên.
               </p>
             </Alert>
           ) : null}

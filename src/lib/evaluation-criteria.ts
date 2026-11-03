@@ -50,7 +50,10 @@ export function validateWeights(criteria: Criterion[]): string | null {
 }
 
 // Tổng = Σ(điểm × %)/100, quy đổi theo maxScore, chỉ làm tròn 1 chữ số ở cuối
-export function computeTotal(scores: CriterionScore[], maxScore: number): number {
+export function computeTotal(
+  scores: CriterionScore[],
+  maxScore: number,
+): number {
   const weighted = scores.reduce((sum, c) => sum + c.score * c.weight, 0) / 100;
   const scaled = (weighted * maxScore) / CRITERION_MAX_SCORE;
   return Math.round(scaled * 10) / 10;

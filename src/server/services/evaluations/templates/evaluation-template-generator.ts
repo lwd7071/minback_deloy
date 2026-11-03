@@ -72,7 +72,12 @@ export async function buildEvaluationTemplateWorkbook(
     const c2Score = isSample ? (index === 0 ? 8.0 : 8.5) : "";
     const c3Score = isSample ? (index === 0 ? 9.0 : 9.5) : "";
     const computedScore = isSample
-      ? Math.round(((c1Score as number) * 0.2 + (c2Score as number) * 0.3 + (c3Score as number) * 0.5) * 10) / 10
+      ? Math.round(
+          ((c1Score as number) * 0.2 +
+            (c2Score as number) * 0.3 +
+            (c3Score as number) * 0.5) *
+            10,
+        ) / 10
       : undefined;
 
     const row = worksheet.addRow({
@@ -88,7 +93,11 @@ export async function buildEvaluationTemplateWorkbook(
       c8: "",
       c9: "",
       c10: "",
-      feedback: isSample ? (index === 0 ? "Bài làm tốt, trình bày rõ ràng" : "Nắm chắc kiến thức") : "",
+      feedback: isSample
+        ? index === 0
+          ? "Bài làm tốt, trình bày rõ ràng"
+          : "Nắm chắc kiến thức"
+        : "",
     });
 
     const scoreCell = row.getCell(13);
@@ -101,19 +110,35 @@ export async function buildEvaluationTemplateWorkbook(
   // 2. Sheet Hướng dẫn
   const guideSheet = workbook.addWorksheet("HuongDan");
   guideSheet.columns = [
-    { header: "QUY TẮC NHẬP BẢNG ĐIỂM THEO TIÊU CHÍ (RUBRIC)", key: "rule", width: 80 },
+    {
+      header: "QUY TẮC NHẬP BẢNG ĐIỂM THEO TIÊU CHÍ (RUBRIC)",
+      key: "rule",
+      width: 80,
+    },
   ];
 
   const guideHeader = guideSheet.getRow(1);
   guideHeader.font = { bold: true, size: 12 };
   guideHeader.height = 26;
 
-  guideSheet.addRow(["1. Điểm mỗi tiêu chí được chấm theo thang 10 (tối đa 1 chữ số thập phân)."]);
-  guideSheet.addRow(["2. Cột nào có trọng số dạng (xx%) trong tiêu đề (ví dụ: 'Báo cáo (30%)') sẽ được tính vào điểm tổng."]);
-  guideSheet.addRow(["3. Tổng phần trăm của các cột tiêu chí có (xx%) phải bằng đúng 100%."]);
-  guideSheet.addRow(["4. Các cột không có (xx%) như 'Tiêu chí 4'.. có thể để trống hoặc xóa bớt tùy ý."]);
-  guideSheet.addRow(["5. Có thể tự do đổi tên tiêu chí (ví dụ: 'Thuyết trình (20%)', 'Code (40%)', 'Báo cáo (40%)')."]);
-  guideSheet.addRow(["6. Cột Điểm tự động trích xuất % từ tiêu đề cột để tính. Khi sửa lại % ở tiêu đề, điểm sẽ tự động nhảy theo."]);
+  guideSheet.addRow([
+    "1. Điểm mỗi tiêu chí được chấm theo thang 10 (tối đa 1 chữ số thập phân).",
+  ]);
+  guideSheet.addRow([
+    "2. Cột nào có trọng số dạng (xx%) trong tiêu đề (ví dụ: 'Báo cáo (30%)') sẽ được tính vào điểm tổng.",
+  ]);
+  guideSheet.addRow([
+    "3. Tổng phần trăm của các cột tiêu chí có (xx%) phải bằng đúng 100%.",
+  ]);
+  guideSheet.addRow([
+    "4. Các cột không có (xx%) như 'Tiêu chí 4'.. có thể để trống hoặc xóa bớt tùy ý.",
+  ]);
+  guideSheet.addRow([
+    "5. Có thể tự do đổi tên tiêu chí (ví dụ: 'Thuyết trình (20%)', 'Code (40%)', 'Báo cáo (40%)').",
+  ]);
+  guideSheet.addRow([
+    "6. Cột Điểm tự động trích xuất % từ tiêu đề cột để tính. Khi sửa lại % ở tiêu đề, điểm sẽ tự động nhảy theo.",
+  ]);
 
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
   const safeTitle = assignmentTitle

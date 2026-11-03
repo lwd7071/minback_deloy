@@ -141,9 +141,7 @@ function parseStudentRecords(records: SourceRow[]): ParsedCsvRow[] {
       mssv: row.cells[mssvIndex] ?? "",
       fullName: row.cells[fullNameIndex] ?? "",
       email:
-        emailIndex === undefined
-          ? ""
-          : (row.cells[emailIndex] ?? "").trim(),
+        emailIndex === undefined ? "" : (row.cells[emailIndex] ?? "").trim(),
     });
     if (!parsed.success) {
       return {

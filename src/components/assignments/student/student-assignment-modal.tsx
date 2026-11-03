@@ -73,12 +73,16 @@ export function StudentAssignmentModal({
                           fontSize: "0.85rem",
                           padding: "4px 6px",
                           borderRadius: "4px",
-                          background: "var(--color-surface-elevated, transparent)",
+                          background:
+                            "var(--color-surface-elevated, transparent)",
                         }}
                       >
                         <span>
                           {c.name}{" "}
-                          <span className="muted" style={{ fontSize: "0.8rem" }}>
+                          <span
+                            className="muted"
+                            style={{ fontSize: "0.8rem" }}
+                          >
                             ({c.weight}%)
                           </span>
                         </span>

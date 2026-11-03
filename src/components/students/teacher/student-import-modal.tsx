@@ -96,7 +96,9 @@ export function StudentImportModal({
       <form onSubmit={(e) => void handleSubmit(e)} className="dialog-form">
         <p className="muted dialog-copy">
           Hỗ trợ file Excel (<strong>.xlsx</strong>) hoặc <strong>.csv</strong>.
-          Cần có đủ 3 cột bắt buộc: <strong>MSSV</strong>, <strong>Họ Tên</strong> và <strong>Email</strong>. Sinh viên sẽ đăng nhập lần đầu bằng Google để tạo mã PIN.
+          Cần có đủ 3 cột bắt buộc: <strong>MSSV</strong>,{" "}
+          <strong>Họ Tên</strong> và <strong>Email</strong>. Sinh viên sẽ đăng
+          nhập lần đầu bằng Google để tạo mã PIN.
         </p>
 
         <div style={{ margin: "12px 0 16px" }}>

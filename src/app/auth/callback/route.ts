@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error || !data.user || !data.user.email) {
-      throw new Error(error?.message ?? "Không lấy được thông tin email Google");
+      throw new Error(
+        error?.message ?? "Không lấy được thông tin email Google",
+      );
     }
 
     const email = data.user.email;
@@ -46,11 +48,7 @@ export async function GET(request: NextRequest) {
 
     // Set cookie phiên sinh viên của MinBack
     const cookieStore = await cookies();
-    cookieStore.set(
-      result.cookieName,
-      result.rawToken,
-      result.cookieOptions,
-    );
+    cookieStore.set(result.cookieName, result.rawToken, result.cookieOptions);
 
     // Chuyển hướng tới onboarding nếu cần đặt PIN, hoặc tới profile nếu đã hoàn tất
     const targetPath =

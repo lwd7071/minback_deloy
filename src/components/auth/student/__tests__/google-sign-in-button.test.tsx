@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSignInWithOAuth = vi.fn();
@@ -41,7 +47,9 @@ describe("GoogleSignInButton", () => {
       expect(mockSignInWithOAuth).toHaveBeenCalledWith({
         provider: "google",
         options: {
-          redirectTo: expect.stringContaining("/auth/callback?classCode=WEB101"),
+          redirectTo: expect.stringContaining(
+            "/auth/callback?classCode=WEB101",
+          ),
           queryParams: {
             access_type: "offline",
             prompt: "select_account",

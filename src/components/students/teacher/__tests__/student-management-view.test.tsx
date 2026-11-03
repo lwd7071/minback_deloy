@@ -55,8 +55,12 @@ describe("StudentManagementView - Account Activation Status and Actions", () => 
     });
 
     // Kiểm tra header hiển thị "Trạng thái" thay vì "Trạng thái PIN"
-    expect(screen.getByRole("columnheader", { name: "Trạng thái" })).toBeInTheDocument();
-    expect(screen.queryByRole("columnheader", { name: "Trạng thái PIN" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Trạng thái" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("columnheader", { name: "Trạng thái PIN" }),
+    ).not.toBeInTheDocument();
 
     // Sinh viên đã hoàn tất đổi PIN: "Đã kích hoạt"
     expect(screen.getByText("Đã kích hoạt")).toBeInTheDocument();
@@ -77,6 +81,8 @@ describe("StudentManagementView - Account Activation Status and Actions", () => 
     const rowButtons = tbody.querySelectorAll("button");
     // 2 sinh viên x 2 nút ("Hồ sơ" và "Sửa") = 4 buttons trong tbody
     expect(rowButtons).toHaveLength(4);
-    expect(screen.queryByRole("button", { name: /reset pin/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /reset pin/i }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -32,12 +32,22 @@ describe("buildImportPreview", () => {
       {
         row: 2,
         status: "valid",
-        student: { row: 2, mssv: "SV01", fullName: "An", email: "an@gmail.com" },
+        student: {
+          row: 2,
+          mssv: "SV01",
+          fullName: "An",
+          email: "an@gmail.com",
+        },
       },
       {
         row: 3,
         status: "valid",
-        student: { row: 3, mssv: "SV01", fullName: "Bình", email: "binh@gmail.com" },
+        student: {
+          row: 3,
+          mssv: "SV01",
+          fullName: "Bình",
+          email: "binh@gmail.com",
+        },
       },
     ]);
     expect(preview.summary).toEqual({ total: 2, valid: 1, skipped: 1 });
@@ -70,9 +80,9 @@ describe("parseStudentCsv", () => {
   });
 
   it("throws validation error if required Email header is missing", () => {
-    expect(() =>
-      parseStudentCsv("MSSV,Họ Tên\nSV001,Nguyễn Văn A\n"),
-    ).toThrow("Tệp CSV thiếu cột bắt buộc MSSV, Họ Tên hoặc Email");
+    expect(() => parseStudentCsv("MSSV,Họ Tên\nSV001,Nguyễn Văn A\n")).toThrow(
+      "Tệp CSV thiếu cột bắt buộc MSSV, Họ Tên hoặc Email",
+    );
   });
 
   it("skips invalid data rows (missing MSSV, wrong email, missing email) while ignoring blank rows", () => {
